@@ -24,7 +24,7 @@ export const NavBar: React.FC = () => {
             <Link to="/" className="flex items-center">
               <img 
                 src="/lovable-uploads/3977d71f-39ec-4118-af1f-b71f31832d06.png" 
-                alt="Learny.se" 
+                alt="Learny" 
                 className="h-10 w-auto mr-2" 
               />
               <span className="text-xl font-bold text-learny-purple dark:text-learny-purple-dark ml-2">Learny.se</span>

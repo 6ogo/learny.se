@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CategoryCard } from '@/components/CategoryCard';
 import { ProgramCard } from '@/components/ProgramCard';
 import { Flashcard } from '@/components/Flashcard';
@@ -11,20 +11,31 @@ import { Link } from 'react-router-dom';
 
 const Home = () => {
   const { categories, programs, flashcards, userStats, updateUserStats } = useLocalStorage();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categoryFlashcard, setCategoryFlashcard] = useState<any | null>(null);
 
   useEffect(() => {
     // Update streak on page visit - men bara en gång när komponenten laddas
     // med tom dependency array för att undvika loopar
     updateUserStats({});
+
+    // Select a random category on first render
+    if (categories.length > 0) {
+      const randomCategoryId = categories[Math.floor(Math.random() * categories.length)].id;
+      setSelectedCategory(randomCategoryId);
+    }
   }, []); // Tom dependency array för att undvika infinite loop
 
-  // Använd memo för att få samma flashcard varje gång komponenten renderas
-  // istället för att välja ett nytt kort varje render
-  const randomFlashcard = React.useMemo(() => {
-    return flashcards.length > 0 
-      ? flashcards[Math.floor(Math.random() * flashcards.length)]
-      : null;
-  }, [flashcards]);
+  // When selectedCategory changes, pick a random flashcard from that category
+  useEffect(() => {
+    if (selectedCategory) {
+      const categoryCards = flashcards.filter(card => card.category === selectedCategory);
+      if (categoryCards.length > 0) {
+        const randomCard = categoryCards[Math.floor(Math.random() * categoryCards.length)];
+        setCategoryFlashcard(randomCard);
+      }
+    }
+  }, [selectedCategory, flashcards]);
 
   // Get recently completed programs
   const recentlyCompletedPrograms = programs
@@ -35,6 +46,19 @@ const Home = () => {
   const popularPrograms = programs
     .filter(program => program.difficulty === 'beginner')
     .slice(0, 3);
+
+  // Handle selecting another category for challenge
+  const handleNewCategoryChallenge = () => {
+    if (categories.length > 0) {
+      // Select a different category than the current one
+      let availableCategories = categories.filter(c => c.id !== selectedCategory);
+      if (availableCategories.length === 0) {
+        availableCategories = categories; // Fallback if only one category exists
+      }
+      const newCategoryId = availableCategories[Math.floor(Math.random() * availableCategories.length)].id;
+      setSelectedCategory(newCategoryId);
+    }
+  };
 
   return (
     <div className="container px-4 py-8 mx-auto">
@@ -98,12 +122,24 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Daily Challenge Section */}
-      {randomFlashcard && (
+      {/* Category Challenge Section */}
+      {categoryFlashcard && selectedCategory && (
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 dark:text-white">Dagens utmaning</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold dark:text-white">
+              Utmaning: {categories.find(c => c.id === selectedCategory)?.name || 'Kategori'}
+            </h2>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleNewCategoryChallenge}
+              className="text-learny-purple dark:text-learny-purple-dark"
+            >
+              Byt kategori
+            </Button>
+          </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <Flashcard flashcard={randomFlashcard} />
+            <Flashcard flashcard={categoryFlashcard} />
           </div>
         </section>
       )}

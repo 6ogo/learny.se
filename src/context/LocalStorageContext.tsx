@@ -112,6 +112,35 @@ const initialCategories: Category[] = [
     description: 'Utforska vetenskapliga principer inom olika områden',
     color: 'bg-learny-yellow',
   },
+  // Nya kategorier
+  {
+    id: 'geography',
+    name: 'Geografi',
+    icon: 'globe',
+    description: 'Utforska världen, länder, kulturer och landformer',
+    color: 'bg-learny-blue',
+  },
+  {
+    id: 'vehicles',
+    name: 'Fordon',
+    icon: 'car',
+    description: 'Lär dig om bilar, motorcyklar, båtar och flygplan',
+    color: 'bg-learny-red',
+  },
+  {
+    id: 'economics',
+    name: 'Ekonomi',
+    icon: 'banknote',
+    description: 'Förstå grundläggande och avancerade ekonomiska koncept',
+    color: 'bg-learny-green',
+  },
+  {
+    id: 'history',
+    name: 'Historia',
+    icon: 'book',
+    description: 'Utforska viktiga historiska händelser och perioder',
+    color: 'bg-learny-purple',
+  },
 ];
 
 // Lägger till fler träningsprogram, inklusive några med prov
@@ -203,6 +232,187 @@ const initialPrograms: Program[] = [
     category: 'coding',
     difficulty: 'advanced',
     flashcards: ['ai1', 'ai2', 'ai3', 'ai4', 'ai5'],
+    hasExam: true,
+  },
+  
+  // Geografi program
+  {
+    id: 'geography-basics',
+    name: 'Geografiska grundbegrepp',
+    description: 'Lär dig grundläggande geografiska termer och landformer',
+    category: 'geography',
+    difficulty: 'beginner',
+    flashcards: ['geo1', 'geo2', 'geo3', 'geo4', 'geo5'],
+    hasExam: true,
+  },
+  {
+    id: 'europe-geography',
+    name: 'Europas geografi',
+    description: 'Lär dig om Europas länder, huvudstäder och landformer',
+    category: 'geography',
+    difficulty: 'intermediate',
+    flashcards: ['geo6', 'geo7', 'geo8', 'geo9', 'geo10'],
+    hasExam: true,
+  },
+  {
+    id: 'world-geography',
+    name: 'Världens geografi',
+    description: 'Utforska världens kontinenter, oceaner och kulturer',
+    category: 'geography',
+    difficulty: 'advanced',
+    flashcards: ['geo11', 'geo12', 'geo13', 'geo14', 'geo15'],
+    hasExam: true,
+  },
+  {
+    id: 'climate-zones',
+    name: 'Klimatzoner och ekosystem',
+    description: 'Fördjupa dig i jordens klimatzoner och ekosystem',
+    category: 'geography',
+    difficulty: 'expert',
+    flashcards: ['geo16', 'geo17', 'geo18', 'geo19', 'geo20'],
+    hasExam: true,
+  },
+  
+  // Fordon program
+  {
+    id: 'car-basics',
+    name: 'Bilens grundläggande delar',
+    description: 'Lär dig om bilens grundläggande komponenter och funktion',
+    category: 'vehicles',
+    difficulty: 'beginner',
+    flashcards: ['veh1', 'veh2', 'veh3', 'veh4', 'veh5'],
+    hasExam: true,
+  },
+  {
+    id: 'motorcycle-mechanics',
+    name: 'Motorcykelmekanik',
+    description: 'Förstå motorcykelns uppbyggnad och mekanik',
+    category: 'vehicles',
+    difficulty: 'intermediate',
+    flashcards: ['veh6', 'veh7', 'veh8', 'veh9', 'veh10'],
+    hasExam: true,
+  },
+  {
+    id: 'airplane-systems',
+    name: 'Flygplanssystem',
+    description: 'Lär dig om flygplanets olika system och komponenter',
+    category: 'vehicles',
+    difficulty: 'advanced',
+    flashcards: ['veh11', 'veh12', 'veh13', 'veh14', 'veh15'],
+    hasExam: true,
+  },
+  {
+    id: 'ship-navigation',
+    name: 'Fartygsnavigation',
+    description: 'Utforska maritima navigationssystem och tekniker',
+    category: 'vehicles',
+    difficulty: 'expert',
+    flashcards: ['veh16', 'veh17', 'veh18', 'veh19', 'veh20'],
+    hasExam: true,
+  },
+  
+  // Ekonomi program
+  {
+    id: 'econ-basics',
+    name: 'Ekonomiska grundbegrepp',
+    description: 'Lär dig grundläggande ekonomiska koncept och termer',
+    category: 'economics',
+    difficulty: 'beginner',
+    flashcards: ['econ1', 'econ2', 'econ3', 'econ4', 'econ5'],
+    hasExam: true,
+  },
+  {
+    id: 'personal-finance',
+    name: 'Privatekonomi',
+    description: 'Förstå hur du bäst hanterar din personliga ekonomi',
+    category: 'economics',
+    difficulty: 'intermediate',
+    flashcards: ['econ6', 'econ7', 'econ8', 'econ9', 'econ10'],
+    hasExam: true,
+  },
+  {
+    id: 'investment-strategies',
+    name: 'Investeringsstrategier',
+    description: 'Lär dig om olika metoder för att investera och spara',
+    category: 'economics',
+    difficulty: 'advanced',
+    flashcards: ['econ11', 'econ12', 'econ13', 'econ14', 'econ15'],
+    hasExam: true,
+  },
+  {
+    id: 'global-finance',
+    name: 'Global finansekonomi',
+    description: 'Utforska komplexa globala finansiella system och marknader',
+    category: 'economics',
+    difficulty: 'expert',
+    flashcards: ['econ16', 'econ17', 'econ18', 'econ19', 'econ20'],
+    hasExam: true,
+  },
+  
+  // Historia program
+  {
+    id: 'ancient-history',
+    name: 'Antikens historia',
+    description: 'Utforska de gamla civilisationerna och deras arv',
+    category: 'history',
+    difficulty: 'beginner',
+    flashcards: ['hist1', 'hist2', 'hist3', 'hist4', 'hist5'],
+    hasExam: true,
+  },
+  {
+    id: 'medieval-history',
+    name: 'Medeltiden',
+    description: 'Lär dig om livet och samhället under medeltiden',
+    category: 'history',
+    difficulty: 'intermediate',
+    flashcards: ['hist6', 'hist7', 'hist8', 'hist9', 'hist10'],
+    hasExam: true,
+  },
+  {
+    id: 'modern-history',
+    name: 'Modern historia',
+    description: 'Utforska viktiga händelser från 1900-talet till idag',
+    category: 'history',
+    difficulty: 'advanced',
+    flashcards: ['hist11', 'hist12', 'hist13', 'hist14', 'hist15'],
+    hasExam: true,
+  },
+  {
+    id: 'war-history',
+    name: 'Krigshistoria',
+    description: 'Djupdykning i världens största konflikter och deras effekter',
+    category: 'history',
+    difficulty: 'expert',
+    flashcards: ['hist16', 'hist17', 'hist18', 'hist19', 'hist20'],
+    hasExam: true,
+  },
+  
+  // Fler program för befintliga kategorier på expertsnivå
+  {
+    id: 'med-surgery',
+    name: 'Kirurgiska tekniker',
+    description: 'Avancerade kirurgiska procedurer och tekniker',
+    category: 'medicine',
+    difficulty: 'expert',
+    flashcards: ['med-ex1', 'med-ex2', 'med-ex3', 'med-ex4', 'med-ex5'],
+    hasExam: true,
+  },
+  {
+    id: 'js-advanced',
+    name: 'Avancerad JavaScript',
+    description: 'Djupdyk i JavaScript-mönster och prestationsoptimering',
+    category: 'coding',
+    difficulty: 'expert',
+    flashcards: ['code-ex1', 'code-ex2', 'code-ex3', 'code-ex4', 'code-ex5'],
+    hasExam: true,
+  },
+  {
+    id: 'math-topology',
+    name: 'Topologi',
+    description: 'Utforska matematikens abstrakta områden inom topologi',
+    category: 'math',
+    difficulty: 'expert',
+    flashcards: ['math-ex1', 'math-ex2', 'math-ex3', 'math-ex4', 'math-ex5'],
     hasExam: true,
   },
 ];
@@ -542,298 +752,3 @@ const initialFlashcards: Flashcard[] = [
   {
     id: 'ai1',
     question: 'Vad är maskininlärning?',
-    answer: 'Maskininlärning är en del av AI där system automatiskt lär sig och förbättras från erfarenhet utan att vara explicit programmerade. Det innefattar algoritmer som kan lära sig mönster från data.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai2',
-    question: 'Vad är skillnaden mellan övervakad och oövervakad inlärning?',
-    answer: 'Övervakad inlärning använder märkta data där algoritmen lär sig att förutsäga utdata från indata. Oövervakad inlärning använder omärkta data för att hitta mönster eller strukturer utan förutbestämda etiketter.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai3',
-    question: 'Vad är ett neuralt nätverk?',
-    answer: 'Ett neuralt nätverk är en maskininlärningsmodell inspirerad av hjärnans struktur. Det består av lager av sammankopplade noder (neuroner) som bearbetar information, lär sig från data och kan identifiera komplexa mönster.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai4',
-    question: 'Vad är "djupinlärning" (deep learning)?',
-    answer: 'Djupinlärning är en underkategori av maskininlärning som använder neurala nätverk med flera dolda lager (djupa neurala nätverk) för att lära sig hierarkiska representationer av data. Det har revolutionerat områden som bildklassificering, språkbehandling och spel.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai5',
-    question: 'Vad är en "confusion matrix" inom maskininlärning?',
-    answer: 'En confusion matrix är en tabell som används för att utvärdera prestandan hos en klassificeringsmodell. Den visar antalet sanna positiva, falska positiva, sanna negativa och falska negativa resultat, vilket hjälper till att beräkna mått som precision, recall och F1-score.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-];
-
-const initialUserStats: UserStats = {
-  streak: 0,
-  lastActivity: 0,
-  totalCorrect: 0,
-  totalIncorrect: 0,
-  cardsLearned: 0,
-  achievements: [],
-  completedPrograms: [],
-};
-
-export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [userStats, setUserStats] = useState<UserStats>(initialUserStats);
-
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const loadedFlashcards = localStorage.getItem('flashcards');
-    const loadedPrograms = localStorage.getItem('programs');
-    const loadedCategories = localStorage.getItem('categories');
-    const loadedUserStats = localStorage.getItem('userStats');
-
-    if (loadedFlashcards) {
-      setFlashcards(JSON.parse(loadedFlashcards));
-    } else {
-      setFlashcards(initialFlashcards);
-    }
-
-    if (loadedPrograms) {
-      setPrograms(JSON.parse(loadedPrograms));
-    } else {
-      setPrograms(initialPrograms);
-    }
-
-    if (loadedCategories) {
-      setCategories(JSON.parse(loadedCategories));
-    } else {
-      setCategories(initialCategories);
-    }
-
-    if (loadedUserStats) {
-      setUserStats(JSON.parse(loadedUserStats));
-    }
-  }, []);
-
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('flashcards', JSON.stringify(flashcards));
-  }, [flashcards]);
-
-  useEffect(() => {
-    localStorage.setItem('programs', JSON.stringify(programs));
-  }, [programs]);
-
-  useEffect(() => {
-    localStorage.setItem('categories', JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    localStorage.setItem('userStats', JSON.stringify(userStats));
-  }, [userStats]);
-
-  const addFlashcard = (flashcard: Omit<Flashcard, 'id'>) => {
-    const newFlashcard: Flashcard = {
-      ...flashcard,
-      id: `flashcard-${Date.now()}`,
-      correctCount: 0,
-      incorrectCount: 0,
-      learned: false,
-      reviewLater: false,
-    };
-
-    setFlashcards((prev) => [...prev, newFlashcard]);
-    toast({
-      title: "Nytt flashcard skapat",
-      description: "Ditt flashcard har lagts till i din samling.",
-    });
-  };
-
-  const updateFlashcard = (id: string, updates: Partial<Flashcard>) => {
-    setFlashcards((prev) =>
-      prev.map((card) => (card.id === id ? { ...card, ...updates } : card))
-    );
-  };
-
-  const deleteFlashcard = (id: string) => {
-    setFlashcards((prev) => prev.filter((card) => card.id !== id));
-    toast({
-      title: "Flashcard borttaget",
-      description: "Ditt flashcard har tagits bort från din samling.",
-    });
-  };
-
-  const getFlashcard = (id: string) => {
-    return flashcards.find((card) => card.id === id);
-  };
-
-  const getFlashcardsByCategory = (category: string) => {
-    return flashcards.filter((card) => card.category === category);
-  };
-
-  const getFlashcardsByProgram = (programId: string) => {
-    const program = programs.find((p) => p.id === programId);
-    if (!program) return [];
-    
-    return program.flashcards
-      .map((id) => flashcards.find((card) => card.id === id))
-      .filter((card): card is Flashcard => card !== undefined);
-  };
-
-  const updateUserStats = (updates: Partial<UserStats>) => {
-    setUserStats((prev) => {
-      const newStats = { ...prev, ...updates };
-      
-      // Check streak
-      const today = new Date().setHours(0, 0, 0, 0);
-      const lastDay = prev.lastActivity ? new Date(prev.lastActivity).setHours(0, 0, 0, 0) : 0;
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      
-      if (today - lastDay > oneDayMs) {
-        if (today - lastDay <= oneDayMs * 2) {
-          // User was active yesterday, maintain or increase streak
-          newStats.streak = prev.streak + 1;
-          
-          // Check for streak achievements
-          if (newStats.streak === 3) {
-            addAchievement({
-              name: "3 dagars streak",
-              description: "Du har studerat 3 dagar i rad!",
-              icon: "flame",
-            });
-          } else if (newStats.streak === 7) {
-            addAchievement({
-              name: "7 dagars streak",
-              description: "Du har studerat en hel vecka i rad!",
-              icon: "flame",
-            });
-          } else if (newStats.streak === 30) {
-            addAchievement({
-              name: "30 dagars streak",
-              description: "Du har studerat en hel månad i rad!",
-              icon: "flame",
-            });
-          }
-        } else {
-          // User was not active yesterday, reset streak
-          newStats.streak = 1;
-        }
-      }
-      
-      newStats.lastActivity = today;
-      
-      return newStats;
-    });
-  };
-
-  const addAchievement = (achievement: Omit<UserAchievement, 'id' | 'dateEarned'>) => {
-    const newAchievement: UserAchievement = {
-      ...achievement,
-      id: `achievement-${Date.now()}`,
-      dateEarned: Date.now(),
-      displayed: false,
-    };
-
-    setUserStats((prev) => {
-      // Check if achievement already exists
-      const exists = prev.achievements.some((a) => a.name === achievement.name);
-      if (exists) return prev;
-      
-      return {
-        ...prev,
-        achievements: [...prev.achievements, newAchievement],
-      };
-    });
-
-    toast({
-      title: "Ny prestation upplåst!",
-      description: achievement.name,
-    });
-  };
-
-  const markProgramCompleted = (programId: string) => {
-    setUserStats((prev) => {
-      // Check if already completed
-      if (prev.completedPrograms.includes(programId)) {
-        return prev;
-      }
-      
-      return {
-        ...prev,
-        completedPrograms: [...prev.completedPrograms, programId],
-      };
-    });
-
-    setPrograms((prev) =>
-      prev.map((program) =>
-        program.id === programId ? { ...program, completedByUser: true } : program
-      )
-    );
-
-    const program = programs.find((p) => p.id === programId);
-    if (program) {
-      toast({
-        title: "Träningsprogram klart!",
-        description: `Du har slutfört träningsprogrammet: ${program.name}`,
-      });
-
-      addAchievement({
-        name: `Slutfört: ${program.name}`,
-        description: `Du har slutfört ${program.name} programmet!`,
-        icon: "trophy",
-      });
-    }
-  };
-
-  const getProgram = (programId: string) => {
-    return programs.find((program) => program.id === programId);
-  };
-
-  const getProgramsByCategory = (category: string) => {
-    return programs.filter((program) => program.category === category);
-  };
-
-  const getCategory = (categoryId: string) => {
-    return categories.find((category) => category.id === categoryId);
-  };
-
-  const contextValue: LocalStorageContextType = {
-    flashcards,
-    programs,
-    categories,
-    userStats,
-    addFlashcard,
-    updateFlashcard,
-    deleteFlashcard,
-    getFlashcard,
-    getFlashcardsByCategory,
-    getFlashcardsByProgram,
-    updateUserStats,
-    addAchievement,
-    markProgramCompleted,
-    getProgram,
-    getProgramsByCategory,
-    getCategory,
-  };
-
-  return (
-    <LocalStorageContext.Provider value={contextValue}>
-      {children}
-    </LocalStorageContext.Provider>
-  );
-};
-
-export const useLocalStorage = () => {
-  const context = useContext(LocalStorageContext);
-  if (context === undefined) {
-    throw new Error('useLocalStorage must be used within a LocalStorageProvider');
-  }
-  return context;
-};

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Book, Code, Plus, Beaker, Languages } from 'lucide-react';
+import { Book, Code, Plus, Beaker, Languages, Globe, Car, Banknote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Category } from '@/context/LocalStorageContext';
 
@@ -23,6 +23,14 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
         return <Beaker className="h-6 w-6" />; // Changed Flask to Beaker which exists in lucide-react
       case 'languages':
         return <Languages className="h-6 w-6" />;
+      case 'globe':
+        return <Globe className="h-6 w-6" />;
+      case 'car':
+        return <Car className="h-6 w-6" />;
+      case 'banknote':
+        return <Banknote className="h-6 w-6" />;
+      case 'book':
+        return <Book className="h-6 w-6" />;
       default:
         return <Book className="h-6 w-6" />;
     }

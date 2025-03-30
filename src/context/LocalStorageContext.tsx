@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, FC } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
 export type Flashcard = {
@@ -73,7 +73,7 @@ type LocalStorageContextType = {
   getCategory: (categoryId: string) => Category | undefined;
 };
 
-// Only declare LocalStorageContext once
+// Create the context
 const LocalStorageContext = createContext<LocalStorageContextType | undefined>(undefined);
 
 // Initial data
@@ -731,4 +731,350 @@ const initialFlashcards: Flashcard[] = [
   {
     id: 'ai2',
     question: 'Vad är skillnaden mellan övervakad och oövervakad inlärning?',
-    answer: 'Övervakad inlärning använder märkta träningsdata med kända resultat. Oövervakad inlärning arbetar med
+    answer: 'Övervakad inlärning använder märkta träningsdata med kända resultat. Oövervakad inlärning arbetar med omärkta data och försöker hitta mönster och strukturer utan fördefinierade svar.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai3',
+    question: 'Vad är ett neuralt nätverk?',
+    answer: 'Ett neuralt nätverk är en datamodell inspirerad av hjärnans neuroner. Det består av lager av noder (neuroner) som bearbetar information, lär sig från data och kan identifiera komplexa mönster för att göra förutsägelser.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai4',
+    question: 'Vad är djupinlärning (deep learning)?',
+    answer: 'Djupinlärning är en typ av maskininlärning som använder neurala nätverk med många lager (djupa nätverk) för att analysera olika aspekter av data. Det är särskilt effektivt för uppgifter som bildigenkänning, språkbehandling och spel.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai5',
+    question: 'Vad är en tränings-/testuppsättning inom maskininlärning?',
+    answer: 'I maskininlärning delas data vanligtvis upp i tränings- och testuppsättningar. Träningsuppsättningen används för att lära modellen, medan testuppsättningen används för att utvärdera dess prestanda på nya, osedda data.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'geo1',
+    question: 'Vad är skillnaden mellan väder och klimat?',
+    answer: 'Väder avser kortsiktiga atmosfäriska förhållanden som temperatur och nederbörd på en specifik plats och tid. Klimat är genomsnittliga vädermönster i en region över längre tidsperioder, vanligtvis 30 år eller mer.',
+    category: 'geography',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'geo2',
+    question: 'Vad är en kontinent?',
+    answer: 'En kontinent är en av jordens sju stora landmassor: Afrika, Antarktis, Asien, Australien, Europa, Nordamerika och Sydamerika. Kontinenter är definierade av geografi, geologi, ekologi och kultur.',
+    category: 'geography',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'geo3',
+    question: 'Vad är longituder och latituder?',
+    answer: 'Latitud är vinkelmåttet nord eller syd om ekvatorn (0° till 90°). Longitud är vinkelmåttet öst eller väst om nollmeridianen (0° till 180°). Tillsammans bildar de ett koordinatsystem för att lokalisera punkter på jordens yta.',
+    category: 'geography',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'geo4',
+    question: 'Vad är erosion?',
+    answer: 'Erosion är processen där jord, sten och andra partiklar transporteras från en plats till en annan genom vind, vatten, is eller gravitation. Det är en naturlig process som formar landskapet över tid.',
+    category: 'geography',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'geo5',
+    question: 'Vad är tidvattnet och vad orsakar det?',
+    answer: 'Tidvatten är regelbundna höjningar och sänkningar av havsnivån orsakade främst av månens gravitationsdragning på jorden, med viss påverkan från solen. Detta resulterar i högvatten och lågvatten vid kuster.',
+    category: 'geography',
+    difficulty: 'beginner',
+  },
+];
+
+const initialUserStats: UserStats = {
+  streak: 0,
+  lastActivity: 0,
+  totalCorrect: 0,
+  totalIncorrect: 0,
+  cardsLearned: 0,
+  achievements: [],
+  completedPrograms: [],
+};
+
+export const useLocalStorage = () => {
+  const context = useContext(LocalStorageContext);
+  if (context === undefined) {
+    throw new Error('useLocalStorage must be used within a LocalStorageProvider');
+  }
+  return context;
+};
+
+export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [userStats, setUserStats] = useState<UserStats>(initialUserStats);
+
+  // Load initial data from local storage or use default values
+  useEffect(() => {
+    const storedFlashcards = localStorage.getItem('flashcards');
+    const storedPrograms = localStorage.getItem('programs');
+    const storedCategories = localStorage.getItem('categories');
+    const storedUserStats = localStorage.getItem('userStats');
+
+    if (storedFlashcards) {
+      setFlashcards(JSON.parse(storedFlashcards));
+    } else {
+      setFlashcards(initialFlashcards);
+      localStorage.setItem('flashcards', JSON.stringify(initialFlashcards));
+    }
+
+    if (storedPrograms) {
+      setPrograms(JSON.parse(storedPrograms));
+    } else {
+      setPrograms(initialPrograms);
+      localStorage.setItem('programs', JSON.stringify(initialPrograms));
+    }
+
+    if (storedCategories) {
+      setCategories(JSON.parse(storedCategories));
+    } else {
+      setCategories(initialCategories);
+      localStorage.setItem('categories', JSON.stringify(initialCategories));
+    }
+
+    if (storedUserStats) {
+      setUserStats(JSON.parse(storedUserStats));
+    } else {
+      localStorage.setItem('userStats', JSON.stringify(initialUserStats));
+    }
+  }, []);
+
+  // Save to local storage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('flashcards', JSON.stringify(flashcards));
+  }, [flashcards]);
+
+  useEffect(() => {
+    localStorage.setItem('programs', JSON.stringify(programs));
+  }, [programs]);
+
+  useEffect(() => {
+    localStorage.setItem('categories', JSON.stringify(categories));
+  }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('userStats', JSON.stringify(userStats));
+  }, [userStats]);
+
+  // Handle streak updates
+  useEffect(() => {
+    const checkAndUpdateStreak = () => {
+      const now = Date.now();
+      const lastActivity = userStats.lastActivity;
+      const oneDayMs = 24 * 60 * 60 * 1000;
+
+      if (lastActivity === 0) {
+        // First time user, set lastActivity to now
+        updateUserStats({ lastActivity: now });
+        return;
+      }
+
+      const daysSinceLastActivity = Math.floor((now - lastActivity) / oneDayMs);
+
+      if (daysSinceLastActivity === 0) {
+        // Already active today, no streak update needed
+        return;
+      } else if (daysSinceLastActivity === 1) {
+        // Active consecutive days, increment streak
+        updateUserStats({
+          streak: userStats.streak + 1,
+          lastActivity: now,
+        });
+
+        // Check if this is a streak milestone for achievement
+        if (userStats.streak + 1 === 7) {
+          addAchievement({
+            name: '7-dagars Streak',
+            description: 'Använt Learny 7 dagar i rad!',
+            icon: 'flame',
+          });
+        } else if (userStats.streak + 1 === 30) {
+          addAchievement({
+            name: '30-dagars Streak',
+            description: 'Använt Learny 30 dagar i rad!',
+            icon: 'flame',
+          });
+        }
+      } else {
+        // Streak broken, reset to 1
+        updateUserStats({
+          streak: 1,
+          lastActivity: now,
+        });
+      }
+    };
+
+    checkAndUpdateStreak();
+  }, []);
+
+  const addFlashcard = (flashcard: Omit<Flashcard, 'id'>) => {
+    const newFlashcard = {
+      ...flashcard,
+      id: `custom-${Date.now()}`,
+      correctCount: 0,
+      incorrectCount: 0,
+      lastReviewed: Date.now(),
+      nextReview: Date.now(),
+      learned: false,
+      reviewLater: false,
+    };
+
+    setFlashcards((prev) => [...prev, newFlashcard]);
+    toast({
+      title: 'Flashcard skapad',
+      description: 'Din nya flashcard har lagts till!',
+    });
+  };
+
+  const updateFlashcard = (id: string, updates: Partial<Flashcard>) => {
+    setFlashcards((prev) =>
+      prev.map((flashcard) =>
+        flashcard.id === id ? { ...flashcard, ...updates } : flashcard
+      )
+    );
+  };
+
+  const deleteFlashcard = (id: string) => {
+    setFlashcards((prev) => prev.filter((flashcard) => flashcard.id !== id));
+    toast({
+      title: 'Flashcard borttagen',
+      description: 'Flashcard har raderats från din samling.',
+    });
+  };
+
+  const getFlashcard = (id: string) => {
+    return flashcards.find((flashcard) => flashcard.id === id);
+  };
+
+  const getFlashcardsByCategory = (category: string) => {
+    return flashcards.filter((flashcard) => flashcard.category === category);
+  };
+
+  const getFlashcardsByProgram = (programId: string) => {
+    const program = programs.find((p) => p.id === programId);
+    if (!program) return [];
+    
+    return program.flashcards
+      .map((id) => flashcards.find((f) => f.id === id))
+      .filter((f): f is Flashcard => f !== undefined);
+  };
+
+  const updateUserStats = (updates: Partial<UserStats>) => {
+    setUserStats((prev) => ({ ...prev, ...updates }));
+  };
+
+  const addAchievement = (achievement: Omit<UserAchievement, 'id' | 'dateEarned'>) => {
+    const newAchievement = {
+      ...achievement,
+      id: `achievement-${Date.now()}`,
+      dateEarned: Date.now(),
+      displayed: false,
+    };
+
+    // Check if the achievement already exists
+    const exists = userStats.achievements.some((a) => a.name === achievement.name);
+    if (exists) return;
+
+    updateUserStats({
+      achievements: [...userStats.achievements, newAchievement],
+    });
+
+    toast({
+      title: 'Ny utmärkelse!',
+      description: `Du har låst upp "${achievement.name}"!`,
+    });
+  };
+
+  const markProgramCompleted = (programId: string) => {
+    // First update the program to mark as completed
+    setPrograms((prev) =>
+      prev.map((program) =>
+        program.id === programId ? { ...program, completedByUser: true } : program
+      )
+    );
+
+    // Then add to user's completed programs if not already there
+    if (!userStats.completedPrograms.includes(programId)) {
+      updateUserStats({
+        completedPrograms: [...userStats.completedPrograms, programId],
+      });
+
+      // Add achievement for program completion
+      const program = programs.find((p) => p.id === programId);
+      if (program) {
+        addAchievement({
+          name: `Avklarat: ${program.name}`,
+          description: `Slutfört programmet "${program.name}"!`,
+          icon: 'trophy',
+        });
+
+        // Check for category mastery (completing all programs in a category)
+        const categoryPrograms = programs.filter((p) => p.category === program.category);
+        const completedInCategory = categoryPrograms.filter(
+          (p) => userStats.completedPrograms.includes(p.id) || p.id === programId
+        );
+
+        if (completedInCategory.length === categoryPrograms.length) {
+          const category = categories.find((c) => c.id === program.category);
+          if (category) {
+            addAchievement({
+              name: `${category.name} Mästare`,
+              description: `Slutfört alla program i kategorin ${category.name}!`,
+              icon: 'award',
+            });
+          }
+        }
+      }
+    }
+  };
+
+  const getProgram = (programId: string) => {
+    return programs.find((program) => program.id === programId);
+  };
+
+  const getProgramsByCategory = (category: string) => {
+    return programs.filter((program) => program.category === category);
+  };
+
+  const getCategory = (categoryId: string) => {
+    return categories.find((category) => category.id === categoryId);
+  };
+
+  const contextValue = {
+    flashcards,
+    programs,
+    categories,
+    userStats,
+    addFlashcard,
+    updateFlashcard,
+    deleteFlashcard,
+    getFlashcard,
+    getFlashcardsByCategory,
+    getFlashcardsByProgram,
+    updateUserStats,
+    addAchievement,
+    markProgramCompleted,
+    getProgram,
+    getProgramsByCategory,
+    getCategory,
+  };
+
+  return (
+    <LocalStorageContext.Provider value={contextValue}>
+      {children}
+    </LocalStorageContext.Provider>
+  );
+};

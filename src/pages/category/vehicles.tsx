@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { ArrowLeft, Car } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FlashcardsByLevel } from '@/components/FlashcardsByLevel';
 import { useLocalStorage } from '@/context/LocalStorageContext';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 
 const difficultyLevels = [
@@ -22,7 +23,7 @@ export default function VehiclesPage() {
     <Layout>
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
-          <Link href="/" passHref>
+          <Link to="/">
             <Button variant="ghost" className="px-0">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Tillbaka till ämnen

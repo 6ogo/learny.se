@@ -1,8 +1,7 @@
+
 import React from 'react';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import { ModeToggle } from '@/components/ui/mode-toggle';
+import { Helmet } from 'react-helmet';
+import { useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, BookOpen, Calendar, Clock } from 'lucide-react';
 
@@ -11,30 +10,26 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const router = useRouter();
+  const location = useLocation();
   
   const isActive = (path: string) => {
-    return router.pathname === path || router.pathname.startsWith(`${path}/`);
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Head>
+      <Helmet>
         <title>Flashcard App</title>
         <meta name="description" content="Lär dig genom flashcards" />
         <link rel="icon" href="/favicon.ico" />
-      </Head>
+      </Helmet>
       
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link href="/" className="font-bold text-xl">
+            <Link to="/" className="font-bold text-xl">
               FlashcardApp
             </Link>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <ModeToggle />
           </div>
         </div>
       </header>
@@ -43,7 +38,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       <nav className="sticky bottom-0 border-t bg-background/95 backdrop-blur">
         <div className="container flex h-14 items-center justify-around">
-          <Link href="/" passHref>
+          <Link to="/">
             <Button
               variant={isActive('/') ? "default" : "ghost"}
               size="sm"
@@ -54,7 +49,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Button>
           </Link>
           
-          <Link href="/explore" passHref>
+          <Link to="/explore">
             <Button
               variant={isActive('/explore') ? "default" : "ghost"}
               size="sm"
@@ -65,7 +60,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Button>
           </Link>
           
-          <Link href="/daily" passHref>
+          <Link to="/daily">
             <Button
               variant={isActive('/daily') ? "default" : "ghost"}
               size="sm"
@@ -76,7 +71,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Button>
           </Link>
           
-          <Link href="/review" passHref>
+          <Link to="/review">
             <Button
               variant={isActive('/review') ? "default" : "ghost"}
               size="sm"

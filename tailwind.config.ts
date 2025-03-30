@@ -65,10 +65,15 @@ export default {
 				},
 				learny: {
 					purple: '#8B5CF6',
+					'purple-dark': '#A78BFA',
 					blue: '#3B82F6',
+					'blue-dark': '#60A5FA',
 					green: '#10B981',
+					'green-dark': '#34D399',
 					yellow: '#FBBF24',
+					'yellow-dark': '#FBBF24',
 					red: '#EF4444',
+					'red-dark': '#F87171',
 					light: '#F3F4F6',
 					dark: '#1F2937'
 				}

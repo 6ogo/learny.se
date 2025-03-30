@@ -31,17 +31,17 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
   const getColorClass = () => {
     switch (category.color) {
       case 'bg-learny-red':
-        return 'from-red-500 to-red-600';
+        return 'from-red-500 to-red-600 dark:from-red-600 dark:to-red-700';
       case 'bg-learny-blue':
-        return 'from-blue-500 to-blue-600';
+        return 'from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700';
       case 'bg-learny-purple':
-        return 'from-purple-500 to-purple-600';
+        return 'from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700';
       case 'bg-learny-green':
-        return 'from-green-500 to-green-600';
+        return 'from-green-500 to-green-600 dark:from-green-600 dark:to-green-700';
       case 'bg-learny-yellow':
-        return 'from-yellow-500 to-yellow-600';
+        return 'from-yellow-500 to-yellow-600 dark:from-yellow-600 dark:to-yellow-700';
       default:
-        return 'from-purple-500 to-purple-600';
+        return 'from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700';
     }
   };
 
@@ -54,7 +54,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
         "h-40 w-full rounded-xl relative overflow-hidden shadow-md",
         "bg-gradient-to-br", getColorClass()
       )}>
-        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute inset-0 bg-black/10 dark:bg-black/20"></div>
         <div className="absolute bottom-0 left-0 right-0 top-0 flex flex-col justify-center items-center p-4 text-white">
           <div className="bg-white/20 rounded-full p-3 mb-3">
             {getIcon()}

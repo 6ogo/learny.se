@@ -2,25 +2,27 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
-import { Trophy, PlusCircle, Home, BookOpen } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
+import { Trophy, PlusCircle, Home, BookOpen, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export const NavBar: React.FC = () => {
   const location = useLocation();
   const { userStats } = useLocalStorage();
+  const { theme, toggleTheme } = useTheme();
 
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   return (
-    <header className="w-full bg-white shadow-sm z-10">
+    <header className="w-full bg-white dark:bg-learny-dark shadow-sm z-10">
       <div className="container px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-learny-purple">Learny.se</span>
+              <span className="text-2xl font-bold text-learny-purple dark:text-learny-purple-dark">Learny.se</span>
             </Link>
           </div>
 
@@ -31,7 +33,7 @@ export const NavBar: React.FC = () => {
                 size="sm"
                 className={cn(
                   "flex flex-col items-center justify-center h-14 px-2 md:px-3",
-                  isActive('/') ? 'bg-learny-purple text-white' : 'text-gray-600 hover:text-learny-purple'
+                  isActive('/') ? 'bg-learny-purple text-white dark:bg-learny-purple-dark' : 'text-gray-600 hover:text-learny-purple dark:text-gray-300 dark:hover:text-learny-purple-dark'
                 )}
               >
                 <Home className="h-5 w-5 mb-1" />
@@ -45,7 +47,7 @@ export const NavBar: React.FC = () => {
                 size="sm"
                 className={cn(
                   "flex flex-col items-center justify-center h-14 px-2 md:px-3",
-                  isActive('/create') ? 'bg-learny-purple text-white' : 'text-gray-600 hover:text-learny-purple'
+                  isActive('/create') ? 'bg-learny-purple text-white dark:bg-learny-purple-dark' : 'text-gray-600 hover:text-learny-purple dark:text-gray-300 dark:hover:text-learny-purple-dark'
                 )}
               >
                 <PlusCircle className="h-5 w-5 mb-1" />
@@ -59,8 +61,9 @@ export const NavBar: React.FC = () => {
                 size="sm"
                 className={cn(
                   "flex flex-col items-center justify-center h-14 px-2 md:px-3 relative",
-                  isActive('/achievements') ? 'bg-learny-purple text-white' : 'text-gray-600 hover:text-learny-purple'
+                  isActive('/achievements') ? 'bg-learny-purple text-white dark:bg-learny-purple-dark' : 'text-gray-600 hover:text-learny-purple dark:text-gray-300 dark:hover:text-learny-purple-dark'
                 )}
+                aria-label="Prestationer"
               >
                 <Trophy className="h-5 w-5 mb-1" />
                 <span className="text-xs">Prestationer</span>
@@ -73,9 +76,19 @@ export const NavBar: React.FC = () => {
               </Button>
             </Link>
 
-            <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 ml-2">
-              <BookOpen className="h-4 w-4 text-learny-purple mr-1" />
-              <span className="text-sm font-medium">{userStats.streak} dagars streak</span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme}
+              className="ml-2 text-gray-600 hover:text-learny-purple dark:text-gray-300 dark:hover:text-learny-purple-dark"
+              aria-label={theme === 'light' ? 'Mörkt läge' : 'Ljust läge'}
+            >
+              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+
+            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1 ml-2">
+              <BookOpen className="h-4 w-4 text-learny-purple dark:text-learny-purple-dark mr-1" />
+              <span className="text-sm font-medium dark:text-white">{userStats.streak} dagars streak</span>
             </div>
           </div>
         </div>

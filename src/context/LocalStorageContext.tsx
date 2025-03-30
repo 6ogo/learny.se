@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
@@ -33,6 +32,7 @@ export type Program = {
   flashcards: string[]; // Array of flashcard IDs
   completedByUser?: boolean;
   progress?: number;
+  hasExam?: boolean; // Indicates if the program has an exam at the end
 };
 
 export type UserAchievement = {
@@ -114,6 +114,7 @@ const initialCategories: Category[] = [
   },
 ];
 
+// Lägger till fler träningsprogram, inklusive några med prov
 const initialPrograms: Program[] = [
   {
     id: 'med-basics',
@@ -122,6 +123,7 @@ const initialPrograms: Program[] = [
     category: 'medicine',
     difficulty: 'beginner',
     flashcards: ['med1', 'med2', 'med3', 'med4', 'med5'],
+    hasExam: true,
   },
   {
     id: 'med-anatomy',
@@ -138,6 +140,7 @@ const initialPrograms: Program[] = [
     category: 'coding',
     difficulty: 'beginner',
     flashcards: ['code1', 'code2', 'code3', 'code4', 'code5'],
+    hasExam: true,
   },
   {
     id: 'react-fundamentals',
@@ -154,9 +157,57 @@ const initialPrograms: Program[] = [
     category: 'math',
     difficulty: 'beginner',
     flashcards: ['math1', 'math2', 'math3', 'math4', 'math5'],
-  }
+    hasExam: true,
+  },
+  // Nya program med prov
+  {
+    id: 'python-basics',
+    name: 'Python grundkurs',
+    description: 'Grundläggande Python-programmering för nybörjare',
+    category: 'coding',
+    difficulty: 'beginner',
+    flashcards: ['py1', 'py2', 'py3', 'py4', 'py5'],
+    hasExam: true,
+  },
+  {
+    id: 'swedish-basics',
+    name: 'Svenska för nybörjare',
+    description: 'Grundläggande svenska ord och fraser',
+    category: 'languages',
+    difficulty: 'beginner',
+    flashcards: ['swe1', 'swe2', 'swe3', 'swe4', 'swe5'],
+    hasExam: true,
+  },
+  {
+    id: 'physics-mechanics',
+    name: 'Grundläggande mekanik',
+    description: 'Viktiga koncept inom klassisk mekanik',
+    category: 'science',
+    difficulty: 'intermediate',
+    flashcards: ['phys1', 'phys2', 'phys3', 'phys4', 'phys5'],
+    hasExam: true,
+  },
+  {
+    id: 'calculus-intro',
+    name: 'Introduktion till kalkyl',
+    description: 'Grundläggande begrepp inom differentialkalkyl',
+    category: 'math',
+    difficulty: 'advanced',
+    flashcards: ['calc1', 'calc2', 'calc3', 'calc4', 'calc5'],
+    hasExam: true,
+  },
+  {
+    id: 'ai-fundamentals',
+    name: 'AI fundamentals',
+    description: 'Grundläggande AI-koncept och maskinlärning',
+    category: 'coding',
+    difficulty: 'advanced',
+    flashcards: ['ai1', 'ai2', 'ai3', 'ai4', 'ai5'],
+    hasExam: true,
+  },
 ];
 
+// Lägg till nya flashcards för de nya programmen
 const initialFlashcards: Flashcard[] = [
   // Medicine flashcards
   {
@@ -337,6 +388,191 @@ const initialFlashcards: Flashcard[] = [
     answer: 'Arean av en cirkel beräknas med formeln A = πr², där r är cirkelns radie och π (pi) är cirka 3,14159.',
     category: 'math',
     difficulty: 'beginner',
+  },
+  
+  // Python flashcards
+  {
+    id: 'py1',
+    question: 'Vad är Python?',
+    answer: 'Python är ett högniåspråk som är känt för sin enkla syntax och läsbarhet. Det är ett av de mest populära programmeringsspråken för datavetenskap, AI och webbutveckling.',
+    category: 'coding',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py2',
+    question: 'Vad är skillnaden mellan en lista och en tuple i Python?',
+    answer: 'En lista är föränderlig (mutable) medan en tuple är oföränderlig (immutable). Listor skapas med hakparenteser [] och tuples med vanliga parenteser ().',
+    category: 'coding',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py3',
+    question: 'Hur skapar man en funktion i Python?',
+    answer: 'En funktion i Python definieras med nyckelordet "def" följt av funktionsnamnet och parametrar inom parenteser. Exempel: def greet(name): return f"Hello, {name}!"',
+    category: 'coding',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py4',
+    question: 'Vad är list comprehension i Python?',
+    answer: 'List comprehension är ett koncist sätt att skapa listor baserat på befintliga listor. Exempel: [x*2 for x in range(10) if x % 2 == 0] skapar en lista med dubbla värden av jämna tal från 0-9.',
+    category: 'coding',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py5',
+    question: 'Vad är en dictionary i Python?',
+    answer: 'En dictionary i Python är en samling av key-value par. De skapas med klammerparenteser {} och kommatecken mellan paren. Exempel: {"name": "John", "age": 30}',
+    category: 'coding',
+    difficulty: 'beginner',
+  },
+  
+  // Svenska flashcards
+  {
+    id: 'swe1',
+    question: 'Hur säger man "hello" på svenska?',
+    answer: '"Hej" är det vanligaste sättet att säga "hello" på svenska. Man kan också säga "God dag" i mer formella situationer.',
+    category: 'languages',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'swe2',
+    question: 'Hur säger man "thank you" på svenska?',
+    answer: '"Tack" betyder "thank you" på svenska. För "thank you very much" säger man "tack så mycket".',
+    category: 'languages',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'swe3',
+    question: 'Hur säger man "my name is..." på svenska?',
+    answer: '"Jag heter..." är det svenska uttrycket för "my name is...". Exempel: "Jag heter Johan" betyder "My name is Johan".',
+    category: 'languages',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'swe4',
+    question: 'Hur säger man "how are you?" på svenska?',
+    answer: '"Hur mår du?" är det svenska uttrycket för "how are you?". Ett mer informellt sätt är "Läget?" som motsvarar "What\'s up?"',
+    category: 'languages',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'swe5',
+    question: 'Hur räknar man från 1 till 5 på svenska?',
+    answer: 'På svenska räknar man från 1 till 5: "ett, två, tre, fyra, fem".',
+    category: 'languages',
+    difficulty: 'beginner',
+  },
+  
+  // Physics flashcards
+  {
+    id: 'phys1',
+    question: 'Vad är Newtons första lag?',
+    answer: 'Newtons första lag (tröghetslagen) säger att ett föremål i vila förblir i vila och ett föremål i rörelse förblir i rörelse med konstant hastighet såvida ingen yttre kraft påverkar det.',
+    category: 'science',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'phys2',
+    question: 'Vad mäter enheten Newton?',
+    answer: 'Newton (N) är SI-enheten för kraft. 1 Newton är den kraft som behövs för att accelerera 1 kg med 1 meter per sekund i kvadrat (1 N = 1 kg·m/s²).',
+    category: 'science',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'phys3',
+    question: 'Vad är energibevarandeprincipen?',
+    answer: 'Energibevarandeprincipen säger att den totala energin i ett isolerat system förblir konstant över tid. Energi kan varken skapas eller förstöras, bara omvandlas från en form till en annan.',
+    category: 'science',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'phys4',
+    question: 'Vad är skillnaden mellan massa och vikt?',
+    answer: 'Massa är ett mått på mängden materia i ett objekt och förblir konstant oavsett plats. Vikt är den gravitationskraft som verkar på ett objekt och varierar beroende på gravitationsfältet (t.ex. är mindre på månen än på jorden).',
+    category: 'science',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'phys5',
+    question: 'Vad är Pascals princip?',
+    answer: 'Pascals princip säger att tryck som appliceras på en innesluten vätska överförs oförändrat till alla delar av vätskan och till behållarens väggar. Detta är grunden för hydrauliska system.',
+    category: 'science',
+    difficulty: 'intermediate',
+  },
+  
+  // Calculus flashcards
+  {
+    id: 'calc1',
+    question: 'Vad är en derivata?',
+    answer: 'En derivata är ett mått på hur snabbt en funktion förändras vid en specifik punkt. Geometriskt representerar derivatan lutningen på tangentlinjen till funktionen vid den punkten.',
+    category: 'math',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'calc2',
+    question: 'Vad är kedjeregeln inom derivering?',
+    answer: 'Kedjeregeln används för att derivera sammansatta funktioner. Om y = f(g(x)), då är y\' = f\'(g(x)) · g\'(x), där f\' och g\' är derivatorna av funktionerna f och g.',
+    category: 'math',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'calc3',
+    question: 'Vad är en obestämd integral?',
+    answer: 'En obestämd integral, ∫f(x)dx, är en familj av funktioner vars derivata är f(x). Den representerar antiderivatan till f(x) och inkluderar en godtycklig konstant C.',
+    category: 'math',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'calc4',
+    question: 'Vad är Fundamentalsatsen för kalkyl?',
+    answer: 'Fundamentalsatsen för kalkyl etablerar sambandet mellan derivering och integrering som inversa operationer. Den säger att om F är en antiderivata till f, då är den bestämda integralen av f från a till b lika med F(b) - F(a).',
+    category: 'math',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'calc5',
+    question: 'Vad är en partiell derivata?',
+    answer: 'En partiell derivata är derivatan av en funktion med flera variabler med avseende på en variabel, medan övriga variabler hålls konstanta. Den noteras ofta som ∂f/∂x för partiell derivata av f med avseende på x.',
+    category: 'math',
+    difficulty: 'advanced',
+  },
+  
+  // AI flashcards
+  {
+    id: 'ai1',
+    question: 'Vad är maskininlärning?',
+    answer: 'Maskininlärning är en del av AI där system automatiskt lär sig och förbättras från erfarenhet utan att vara explicit programmerade. Det innefattar algoritmer som kan lära sig mönster från data.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai2',
+    question: 'Vad är skillnaden mellan övervakad och oövervakad inlärning?',
+    answer: 'Övervakad inlärning använder märkta data där algoritmen lär sig att förutsäga utdata från indata. Oövervakad inlärning använder omärkta data för att hitta mönster eller strukturer utan förutbestämda etiketter.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai3',
+    question: 'Vad är ett neuralt nätverk?',
+    answer: 'Ett neuralt nätverk är en maskininlärningsmodell inspirerad av hjärnans struktur. Det består av lager av sammankopplade noder (neuroner) som bearbetar information, lär sig från data och kan identifiera komplexa mönster.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai4',
+    question: 'Vad är "djupinlärning" (deep learning)?',
+    answer: 'Djupinlärning är en underkategori av maskininlärning som använder neurala nätverk med flera dolda lager (djupa neurala nätverk) för att lära sig hierarkiska representationer av data. Det har revolutionerat områden som bildklassificering, språkbehandling och spel.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai5',
+    question: 'Vad är en "confusion matrix" inom maskininlärning?',
+    answer: 'En confusion matrix är en tabell som används för att utvärdera prestandan hos en klassificeringsmodell. Den visar antalet sanna positiva, falska positiva, sanna negativa och falska negativa resultat, vilket hjälper till att beräkna mått som precision, recall och F1-score.',
+    category: 'coding',
+    difficulty: 'advanced',
   },
 ];
 

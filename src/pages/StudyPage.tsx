@@ -52,11 +52,12 @@ const StudyPage = () => {
     } else {
       setIsFinished(true);
       
-      // Update user stats
+      // Fix the type errors by not passing function updates through updateUserStats
+      // Instead, use the current values directly
       updateUserStats({
-        totalCorrect: (prev) => prev + correctCount,
-        totalIncorrect: (prev) => prev + incorrectCount,
-        cardsLearned: (prev) => prev + correctCount,
+        totalCorrect: correctCount,
+        totalIncorrect: incorrectCount,
+        cardsLearned: correctCount,
       });
       
       // Mark program as completed if all cards are answered

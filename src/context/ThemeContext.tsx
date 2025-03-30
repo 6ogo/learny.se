@@ -1,48 +1,26 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-
-type Theme = 'light' | 'dark';
+import React, { createContext, useContext, useEffect } from 'react';
 
 interface ThemeContextType {
-  theme: Theme;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
-
   useEffect(() => {
-    // Hämta sparad tema från localStorage vid start
-    const savedTheme = localStorage.getItem('learny-theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-    } else {
-      // Kontrollera om användarens system föredrar dark mode
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        setTheme('dark');
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('learny-theme', 'dark');
-      }
-    }
+    // Always use dark mode
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('learny-theme', 'dark');
   }, []);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => {
-      const newTheme = prevTheme === 'light' ? 'dark' : 'light';
-      // Spara temat i localStorage
-      localStorage.setItem('learny-theme', newTheme);
-      // Uppdatera HTML-roten för att aktivera/inaktivera dark mode
-      document.documentElement.classList.toggle('dark', newTheme === 'dark');
-      return newTheme;
-    });
+    // Function kept for API compatibility, but it doesn't change the theme
+    console.log('Dark mode is always enabled');
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

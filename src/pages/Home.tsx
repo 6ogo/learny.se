@@ -92,7 +92,7 @@ const Home = () => {
                 </Button>
               </Link>
               <Link to="/achievements">
-                <Button variant="outline" size="lg" className="border-white text-learny-purple hover:bg-white/20">
+                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/20">
                   <Award className="mr-2 h-5 w-5" />
                   Mina prestationer
                 </Button>

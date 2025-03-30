@@ -25,7 +25,7 @@ export const NavBar: React.FC = () => {
                 alt="Learny.se" 
                 className="h-10 w-auto mr-2" 
               />
-              <span className="text-xl font-bold text-learny-purple-dark ml-2">Learny</span>
+              <span className="text-xl font-bold text-learny-purple-dark ml-2">Learny.se</span>
             </Link>
           </div>
 

@@ -127,7 +127,7 @@ const Home = () => {
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold dark:text-white">
-              Utmaning: {categories.find(c => c.id === selectedCategory)?.name || 'Kategori'}
+              Kategoriutmaning: {categories.find(c => c.id === selectedCategory)?.name || 'Kategori'}
             </h2>
             <Button 
               variant="outline" 
@@ -144,13 +144,38 @@ const Home = () => {
         </section>
       )}
 
-      {/* Categories Section */}
+      {/* Categories Section - Organized by topic groups */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6 dark:text-white">Ämnen</h2>
+        
+        {/* Academic Subjects */}
+        <h3 className="text-xl font-medium mb-4 dark:text-gray-200">Akademiska ämnen</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {categories
+            .filter(cat => ['medicine', 'math', 'science', 'history'].includes(cat.id))
+            .map((category) => (
+              <CategoryCard key={category.id} category={category} />
+            ))}
+        </div>
+        
+        {/* Technology & Languages */}
+        <h3 className="text-xl font-medium mb-4 dark:text-gray-200">Teknologi & Språk</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {categories
+            .filter(cat => ['coding', 'languages'].includes(cat.id))
+            .map((category) => (
+              <CategoryCard key={category.id} category={category} />
+            ))}
+        </div>
+        
+        {/* Practical Knowledge */}
+        <h3 className="text-xl font-medium mb-4 dark:text-gray-200">Praktisk kunskap</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
+          {categories
+            .filter(cat => ['geography', 'vehicles', 'economics'].includes(cat.id))
+            .map((category) => (
+              <CategoryCard key={category.id} category={category} />
+            ))}
         </div>
       </section>
 

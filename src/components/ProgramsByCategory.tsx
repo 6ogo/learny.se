@@ -15,7 +15,18 @@ export const ProgramsByCategory: React.FC<ProgramsByCategoryProps> = ({ category
   const category = getCategory(categoryId);
   
   if (programs.length === 0) {
-    return null;
+    return (
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Program i {category?.name}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center py-8 dark:text-gray-400">
+            Inga program tillgängliga i denna kategori ännu.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   // Group programs by difficulty

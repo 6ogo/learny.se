@@ -162,7 +162,7 @@ const Home = () => {
         
         {/* Academic Subjects */}
         <h3 className="text-xl font-medium mb-4 dark:text-gray-200">Akademiska ämnen</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {academicCategories.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}
@@ -170,7 +170,7 @@ const Home = () => {
         
         {/* Technology & Languages */}
         <h3 className="text-xl font-medium mb-4 dark:text-gray-200">Teknologi & Språk</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
           {techLanguageCategories.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}

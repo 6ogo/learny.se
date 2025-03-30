@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Book, Code, Plus, Beaker, Languages, Globe, Car, Banknote } from 'lucide-react';
+import { Book, Code, Plus, Beaker, Languages, Globe, Car, Banknote, History, AtomIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Category } from '@/types/category';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
       case 'plus':
         return <Plus className="h-6 w-6" />;
       case 'flask':
-        return <Beaker className="h-6 w-6" />; // Changed Flask to Beaker which exists in lucide-react
+        return <Beaker className="h-6 w-6" />; 
       case 'languages':
         return <Languages className="h-6 w-6" />;
       case 'globe':
@@ -32,6 +32,10 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
         return <Banknote className="h-6 w-6" />;
       case 'book':
         return <Book className="h-6 w-6" />;
+      case 'atom':
+        return <AtomIcon className="h-6 w-6" />;
+      case 'history':
+        return <History className="h-6 w-6" />;
       default:
         return <Book className="h-6 w-6" />;
     }
@@ -60,7 +64,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
       className="block transform transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 rounded-xl"
     >
       <div className={cn(
-        "h-48 w-full rounded-xl relative overflow-hidden shadow-md", // Increased height for more content
+        "h-48 w-full rounded-xl relative overflow-hidden shadow-md",
         "bg-gradient-to-br", getColorClass()
       )}>
         <div className="absolute inset-0 bg-black/10 dark:bg-black/20"></div>

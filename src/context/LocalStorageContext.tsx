@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
@@ -1048,5 +1049,223 @@ export const useLocalStorage = () => {
 };
 
 export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Implementation of LocalStorageProvider
+  const [flashcards, setFlashcards] = useState<Flashcard[]>(() => {
+    const savedFlashcards = localStorage.getItem('flashcards');
+    return savedFlashcards ? JSON.parse(savedFlashcards) : initialFlashcards;
+  });
+
+  const [programs, setPrograms] = useState<Program[]>(() => {
+    const savedPrograms = localStorage.getItem('programs');
+    return savedPrograms ? JSON.parse(savedPrograms) : initialPrograms;
+  });
+
+  const [categories] = useState<Category[]>(initialCategories);
+
+  const [userStats, setUserStats] = useState<UserStats>(() => {
+    const savedStats = localStorage.getItem('userStats');
+    return savedStats
+      ? JSON.parse(savedStats)
+      : {
+          streak: 0,
+          lastActivity: Date.now(),
+          totalCorrect: 0,
+          totalIncorrect: 0,
+          cardsLearned: 0,
+          achievements: [],
+          completedPrograms: [],
+        };
+  });
+
+  // Save flashcards to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('flashcards', JSON.stringify(flashcards));
+  }, [flashcards]);
+
+  // Save programs to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('programs', JSON.stringify(programs));
+  }, [programs]);
+
+  // Save user stats to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('userStats', JSON.stringify(userStats));
+  }, [userStats]);
+
+  // Add a new flashcard
+  const addFlashcard = (flashcard: Omit<Flashcard, 'id'>) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    const newFlashcard: Flashcard = {
+      ...flashcard,
+      id,
+      correctCount: 0,
+      incorrectCount: 0,
+      lastReviewed: Date.now(),
+      learned: false,
+      reviewLater: false,
+    };
+    setFlashcards((prevFlashcards) => [...prevFlashcards, newFlashcard]);
+    toast({
+      title: "Flashcard created",
+      description: "Your new flashcard has been added to your collection."
+    });
+  };
+
+  // Update an existing flashcard
+  const updateFlashcard = (id: string, updates: Partial<Flashcard>) => {
+    setFlashcards((prevFlashcards) =>
+      prevFlashcards.map((card) =>
+        card.id === id ? { ...card, ...updates } : card
+      )
+    );
+  };
+
+  // Delete a flashcard
+  const deleteFlashcard = (id: string) => {
+    setFlashcards((prevFlashcards) =>
+      prevFlashcards.filter((card) => card.id !== id)
+    );
+    toast({
+      title: "Flashcard deleted",
+      description: "The flashcard has been removed from your collection."
+    });
+  };
+
+  // Get a single flashcard by ID
+  const getFlashcard = (id: string) => {
+    return flashcards.find((card) => card.id === id);
+  };
+
+  // Get flashcards by category
+  const getFlashcardsByCategory = (category: string) => {
+    return flashcards.filter((card) => card.category === category);
+  };
+
+  // Get flashcards for a specific program
+  const getFlashcardsByProgram = (programId: string) => {
+    const program = programs.find((p) => p.id === programId);
+    if (!program) return [];
+    return flashcards.filter((card) => program.flashcards.includes(card.id));
+  };
+
+  // Get a specific program
+  const getProgram = (programId: string) => {
+    return programs.find((p) => p.id === programId);
+  };
+
+  // Get programs by category
+  const getProgramsByCategory = (category: string) => {
+    return programs.filter((p) => p.category === category);
+  };
+
+  // Get a specific category
+  const getCategory = (categoryId: string) => {
+    return categories.find((c) => c.id === categoryId);
+  };
+
+  // Update user stats
+  const updateUserStats = (updates: Partial<UserStats>) => {
+    setUserStats((prevStats) => ({ ...prevStats, ...updates }));
+  };
+
+  // Add a new achievement
+  const addAchievement = (achievement: Omit<UserAchievement, 'id' | 'dateEarned'>) => {
+    const newAchievement: UserAchievement = {
+      ...achievement,
+      id: Math.random().toString(36).substring(2, 9),
+      dateEarned: Date.now(),
+      displayed: false,
+    };
+
+    // Check if this achievement already exists (avoid duplicates)
+    const achievementExists = userStats.achievements.some(
+      (a) => a.name === achievement.name
+    );
+
+    if (!achievementExists) {
+      setUserStats((prevStats) => ({
+        ...prevStats,
+        achievements: [...prevStats.achievements, newAchievement],
+      }));
+
+      toast({
+        title: "New Achievement Unlocked!",
+        description: achievement.name
+      });
+    }
+  };
+
+  // Mark a program as completed
+  const markProgramCompleted = (programId: string) => {
+    // Update program status
+    setPrograms((prevPrograms) =>
+      prevPrograms.map((program) =>
+        program.id === programId
+          ? { ...program, completedByUser: true, progress: 100 }
+          : program
+      )
+    );
+
+    // Add to user's completed programs if not already there
+    if (!userStats.completedPrograms.includes(programId)) {
+      setUserStats((prevStats) => ({
+        ...prevStats,
+        completedPrograms: [...prevStats.completedPrograms, programId],
+      }));
+
+      // Get the program to show proper achievement message
+      const program = programs.find((p) => p.id === programId);
+      if (program) {
+        addAchievement({
+          name: `Completed: ${program.name}`,
+          description: `You've successfully completed the "${program.name}" learning program.`,
+          icon: 'trophy',
+        });
+
+        // Check if all programs in a category are completed
+        const categoryPrograms = programs.filter(
+          (p) => p.category === program.category
+        );
+        const completedInCategory = categoryPrograms.filter(
+          (p) => p.id === programId || userStats.completedPrograms.includes(p.id)
+        );
+
+        // If all programs in the category are completed, award a master achievement
+        if (completedInCategory.length === categoryPrograms.length) {
+          const category = categories.find((c) => c.id === program.category);
+          if (category) {
+            addAchievement({
+              name: `${category.name} Master`,
+              description: `You've mastered all programs in the ${category.name} category!`,
+              icon: 'award',
+            });
+          }
+        }
+      }
+    }
+  };
+
+  return (
+    <LocalStorageContext.Provider
+      value={{
+        flashcards,
+        programs,
+        categories,
+        userStats,
+        addFlashcard,
+        updateFlashcard,
+        deleteFlashcard,
+        getFlashcard,
+        getFlashcardsByCategory,
+        getFlashcardsByProgram,
+        updateUserStats,
+        addAchievement,
+        markProgramCompleted,
+        getProgram,
+        getProgramsByCategory,
+        getCategory,
+      }}
+    >
+      {children}
+    </LocalStorageContext.Provider>
+  );
 };

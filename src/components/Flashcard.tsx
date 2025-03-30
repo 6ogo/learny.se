@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, RotateCcw, BookmarkPlus, BookmarkX } from 'lucide-react';
-import { Flashcard as FlashcardType, useLocalStorage } from '@/context/LocalStorageContext';
+import { Flashcard as FlashcardType } from '@/types/flashcard';
+import { useLocalStorage } from '@/context/LocalStorageContext';
 import { toast } from "@/hooks/use-toast";
 
 // Array of positive feedback messages

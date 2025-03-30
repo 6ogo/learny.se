@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Book, Code, Plus, Beaker, Languages, Globe, Car, Banknote } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Category } from '@/context/LocalStorageContext';
+import { Category } from '@/types/category';
 import { Badge } from '@/components/ui/badge';
 
 interface CategoryCardProps {

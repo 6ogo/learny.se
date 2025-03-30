@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Award, Flame, Trophy, Medal, Star } from 'lucide-react';
-import { UserAchievement } from '@/context/LocalStorageContext';
+import { UserAchievement } from '@/types/user';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';

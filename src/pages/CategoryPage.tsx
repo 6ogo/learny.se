@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
-import { FlashcardsByLevel } from '@/components/FlashcardsByLevel';
 import { ProgramsByCategory } from '@/components/ProgramsByCategory';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -46,14 +45,6 @@ const CategoryPage = () => {
 
       {/* Programs by category */}
       <ProgramsByCategory categoryId={category.id} />
-      
-      <h2 className="text-2xl font-bold mb-6 dark:text-white">Flashcards efter svårighetsnivå</h2>
-      
-      {/* Flashcards by difficulty level */}
-      <FlashcardsByLevel categoryId={category.id} difficulty="beginner" />
-      <FlashcardsByLevel categoryId={category.id} difficulty="intermediate" />
-      <FlashcardsByLevel categoryId={category.id} difficulty="advanced" />
-      <FlashcardsByLevel categoryId={category.id} difficulty="expert" />
     </div>
   );
 };

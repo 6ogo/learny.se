@@ -136,9 +136,19 @@ const StudyPage = () => {
           >
             <Flashcard 
               flashcard={programFlashcards[currentIndex]} 
-              onCorrect={handleCorrect}
-              onIncorrect={handleIncorrect}
+              // Since the onCorrect prop doesn't exist on the Flashcard component,
+              // we shouldn't pass it. We'll need to handle this differently.
+              showControls={false}
             />
+            {/* Add manual controls instead */}
+            <div className="flex justify-center mt-4 gap-4">
+              <Button onClick={handleIncorrect} variant="outline" className="text-learny-red">
+                Svårt
+              </Button>
+              <Button onClick={handleCorrect} className="bg-learny-green text-white">
+                Lätt
+              </Button>
+            </div>
           </motion.div>
         ) : (
           <motion.div

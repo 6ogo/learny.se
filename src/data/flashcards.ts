@@ -1,6 +1,8 @@
+// src/data/flashcards.ts
 import { Flashcard } from '@/types/flashcard';
 
 export const initialFlashcards: Flashcard[] = [
+  // --- Medicine (Original + Added) ---
   {
     id: 'med1',
     question: 'Vad menas med "hypertension"?',
@@ -72,6 +74,36 @@ export const initialFlashcards: Flashcard[] = [
     difficulty: 'intermediate',
   },
   {
+    id: 'med-adv1',
+    question: 'Förklara mekanismen för typ 1-diabetes.',
+    answer: 'Typ 1-diabetes är en autoimmun sjukdom där kroppens immunsystem attackerar och förstör de insulinproducerande betacellerna i bukspottkörteln, vilket leder till absolut insulinbrist.',
+    category: 'medicine',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'med-adv2',
+    question: 'Vad är skillnaden mellan en ischemisk och en hemorragisk stroke?',
+    answer: 'En ischemisk stroke orsakas av en blodpropp som blockerar blodflödet till hjärnan. En hemorragisk stroke orsakas av en blödning i eller runt hjärnan.',
+    category: 'medicine',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'med-ex1',
+    question: 'Beskriv den molekylära verkningsmekanismen för protonpumpshämmare (PPI).',
+    answer: 'PPI hämmar irreversibelt H+/K+-ATPas (protonpumpen) i parietalcellerna i magsäcken, vilket minskar utsöndringen av magsyra.',
+    category: 'medicine',
+    difficulty: 'expert',
+  },
+  {
+    id: 'med-ex2',
+    question: 'Vad är CRISPR-Cas9 och hur används det potentiellt inom medicin?',
+    answer: 'CRISPR-Cas9 är en genredigeringsteknik som möjliggör precisa ändringar i DNA. Potentiella medicinska tillämpningar inkluderar behandling av genetiska sjukdomar genom att korrigera mutationer.',
+    category: 'medicine',
+    difficulty: 'expert',
+  },
+
+  // --- Coding (Original + Added) ---
+  {
     id: 'code1',
     question: 'Vad är variablar i JavaScript?',
     answer: 'Variabler i JavaScript är behållare för att lagra data. De kan deklareras med nyckelorden var, let eller const.',
@@ -142,6 +174,57 @@ export const initialFlashcards: Flashcard[] = [
     difficulty: 'intermediate',
   },
   {
+    id: 'ai1', // Renamed from code-adv1 for consistency with program
+    question: 'Vad är maskininlärning?',
+    answer: 'Maskininlärning är en delmängd av artificiell intelligens där datorer lär sig från data utan att explicit programmeras. Målet är att automatiskt identifiera mönster och fatta beslut med minimal mänsklig inblandning.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai2', // Renamed from code-adv2
+    question: 'Vad är skillnaden mellan övervakad och oövervakad inlärning?',
+    answer: 'Övervakad inlärning använder märkta träningsdata med kända resultat. Oövervakad inlärning arbetar med omärkta data och försöker hitta mönster och strukturer utan fördefinierade svar.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai3', // Renamed from code-adv3
+    question: 'Vad är ett neuralt nätverk?',
+    answer: 'Ett neuralt nätverk är en datamodell inspirerad av hjärnans neuroner. Det består av lager av noder (neuroner) som bearbetar information, lär sig från data och kan identifiera komplexa mönster för att göra förutsägelser.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai4', // Renamed from code-adv4
+    question: 'Vad är djupinlärning (deep learning)?',
+    answer: 'Djupinlärning är en typ av maskininlärning som använder neurala nätverk med många lager (djupa nätverk) för att analysera olika aspekter av data. Det är särskilt effektivt för uppgifter som bildigenkänning, språkbehandling och spel.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'ai5', // Renamed from code-adv5
+    question: 'Vad är en tränings-/testuppsättning inom maskininlärning?',
+    answer: 'I maskininlärning delas data vanligtvis upp i tränings- och testuppsättningar. Träningsuppsättningen används för att lära modellen, medan testuppsättningen används för att utvärdera dess prestanda på nya, osedda data.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'code-ex1',
+    question: 'Förklara begreppet "closure" i JavaScript.',
+    answer: 'En closure är kombinationen av en funktion och den lexikaliska miljön inom vilken funktionen deklarerades. Det ger funktionen tillgång till variabler från dess yttre scope även efter att det yttre scopet har avslutats.',
+    category: 'coding',
+    difficulty: 'expert',
+  },
+  {
+    id: 'code-ex2',
+    question: 'Vad är "event loop" i JavaScript?',
+    answer: 'Event loop är en mekanism i JavaScripts runtime-miljö som hanterar exekveringen av kod, insamling och bearbetning av händelser samt körning av köade sub-tasks. Den möjliggör asynkron programmering.',
+    category: 'coding',
+    difficulty: 'expert',
+  },
+
+  // --- Math (Original + Added) ---
+  {
     id: 'math1',
     question: 'Vad är Pythagoras sats?',
     answer: 'Pythagoras sats säger att i en rätvinklig triangel är kvadraten på hypotenusan lika med summan av kvadraterna på kateterna: a² + b² = c².',
@@ -177,40 +260,71 @@ export const initialFlashcards: Flashcard[] = [
     difficulty: 'beginner',
   },
   {
-    id: 'py1',
-    question: 'Vad är Python?',
-    answer: 'Python är ett högniåspråk som är känt för sin enkla syntax och läsbarhet. Det är ett av de mest populära programmeringsspråken för datavetenskap, AI och webbutveckling.',
-    category: 'coding',
-    difficulty: 'beginner',
+    id: 'math-int1',
+    question: 'Vad är skillnaden mellan medelvärde, median och typvärde?',
+    answer: 'Medelvärde är summan av värden dividerat med antalet värden. Median är det mittersta värdet i en sorterad datamängd. Typvärde är det vanligast förekommande värdet.',
+    category: 'math',
+    difficulty: 'intermediate',
   },
   {
-    id: 'py2',
-    question: 'Vad är skillnaden mellan en lista och en tuple i Python?',
-    answer: 'En lista är föränderlig (mutable) medan en tuple är oföränderlig (immutable). Listor skapas med hakparenteser [] och tuples med vanliga parenteser ().',
-    category: 'coding',
-    difficulty: 'beginner',
+    id: 'math-int2',
+    question: 'Förklara begreppet standardavvikelse.',
+    answer: 'Standardavvikelse är ett mått på spridningen av värden i en datamängd runt medelvärdet. En låg standardavvikelse indikerar att värdena ligger nära medelvärdet.',
+    category: 'math',
+    difficulty: 'intermediate',
   },
   {
-    id: 'py3',
-    question: 'Hur skapar man en funktion i Python?',
-    answer: 'En funktion i Python definieras med nyckelordet "def" följt av funktionsnamnet och parametrar inom parenteser. Exempel: def greet(name): return f"Hello, {name}!"',
-    category: 'coding',
-    difficulty: 'beginner',
+    id: 'calc1', // Renamed from math-adv1
+    question: 'Vad är en derivata?',
+    answer: 'En derivata är ett mått på hur snabbt en funktion förändras vid en specifik punkt. Geometriskt representerar derivatan lutningen på tangentlinjen till funktionen vid den punkten.',
+    category: 'math',
+    difficulty: 'advanced',
   },
   {
-    id: 'py4',
-    question: 'Vad är list comprehension i Python?',
-    answer: 'List comprehension är ett koncist sätt att skapa listor baserat på befintliga listor. Exempel: [x*2 for x in range(10) if x % 2 == 0] skapar en lista med dubbla värden av jämna tal från 0-9.',
-    category: 'coding',
-    difficulty: 'beginner',
+    id: 'calc2', // Renamed from math-adv2
+    question: 'Vad är kedjeregeln inom derivering?',
+    answer: 'Kedjeregeln används för att derivera sammansatta funktioner. Om y = f(g(x)), då är y\' = f\'(g(x)) · g\'(x), där f\' och g\' är derivatorna av funktionerna f och g.',
+    category: 'math',
+    difficulty: 'advanced',
   },
   {
-    id: 'py5',
-    question: 'Vad är en dictionary i Python?',
-    answer: 'En dictionary i Python är en samling av key-value par. De skapas med klammerparenteser {} och kommatecken mellan paren. Exempel: {"name": "John", "age": 30}',
-    category: 'coding',
-    difficulty: 'beginner',
+    id: 'calc3', // Renamed from math-adv3
+    question: 'Vad är en obestämd integral?',
+    answer: 'En obestämd integral, ∫f(x)dx, är en familj av funktioner vars derivata är f(x). Den representerar antiderivatan till f(x) och inkluderar en godtycklig konstant C.',
+    category: 'math',
+    difficulty: 'advanced',
   },
+  {
+    id: 'calc4', // Renamed from math-adv4
+    question: 'Vad är Fundamentalsatsen för kalkyl?',
+    answer: 'Fundamentalsatsen för kalkyl etablerar sambandet mellan derivering och integrering som inversa operationer. Den säger att om F är en antiderivata till f, då är den bestämda integralen av f från a till b lika med F(b) - F(a).',
+    category: 'math',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'calc5', // Renamed from math-adv5
+    question: 'Vad är en partiell derivata?',
+    answer: 'En partiell derivata är derivatan av en funktion med flera variabler med avseende på en variabel, medan övriga variabler hålls konstanta. Den noteras ofta som ∂f/∂x för partiell derivata av f med avseende på x.',
+    category: 'math',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'math-ex1',
+    question: 'Förklara Fermats sista sats.',
+    answer: 'Fermats sista sats (bevisad av Andrew Wiles) säger att det inte finns några positiva heltal a, b och c som kan uppfylla ekvationen aⁿ + bⁿ = cⁿ för något heltal n större än 2.',
+    category: 'math',
+    difficulty: 'expert',
+  },
+  {
+    id: 'math-ex2',
+    question: 'Vad är Riemannhypotesen?',
+    answer: 'Riemannhypotesen är en förmodan om fördelningen av nollställena för Riemanns zetafunktion. Den påstår att alla icke-triviala nollställen har en realdel som är lika med 1/2.',
+    category: 'math',
+    difficulty: 'expert',
+  },
+
+
+  // --- Languages (Original + Added) ---
   {
     id: 'swe1',
     question: 'Hur säger man "hello" på svenska?',
@@ -246,111 +360,101 @@ export const initialFlashcards: Flashcard[] = [
     category: 'languages',
     difficulty: 'beginner',
   },
+   {
+    id: 'swe-int1',
+    question: 'Vad är skillnaden mellan "en" och "ett" substantiv på svenska?',
+    answer: 'Svenska substantiv har två genus: utrum ("en-ord", t.ex. en bok) och neutrum ("ett-ord", t.ex. ett hus). Genus påverkar böjning och användning av artiklar och adjektiv.',
+    category: 'languages',
+    difficulty: 'intermediate',
+  },
   {
-    id: 'phys1',
+    id: 'swe-int2',
+    question: 'Hur bildas bestämd form singular för "en" och "ett" substantiv?',
+    answer: 'För en-ord läggs -en eller -n till (en bok -> boken). För ett-ord läggs -et eller -t till (ett hus -> huset).',
+    category: 'languages',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'swe-adv1',
+    question: 'Förklara användningen av konjunktiv i svenskan.',
+    answer: 'Konjunktiv (t.ex. "vore", "måste") används sällan i modern svenska men förekommer i vissa fasta uttryck, önskningar ("leve konungen!") och formellt skriftspråk för att uttrycka hypotetiska eller önskade situationer.',
+    category: 'languages',
+    difficulty: 'advanced',
+  },
+
+  // --- Science (Original + Added) ---
+  {
+    id: 'phys1', // Renamed from sci-int1
     question: 'Vad är Newtons första lag?',
     answer: 'Newtons första lag (tröghetslagen) säger att ett föremål i vila förblir i vila och ett föremål i rörelse förblir i rörelse med konstant hastighet såvida ingen yttre kraft påverkar det.',
     category: 'science',
     difficulty: 'intermediate',
   },
   {
-    id: 'phys2',
+    id: 'phys2', // Renamed from sci-int2
     question: 'Vad mäter enheten Newton?',
     answer: 'Newton (N) är SI-enheten för kraft. 1 Newton är den kraft som behövs för att accelerera 1 kg med 1 meter per sekund i kvadrat (1 N = 1 kg·m/s²).',
     category: 'science',
     difficulty: 'intermediate',
   },
   {
-    id: 'phys3',
+    id: 'phys3', // Renamed from sci-int3
     question: 'Vad är energibevarandeprincipen?',
     answer: 'Energibevarandeprincipen säger att den totala energin i ett isolerat system förblir konstant över tid. Energi kan varken skapas eller förstöras, bara omvandlas från en form till en annan.',
     category: 'science',
     difficulty: 'intermediate',
   },
   {
-    id: 'phys4',
+    id: 'phys4', // Renamed from sci-int4
     question: 'Vad är skillnaden mellan massa och vikt?',
     answer: 'Massa är ett mått på mängden materia i ett objekt och förblir konstant oavsett plats. Vikt är den gravitationskraft som verkar på ett objekt och varierar beroende på gravitationsfältet (t.ex. är mindre på månen än på jorden).',
     category: 'science',
     difficulty: 'intermediate',
   },
   {
-    id: 'phys5',
+    id: 'phys5', // Renamed from sci-int5
     question: 'Vad är Pascals princip?',
     answer: 'Pascals princip säger att tryck som appliceras på en innesluten vätska överförs oförändrat till alla delar av vätskan och till behållarens väggar. Detta är grunden för hydrauliska system.',
     category: 'science',
     difficulty: 'intermediate',
   },
   {
-    id: 'calc1',
-    question: 'Vad är en derivata?',
-    answer: 'En derivata är ett mått på hur snabbt en funktion förändras vid en specifik punkt. Geometriskt representerar derivatan lutningen på tangentlinjen till funktionen vid den punkten.',
-    category: 'math',
+    id: 'sci-beg1',
+    question: 'Vad är fotosyntes?',
+    answer: 'Fotosyntes är processen där gröna växter och vissa andra organismer använder solljus för att syntetisera föda från koldioxid och vatten, och frigör syre som biprodukt.',
+    category: 'science',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'sci-beg2',
+    question: 'Vilka är de tre aggregationstillstånden för materia?',
+    answer: 'De tre vanligaste aggregationstillstånden är fast, flytande och gas.',
+    category: 'science',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'chem-adv1',
+    question: 'Förklara begreppet entalpi.',
+    answer: 'Entalpi (H) är ett termodynamiskt tillståndsmått som representerar den totala värmeenergin i ett system vid konstant tryck. Entalpiändringen (ΔH) anger om en reaktion är exoterm (avgivande värme, ΔH < 0) eller endoterm (upptagande värme, ΔH > 0).',
+    category: 'science',
     difficulty: 'advanced',
   },
   {
-    id: 'calc2',
-    question: 'Vad är kedjeregeln inom derivering?',
-    answer: 'Kedjeregeln används för att derivera sammansatta funktioner. Om y = f(g(x)), då är y\' = f\'(g(x)) · g\'(x), där f\' och g\' är derivatorna av funktionerna f och g.',
-    category: 'math',
+    id: 'bio-adv1',
+    question: 'Vad är ATP och vilken roll har det i cellen?',
+    answer: 'ATP (adenosintrifosfat) är cellens primära energivaluta. Det lagrar och transporterar kemisk energi inom celler för metabolism.',
+    category: 'science',
     difficulty: 'advanced',
   },
-  {
-    id: 'calc3',
-    question: 'Vad är en obestämd integral?',
-    answer: 'En obestämd integral, ∫f(x)dx, är en familj av funktioner vars derivata är f(x). Den representerar antiderivatan till f(x) och inkluderar en godtycklig konstant C.',
-    category: 'math',
-    difficulty: 'advanced',
+   {
+    id: 'sci-ex1',
+    question: 'Beskriv Schrödingerekvationen och dess betydelse inom kvantmekanik.',
+    answer: 'Schrödingerekvationen är en fundamental ekvation inom kvantmekanik som beskriver hur kvanttillståndet (vågfunktionen) hos ett fysikaliskt system förändras över tid. Dess lösningar ger sannolikhetsfördelningen för systemets mätbara egenskaper.',
+    category: 'science',
+    difficulty: 'expert',
   },
-  {
-    id: 'calc4',
-    question: 'Vad är Fundamentalsatsen för kalkyl?',
-    answer: 'Fundamentalsatsen för kalkyl etablerar sambandet mellan derivering och integrering som inversa operationer. Den säger att om F är en antiderivata till f, då är den bestämda integralen av f från a till b lika med F(b) - F(a).',
-    category: 'math',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'calc5',
-    question: 'Vad är en partiell derivata?',
-    answer: 'En partiell derivata är derivatan av en funktion med flera variabler med avseende på en variabel, medan övriga variabler hålls konstanta. Den noteras ofta som ∂f/∂x för partiell derivata av f med avseende på x.',
-    category: 'math',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai1',
-    question: 'Vad är maskininlärning?',
-    answer: 'Maskininlärning är en delmängd av artificiell intelligens där datorer lär sig från data utan att explicit programmeras. Målet är att automatiskt identifiera mönster och fatta beslut med minimal mänsklig inblandning.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai2',
-    question: 'Vad är skillnaden mellan övervakad och oövervakad inlärning?',
-    answer: 'Övervakad inlärning använder märkta träningsdata med kända resultat. Oövervakad inlärning arbetar med omärkta data och försöker hitta mönster och strukturer utan fördefinierade svar.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai3',
-    question: 'Vad är ett neuralt nätverk?',
-    answer: 'Ett neuralt nätverk är en datamodell inspirerad av hjärnans neuroner. Det består av lager av noder (neuroner) som bearbetar information, lär sig från data och kan identifiera komplexa mönster för att göra förutsägelser.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai4',
-    question: 'Vad är djupinlärning (deep learning)?',
-    answer: 'Djupinlärning är en typ av maskininlärning som använder neurala nätverk med många lager (djupa nätverk) för att analysera olika aspekter av data. Det är särskilt effektivt för uppgifter som bildigenkänning, språkbehandling och spel.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
-  {
-    id: 'ai5',
-    question: 'Vad är en tränings-/testuppsättning inom maskininlärning?',
-    answer: 'I maskininlärning delas data vanligtvis upp i tränings- och testuppsättningar. Träningsuppsättningen används för att lära modellen, medan testuppsättningen används för att utvärdera dess prestanda på nya, osedda data.',
-    category: 'coding',
-    difficulty: 'advanced',
-  },
+
+  // --- Geography (Original + Added) ---
   {
     id: 'geo1',
     question: 'Vad är skillnaden mellan väder och klimat?',
@@ -385,5 +489,610 @@ export const initialFlashcards: Flashcard[] = [
     answer: 'Tidvatten är regelbundna höjningar och sänkningar av havsnivån orsakade främst av månens gravitationsdragning på jorden, med viss påverkan från solen. Detta resulterar i högvatten och lågvatten vid kuster.',
     category: 'geography',
     difficulty: 'beginner',
+  },
+   {
+    id: 'geo6', // Renamed from geo-int1
+    question: 'Vilken är Europas längsta flod?',
+    answer: 'Volga är Europas längsta flod, belägen i Ryssland.',
+    category: 'geography',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'geo7', // Renamed from geo-int2
+    question: 'Vad är Alpernas högsta bergstopp?',
+    answer: 'Mont Blanc, beläget på gränsen mellan Frankrike och Italien, är Alpernas högsta topp.',
+    category: 'geography',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'geo8', // Renamed from geo-int3
+    question: 'Vilket land i Europa har flest invånare?',
+    answer: 'Tyskland är det folkrikaste landet som helt ligger inom Europa (Ryssland har fler invånare totalt, men sträcker sig över två kontinenter).',
+    category: 'geography',
+    difficulty: 'intermediate',
+  },
+   {
+    id: 'geo9', // Renamed from geo-int4
+    question: 'Vad är en fjord och var är de vanliga?',
+    answer: 'En fjord är en lång, smal havsvik med branta sidor, skapad av en glaciär. De är vanliga i Norge, Chile, Nya Zeeland och Alaska.',
+    category: 'geography',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'geo10', // Renamed from geo-int5
+    question: 'Vad heter huvudstaden i Spanien?',
+    answer: 'Madrid är Spaniens huvudstad.',
+    category: 'geography',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'geo11', // Renamed from geo-adv1
+    question: 'Vilken är världens största öken?',
+    answer: 'Antarktis (en kall öken) är världens största öken. Sahara är den största varma öknen.',
+    category: 'geography',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'geo12', // Renamed from geo-adv2
+    question: 'Vad är den Stora Barriärrevet och var ligger det?',
+    answer: 'Stora Barriärrevet är världens största korallrevssystem, beläget i Korallhavet utanför Queenslands kust i Australien.',
+    category: 'geography',
+    difficulty: 'advanced',
+  },
+   {
+    id: 'geo13', // Renamed from geo-adv3
+    question: 'Vad är Marianergraven?',
+    answer: 'Marianergraven i västra Stilla havet är den djupaste kända punkten i världshaven.',
+    category: 'geography',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'geo14', // Renamed from geo-adv4
+    question: 'Vilket är världens folkrikaste land?',
+    answer: 'Indien passerade Kina som världens folkrikaste land under 2023.',
+    category: 'geography',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'geo15', // Renamed from geo-adv5
+    question: 'Vad är Amazonas regnskog och dess betydelse?',
+    answer: 'Amazonas är världens största tropiska regnskog, belägen i Sydamerika. Den har enorm biologisk mångfald och spelar en kritisk roll i det globala klimatsystemet ("jordens lungor").',
+    category: 'geography',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'geo16', // Renamed from geo-ex1
+    question: 'Förklara Köppens klimatklassificeringssystem.',
+    answer: 'Köppens system är ett av de mest använda systemen för att klassificera världens klimat. Det baseras på årlig och månatlig medeltemperatur och nederbörd.',
+    category: 'geography',
+    difficulty: 'expert',
+  },
+  {
+    id: 'geo17', // Renamed from geo-ex2
+    question: 'Vad är plattektonik och vilka bevis finns för teorin?',
+    answer: 'Plattektonik är teorin att jordens yttre skal (litosfären) är uppdelad i plattor som rör sig. Bevis inkluderar kontinenternas passform, fossila fynd, paleomagnetism och fördelningen av jordbävningar/vulkaner.',
+    category: 'geography',
+    difficulty: 'expert',
+  },
+  {
+    id: 'geo18', // Renamed from geo-ex3
+    question: 'Beskriv den termohalina cirkulationen.',
+    answer: 'Den termohalina cirkulationen (även kallad det globala transportbandet) är ett storskaligt havsströmsystem som drivs av skillnader i temperatur (termo) och salthalt (halin) i havsvattnet.',
+    category: 'geography',
+    difficulty: 'expert',
+  },
+   {
+    id: 'geo19', // Renamed from geo-ex4
+    question: 'Vad är GIS och hur används det inom geografi?',
+    answer: 'GIS (Geografiska Informationssystem) är system för att samla in, lagra, analysera och visualisera geografisk data. Det används för kartläggning, planering, miljöanalys m.m.',
+    category: 'geography',
+    difficulty: 'expert',
+  },
+  {
+    id: 'geo20', // Renamed from geo-ex5
+    question: 'Förklara begreppet "carrying capacity" (bärförmåga) inom populationsgeografi.',
+    answer: 'Carrying capacity är den maximala populationsstorlek av en art som en miljö kan upprätthålla på obestämd tid, givet tillgängliga resurser som mat, vatten och habitat.',
+    category: 'geography',
+    difficulty: 'expert',
+  },
+
+  // --- Vehicles (NEW) ---
+  {
+    id: 'veh1',
+    question: 'Vilka är de fyra huvudtakterna i en fyrtaktsmotor?',
+    answer: '1. Insugningstakt, 2. Kompressionstakt, 3. Arbetstakt (förbränning), 4. Avgastakt.',
+    category: 'vehicles',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'veh2',
+    question: 'Vad är funktionen hos ett bilbatteri?',
+    answer: 'Bilbatteriet levererar elektrisk ström för att starta motorn och driva bilens elektriska system när motorn är avstängd.',
+    category: 'vehicles',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'veh3',
+    question: 'Vad står ABS för i samband med bromsar?',
+    answer: 'ABS står för Anti-lock Braking System (låsningsfria bromsar), vilket hjälper föraren att behålla styrkontrollen vid hård inbromsning.',
+    category: 'vehicles',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'veh4',
+    question: 'Vad är skillnaden mellan en automatisk och manuell växellåda?',
+    answer: 'En automatisk växellåda växlar automatiskt åt föraren, medan en manuell växellåda kräver att föraren använder en kopplingspedal och växelspak.',
+    category: 'vehicles',
+    difficulty: 'beginner',
+  },
+   {
+    id: 'veh5',
+    question: 'Vad mäter en hastighetsmätare?',
+    answer: 'Hastighetsmätaren visar fordonets aktuella hastighet, oftast i kilometer per timme (km/h) eller miles per hour (mph).',
+    category: 'vehicles',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'veh6',
+    question: 'Vad är skillnaden mellan en tvåtakts- och en fyrtaktsmotor (vanligt på motorcyklar)?',
+    answer: 'En tvåtaktsmotor slutför arbetscykeln på två kolvslag (ett varv), medan en fyrtaktsmotor behöver fyra kolvslag (två varv). Tvåtaktare är ofta enklare men mindre bränsleeffektiva och smutsigare.',
+    category: 'vehicles',
+    difficulty: 'intermediate',
+  },
+   {
+    id: 'veh7',
+    question: 'Förklara principen bakom en turbo.',
+    answer: 'En turbo använder avgaserna för att driva en turbin, som i sin tur driver en kompressor som pressar mer luft in i motorns cylindrar, vilket möjliggör mer bränsle och därmed högre effekt.',
+    category: 'vehicles',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'veh8',
+    question: 'Vad är ett chassi på ett fordon?',
+    answer: 'Chassit är fordonets grundläggande ramverk som bär upp karossen, motorn, drivlinan och hjulupphängningen.',
+    category: 'vehicles',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'veh9',
+    question: 'Vad är ESP (Electronic Stability Program)?',
+    answer: 'ESP är ett antisladdsystem som hjälper föraren att behålla kontrollen över bilen genom att individuellt bromsa hjulen om systemet upptäcker att bilen håller på att sladda.',
+    category: 'vehicles',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'veh10',
+    question: 'Vad är skillnaden mellan bakhjulsdrift (RWD) och framhjulsdrift (FWD)?',
+    answer: 'I RWD driver motorn bakhjulen, medan i FWD driver motorn framhjulen. Detta påverkar bilens köregenskaper och viktfördelning.',
+    category: 'vehicles',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'veh11',
+    question: 'Förklara de fyra grundläggande krafterna som verkar på ett flygplan under flygning.',
+    answer: 'Lyftkraft (uppåt), tyngdkraft (nedåt), dragkraft (framåt) och luftmotstånd (bakåt). För stabil flygning måste dessa krafter vara i balans.',
+    category: 'vehicles',
+    difficulty: 'advanced',
+  },
+   {
+    id: 'veh12',
+    question: 'Vad är en jetmotor och hur fungerar den?',
+    answer: 'En jetmotor suger in luft, komprimerar den, blandar den med bränsle och antänder blandningen. De heta avgaserna skjuts ut bakåt med hög hastighet, vilket skapar dragkraft enligt Newtons tredje lag.',
+    category: 'vehicles',
+    difficulty: 'advanced',
+  },
+   {
+    id: 'veh13',
+    question: 'Vad är skillnaden mellan tryckkabin och icke-tryckkabin?',
+    answer: 'En tryckkabin upprätthåller ett artificiellt lufttryck som är högre än det omgivande lufttrycket på hög höjd, vilket gör det möjligt för passagerare och besättning att andas normalt.',
+    category: 'vehicles',
+    difficulty: 'advanced',
+  },
+   {
+    id: 'veh14',
+    question: 'Vad är vingklaffar (flaps) och spoilers på ett flygplan?',
+    answer: 'Flaps ökar vingens yta och välvning för att generera mer lyftkraft vid låga hastigheter (start/landning). Spoilers fälls upp på vingens ovansida för att minska lyftkraften och öka luftmotståndet (bromsning/nedstigning).',
+    category: 'vehicles',
+    difficulty: 'advanced',
+  },
+   {
+    id: 'veh15',
+    question: 'Vad är stall på ett flygplan?',
+    answer: 'Stall inträffar när vingens anfallsvinkel blir för stor, vilket gör att luftströmmen separerar från vingens ovansida och lyftkraften drastiskt minskar.',
+    category: 'vehicles',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'veh16',
+    question: 'Vad är Arkimedes princip och hur relaterar den till fartyg?',
+    answer: 'Arkimedes princip säger att ett föremål nedsänkt i en vätska påverkas av en uppåtriktad kraft (lyftkraft) som är lika stor som tyngden av den undanträngda vätskan. Detta förklarar varför fartyg flyter.',
+    category: 'vehicles',
+    difficulty: 'expert',
+  },
+  {
+    id: 'veh17',
+    question: 'Vad är skillnaden mellan deplacement och tonnage för fartyg?',
+    answer: 'Deplacement är vikten av det vatten fartyget tränger undan (vilket är lika med fartygets totala vikt). Tonnage är ett mått på fartygets lastkapacitet eller interna volym (finns olika typer som brutto- och nettoregistertonnage).',
+    category: 'vehicles',
+    difficulty: 'expert',
+  },
+  {
+    id: 'veh18',
+    question: 'Vad är ett roder och dess funktion på ett fartyg?',
+    answer: 'Rodret är en styrfena längst bak på fartyget under vattenlinjen. Genom att vinkla rodret ändras vattenströmmen, vilket skapar en sidokraft som vrider fartygets akter och därmed ändrar kursen.',
+    category: 'vehicles',
+    difficulty: 'expert',
+  },
+   {
+    id: 'veh19',
+    question: 'Vad är kavitation och varför är det ett problem för propellrar?',
+    answer: 'Kavitation är bildandet av ångbubblor i en vätska på grund av lågt tryck (t.ex. på baksidan av propellerblad). När bubblorna kollapsar kan de orsaka erosion, buller och minskad effektivitet.',
+    category: 'vehicles',
+    difficulty: 'expert',
+  },
+   {
+    id: 'veh20',
+    question: 'Förklara begreppet metacentrisk höjd (GM) för ett fartyg.',
+    answer: 'Metacentrisk höjd är ett mått på ett fartygs initiala stabilitet mot krängning. Det är avståndet mellan fartygets tyngdpunkt (G) och metacentrum (M). En större GM innebär högre stabilitet (men kan ge ryckiga rörelser).',
+    category: 'vehicles',
+    difficulty: 'expert',
+  },
+
+
+  // --- Economics (NEW) ---
+  {
+    id: 'econ1',
+    question: 'Vad är skillnaden mellan mikroekonomi och makroekonomi?',
+    answer: 'Mikroekonomi studerar enskilda aktörers (hushåll, företag) beteende och marknader. Makroekonomi studerar ekonomin som helhet (inflation, arbetslöshet, BNP).',
+    category: 'economics',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'econ2',
+    question: 'Förklara begreppet alternativkostnad.',
+    answer: 'Alternativkostnad är värdet av det bästa alternativet man avstår från när man gör ett val. Det representerar den förlorade potentiella vinsten.',
+    category: 'economics',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'econ3',
+    question: 'Vad innebär lagen om efterfrågan?',
+    answer: 'Lagen om efterfrågan säger att, allt annat lika, kommer konsumenter att efterfråga en mindre kvantitet av en vara när priset på varan stiger, och vice versa.',
+    category: 'economics',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'econ4',
+    question: 'Vad är inflation?',
+    answer: 'Inflation är en ihållande ökning av den allmänna prisnivån i ekonomin, vilket leder till att köpkraften för pengar minskar över tid.',
+    category: 'economics',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'econ5',
+    question: 'Vad är BNP (Bruttonationalprodukt)?',
+    answer: 'BNP är det totala marknadsvärdet av alla färdiga varor och tjänster som produceras inom ett lands gränser under en viss tidsperiod (oftast ett år).',
+    category: 'economics',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'econ6',
+    question: 'Vad är penningpolitik och vem ansvarar för den i Sverige?',
+    answer: 'Penningpolitik handlar om att styra mängden pengar och kredit i ekonomin för att påverka inflation och ekonomisk aktivitet. I Sverige ansvarar Riksbanken för penningpolitiken (främst via styrräntan).',
+    category: 'economics',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'econ7',
+    question: 'Vad är finanspolitik?',
+    answer: 'Finanspolitik är användningen av statens utgifter och skatter för att påverka ekonomin. Den hanteras av regeringen och riksdagen.',
+    category: 'economics',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'econ8',
+    question: 'Förklara begreppet elasticitet inom ekonomi.',
+    answer: 'Elasticitet mäter känsligheten i en variabel för förändringar i en annan. Till exempel mäter priselasticiteten hur mycket efterfrågad kvantitet förändras när priset ändras.',
+    category: 'economics',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'econ9',
+    question: 'Vad är en konjunkturcykel?',
+    answer: 'En konjunkturcykel beskriver de återkommande svängningarna i ekonomisk aktivitet över tid, med faser som högkonjunktur, lågkonjunktur, recession och återhämtning.',
+    category: 'economics',
+    difficulty: 'intermediate',
+  },
+   {
+    id: 'econ10',
+    question: 'Vad är skillnaden mellan nominell och real BNP?',
+    answer: 'Nominell BNP mäts i löpande priser (tar inte hänsyn till inflation). Real BNP är justerad för inflation och ger ett bättre mått på den faktiska produktionsökningen.',
+    category: 'economics',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'econ11',
+    question: 'Förklara Phillips-kurvan.',
+    answer: 'Phillips-kurvan beskriver (historiskt) ett kortsiktigt omvänt samband mellan arbetslöshet och inflation. Lägre arbetslöshet tenderade att korrelera med högre inflation, och vice versa. Sambandet är dock omdebatterat och instabilt på lång sikt.',
+    category: 'economics',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'econ12',
+    question: 'Vad är "moral hazard"?',
+    answer: 'Moral hazard (moralisk risk) uppstår när en part i ett avtal ändrar sitt beteende till det sämre efter att avtalet ingåtts, eftersom den andra parten bär kostnaden för risken (t.ex. tar större risker när man är försäkrad).',
+    category: 'economics',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'econ13',
+    question: 'Vad är "adverse selection"?',
+    answer: 'Adverse selection (negativt urval) uppstår vid asymmetrisk information innan ett avtal ingås, där en part har mer information och detta leder till att oönskade parter (t.ex. de med högst risk) är de som är mest benägna att ingå avtalet.',
+    category: 'economics',
+    difficulty: 'advanced',
+  },
+   {
+    id: 'econ14',
+    question: 'Förklara Heckscher-Ohlin-teoremet inom internationell handel.',
+    answer: 'Heckscher-Ohlin-teoremet säger att länder tenderar att exportera varor som intensivt använder de produktionsfaktorer (t.ex. arbete, kapital) som landet har relativt gott om.',
+    category: 'economics',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'econ15',
+    question: 'Vad är skillnaden mellan komparativa och absoluta fördelar?',
+    answer: 'Ett land har en absolut fördel om det kan producera en vara med mindre resurser än ett annat land. Ett land har en komparativ fördel om det kan producera en vara till en lägre alternativkostnad än ett annat land. Handel baseras på komparativa fördelar.',
+    category: 'economics',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'econ16',
+    question: 'Vad är syftet med IMF (Internationella Valutafonden)?',
+    answer: 'IMF syftar till att främja internationellt monetärt samarbete, underlätta internationell handel, främja hög sysselsättning och hållbar ekonomisk tillväxt, samt minska fattigdom globalt, ofta genom att ge lån till länder med betalningsbalansproblem.',
+    category: 'economics',
+    difficulty: 'expert',
+  },
+   {
+    id: 'econ17',
+    question: 'Förklara Black-Scholes-modellen.',
+    answer: 'Black-Scholes är en matematisk modell som används för att teoretiskt prissätta finansiella optioner (särskilt europeiska optioner). Den tar hänsyn till faktorer som underliggande tillgångens pris, löptid, volatilitet, lösenpris och riskfri ränta.',
+    category: 'economics',
+    difficulty: 'expert',
+  },
+  {
+    id: 'econ18',
+    question: 'Vad är kvantitativa lättnader (Quantitative Easing, QE)?',
+    answer: 'QE är en okonventionell penningpolitisk åtgärd där en centralbank köper finansiella tillgångar (ofta statsobligationer) från marknaden för att öka penningmängden och sänka långa räntor, i syfte att stimulera ekonomin när styrräntan redan är nära noll.',
+    category: 'economics',
+    difficulty: 'expert',
+  },
+   {
+    id: 'econ19',
+    question: 'Diskutera Coase-teoremet.',
+    answer: 'Coase-teoremet säger att om äganderätter är väldefinierade och transaktionskostnaderna är tillräckligt låga, kan privata parter förhandla fram effektiva lösningar på externa effekter (t.ex. föroreningar) utan statlig inblandning.',
+    category: 'economics',
+    difficulty: 'expert',
+  },
+  {
+    id: 'econ20',
+    question: 'Vad är skillnaden mellan Ricardiansk och Hekscher-Ohlin-baserad handelsteori?',
+    answer: 'Ricardiansk teori förklarar handel baserat på skillnader i arbetsproduktivitet (teknologi). Heckscher-Ohlin-teorin förklarar handel baserat på skillnader i relativ tillgång på produktionsfaktorer (kapital, arbete).',
+    category: 'economics',
+    difficulty: 'expert',
+  },
+
+
+  // --- History (NEW) ---
+  {
+    id: 'hist1',
+    question: 'Vilken civilisation utvecklades i Mesopotamien mellan floderna Eufrat och Tigris?',
+    answer: 'Sumererna var bland de tidigaste civilisationerna i Mesopotamien, kända för kilskrift, stadsstater och ziggurater.',
+    category: 'history',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'hist2',
+    question: 'Vem var Alexander den store?',
+    answer: 'Alexander den store var kung av Makedonien som erövrade det persiska riket och spred grekisk (hellenistisk) kultur över ett stort område på 300-talet f.Kr.',
+    category: 'history',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'hist3',
+    question: 'Vad var Romerska riket?',
+    answer: 'Romerska riket var en av historiens mäktigaste civilisationer, med centrum i Rom, som dominerade Medelhavsområdet och stora delar av Europa från ca 27 f.Kr. till 476 e.Kr. (västromerska riket).',
+    category: 'history',
+    difficulty: 'beginner',
+  },
+   {
+    id: 'hist4',
+    question: 'Vad var startskottet för första världskriget?',
+    answer: 'Skotten i Sarajevo den 28 juni 1914, där den österrikisk-ungerske tronföljaren Franz Ferdinand mördades, anses vara den utlösande faktorn för första världskriget.',
+    category: 'history',
+    difficulty: 'beginner',
+  },
+   {
+    id: 'hist5',
+    question: 'Vem var Martin Luther King Jr.?',
+    answer: 'Martin Luther King Jr. var en ledande gestalt i den amerikanska medborgarrättsrörelsen som kämpade för afroamerikaners rättigheter genom ickevåldsmetoder på 1950- och 60-talen.',
+    category: 'history',
+    difficulty: 'beginner',
+  },
+  {
+    id: 'hist6',
+    question: 'Vad var feodalism?',
+    answer: 'Feodalism var ett politiskt, ekonomiskt och socialt system i medeltida Europa, baserat på ömsesidiga skyldigheter mellan herrar (lords) och vasaller, ofta kopplat till markägande (län).',
+    category: 'history',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'hist7',
+    question: 'Vad var renässansen?',
+    answer: 'Renässansen var en kulturell och intellektuell rörelse i Europa (ca 1300-1600) som kännetecknades av ett återuppväckt intresse för antikens konst, litteratur och filosofi, samt nya framsteg inom konst och vetenskap.',
+    category: 'history',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'hist8',
+    question: 'Vad var upplysningen?',
+    answer: 'Upplysningen var en intellektuell och filosofisk rörelse under 1700-talet som betonade förnuft, vetenskap, individuell frihet och kritik mot traditionella auktoriteter (kyrkan, monarkin).',
+    category: 'history',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'hist9',
+    question: 'Vad var den industriella revolutionen?',
+    answer: 'Den industriella revolutionen var en period av stora teknologiska, socioekonomiska och kulturella förändringar (främst i Storbritannien från sent 1700-tal) driven av nya maskiner, fabriker och energikällor (ångkraft).',
+    category: 'history',
+    difficulty: 'intermediate',
+  },
+   {
+    id: 'hist10',
+    question: 'Vad var kalla kriget?',
+    answer: 'Kalla kriget (ca 1947-1991) var en period av geopolitisk spänning och ideologisk konflikt mellan USA (västblocket) och Sovjetunionen (östblocket), utan direkta storskaliga väpnade konflikter mellan de två supermakterna.',
+    category: 'history',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'hist11',
+    question: 'Vad var de främsta orsakerna till den franska revolutionen?',
+    answer: 'Orsakerna inkluderade social ojämlikhet (ståndssamhället), ekonomisk kris (statsskuld, höga brödpriser), upplysningsidéer om frihet och jämlikhet, samt en svag monarki.',
+    category: 'history',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'hist12',
+    question: 'Förklara Versaillesfredens betydelse efter första världskriget.',
+    answer: 'Versaillesfreden (1919) avslutade formellt första världskriget. Den tvingade Tyskland att acceptera skulden för kriget, betala enorma krigsskadestånd och förlora territorier, vilket bidrog till instabilitet och revanschism.',
+    category: 'history',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'hist13',
+    question: 'Vad var Förintelsen (Holocaust)?',
+    answer: 'Förintelsen var det systematiska, statligt organiserade folkmordet på cirka sex miljoner judar av Nazityskland och dess kollaboratörer under andra världskriget.',
+    category: 'history',
+    difficulty: 'advanced',
+  },
+   {
+    id: 'hist14',
+    question: 'Vad var Berlinmurens fall och dess konsekvenser?',
+    answer: 'Berlinmurens fall i november 1989 symboliserade slutet på det kalla kriget i Europa. Det ledde till Tysklands återförening och kollapsen av kommunistiska regimer i Östeuropa.',
+    category: 'history',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'hist15',
+    question: 'Vad var syftet med Marshallplanen?',
+    answer: 'Marshallplanen var ett amerikanskt initiativ efter andra världskriget för att ge ekonomiskt stöd till återuppbyggnaden av Västeuropa, delvis för att förhindra spridningen av kommunism.',
+    category: 'history',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'hist16',
+    question: 'Diskutera Peloponnesiska kriget och dess utfall.',
+    answer: 'Peloponnesiska kriget (431–404 f.Kr.) var en utdragen konflikt mellan Aten och dess imperium och Peloponnesiska förbundet lett av Sparta. Kriget slutade med Spartas seger och markerade slutet på Atens gyllene tidsålder.',
+    category: 'history',
+    difficulty: 'expert',
+  },
+   {
+    id: 'hist17',
+    question: 'Analysera orsakerna till det Västromerska rikets fall.',
+    answer: 'Orsakerna är komplexa och omdebatterade, men inkluderar interna faktorer (politisk instabilitet, ekonomisk nedgång, militär försvagning) och externa faktorer (invasioner av germanska stammar, tryck från hunnerna).',
+    category: 'history',
+    difficulty: 'expert',
+  },
+  {
+    id: 'hist18',
+    question: 'Vad var Meijirestaurationen i Japan?',
+    answer: 'Meijirestaurationen (1868) var en politisk revolution som återställde kejsarmakten och avskaffade shogunatet. Den ledde till en snabb modernisering, industrialisering och militarisering av Japan efter västerländsk modell.',
+    category: 'history',
+    difficulty: 'expert',
+  },
+  {
+    id: 'hist19',
+    question: 'Förklara begreppet historiografi.',
+    answer: 'Historiografi är studiet av historieskrivningens historia och metodik. Det handlar om hur historiker har tolkat och skrivit om det förflutna, samt hur synen på historia har förändrats över tid.',
+    category: 'history',
+    difficulty: 'expert',
+  },
+  {
+    id: 'hist20',
+    question: 'Jämför den ryska revolutionen (1917) med den kinesiska revolutionen (1949).',
+    answer: 'Båda ledde till kommunistiska regimer men skilde sig åt: Ryska revolutionen var mer urban-baserad och snabbare, ledd av bolsjeviker. Kinesiska revolutionen var en långdragen landsbygdsbaserad gerillakamp ledd av Mao Zedong och kommunistpartiet.',
+    category: 'history',
+    difficulty: 'expert',
+  },
+
+  // --- Python (Original - Moved from coding category for clarity) ---
+   {
+    id: 'py1',
+    question: 'Vad är Python?',
+    answer: 'Python är ett högniåspråk som är känt för sin enkla syntax och läsbarhet. Det är ett av de mest populära programmeringsspråken för datavetenskap, AI och webbutveckling.',
+    category: 'coding', // Stays in coding category
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py2',
+    question: 'Vad är skillnaden mellan en lista och en tuple i Python?',
+    answer: 'En lista är föränderlig (mutable) medan en tuple är oföränderlig (immutable). Listor skapas med hakparenteser [] och tuples med vanliga parenteser ().',
+    category: 'coding', // Stays in coding category
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py3',
+    question: 'Hur skapar man en funktion i Python?',
+    answer: 'En funktion i Python definieras med nyckelordet "def" följt av funktionsnamnet och parametrar inom parenteser. Exempel: def greet(name): return f"Hello, {name}!"',
+    category: 'coding', // Stays in coding category
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py4',
+    question: 'Vad är list comprehension i Python?',
+    answer: 'List comprehension är ett koncist sätt att skapa listor baserat på befintliga listor. Exempel: [x*2 for x in range(10) if x % 2 == 0] skapar en lista med dubbla värden av jämna tal från 0-9.',
+    category: 'coding', // Stays in coding category
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py5',
+    question: 'Vad är en dictionary i Python?',
+    answer: 'En dictionary i Python är en samling av key-value par. De skapas med klammerparenteser {} och kommatecken mellan paren. Exempel: {"name": "John", "age": 30}',
+    category: 'coding', // Stays in coding category
+    difficulty: 'beginner',
+  },
+  {
+    id: 'py-int1',
+    question: 'Vad är skillnaden mellan `append()` och `extend()` för Python-listor?',
+    answer: '`append()` lägger till sitt argument som ett enda element i slutet av listan. `extend()` itererar över sitt argument (som måste vara en iterable) och lägger till varje element individuellt till listan.',
+    category: 'coding',
+    difficulty: 'intermediate',
+  },
+  {
+    id: 'py-int2',
+    question: 'Vad är en Python-modul?',
+    answer: 'En Python-modul är en fil (.py) som innehåller Python-definitioner och -satser. Moduler används för att organisera kod och kan importeras i andra Python-skript.',
+    category: 'coding',
+    difficulty: 'intermediate',
+  },
+   {
+    id: 'py-adv1',
+    question: 'Vad är en decorator i Python?',
+    answer: 'En decorator är en designpattern i Python som tillåter en användare att lägga till ny funktionalitet till ett befintligt objekt (ofta en funktion eller metod) utan att modifiera dess struktur. De implementeras ofta med @-syntax.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'py-adv2',
+    question: 'Förklara GIL (Global Interpreter Lock) i CPython.',
+    answer: 'GIL är en mutex som skyddar åtkomst till Python-objekt och förhindrar att flera trådar exekverar Python-bytekod samtidigt inom en enda process. Detta förenklar minneshantering men begränsar prestandan för CPU-bundna flertrådade program.',
+    category: 'coding',
+    difficulty: 'advanced',
+  },
+  {
+    id: 'py-ex1',
+    question: 'Vad är metaclasses i Python?',
+    answer: 'Metaclasses är "klassernas klasser". De definierar hur klasser beter sig. `type` är den vanligaste metaclassen. Genom att skapa egna metaclasses kan man anpassa hur klasser skapas.',
+    category: 'coding',
+    difficulty: 'expert',
   },
 ];

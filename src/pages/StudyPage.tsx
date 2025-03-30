@@ -25,7 +25,6 @@ const StudyPage = () => {
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     if (!program) {
@@ -52,16 +51,15 @@ const StudyPage = () => {
     } else {
       setIsFinished(true);
       
-      // Fix the type errors by not passing function updates through updateUserStats
-      // Instead, use the current values directly
+      // Update user stats with the current values
       updateUserStats({
-        totalCorrect: correctCount,
+        totalCorrect: correctCount + 1, // +1 because we just answered correctly
         totalIncorrect: incorrectCount,
-        cardsLearned: correctCount,
+        cardsLearned: correctCount + 1,
       });
       
       // Mark program as completed if all cards are answered
-      if (program && correctCount + incorrectCount === programFlashcards.length) {
+      if (program) {
         markProgramCompleted(program.id);
       }
     }
@@ -72,7 +70,6 @@ const StudyPage = () => {
     setCorrectCount(0);
     setIncorrectCount(0);
     setIsFinished(false);
-    setShowSummary(false);
   };
 
   const handleStartExam = () => {
@@ -90,6 +87,7 @@ const StudyPage = () => {
     );
   }
 
+  // Calculate progress (add 1 to currentIndex for user-friendly numbering)
   const progress = Math.round(((currentIndex) / programFlashcards.length) * 100);
 
   return (

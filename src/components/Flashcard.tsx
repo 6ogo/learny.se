@@ -1,10 +1,35 @@
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, RotateCcw, BookmarkPlus } from 'lucide-react';
+import { CheckCircle, XCircle, RotateCcw, BookmarkPlus, BookmarkX } from 'lucide-react';
 import { Flashcard as FlashcardType, useLocalStorage } from '@/context/LocalStorageContext';
+import { toast } from "@/hooks/use-toast";
+
+// Array of positive feedback messages
+const POSITIVE_FEEDBACK = [
+  "Bra jobbat!",
+  "Helt rätt!",
+  "Perfekt!",
+  "Utmärkt!",
+  "Bravo!",
+  "Mycket bra!",
+  "Korrekt!",
+  "Snyggt!",
+  "Rätt tänkt!",
+  "Imponerande!",
+  "Bra minne!",
+  "Du klarade det!",
+  "Helt korrekt!",
+  "Fantastiskt!",
+  "Briljant!",
+  "Bra gjort!",
+  "Tummen upp!",
+  "Du har förstått det!",
+  "Du har koll på det här!",
+  "Fortsätt så!"
+];
 
 interface FlashcardProps {
   flashcard: FlashcardType;
@@ -21,7 +46,15 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [answered, setAnswered] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const { updateFlashcard } = useLocalStorage();
+
+  // Reset states when flashcard changes
+  useEffect(() => {
+    setIsFlipped(false);
+    setAnswered(false);
+    setFeedbackMessage(null);
+  }, [flashcard.id]);
 
   const handleFlip = () => {
     if (!answered) {
@@ -29,34 +62,54 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     }
   };
 
+  const getRandomPositiveFeedback = () => {
+    return POSITIVE_FEEDBACK[Math.floor(Math.random() * POSITIVE_FEEDBACK.length)];
+  };
+
   const handleCorrect = () => {
     setAnswered(true);
+    const feedback = getRandomPositiveFeedback();
+    setFeedbackMessage(feedback);
+    
     updateFlashcard(flashcard.id, {
       correctCount: (flashcard.correctCount || 0) + 1,
       lastReviewed: Date.now(),
     });
+    
     if (onCorrect) onCorrect();
   };
 
   const handleIncorrect = () => {
     setAnswered(true);
+    setFeedbackMessage("Du behöver träna mer på det här. Fortsätt öva!");
+    
     updateFlashcard(flashcard.id, {
       incorrectCount: (flashcard.incorrectCount || 0) + 1,
       lastReviewed: Date.now(),
       reviewLater: true,
     });
+    
     if (onIncorrect) onIncorrect();
   };
 
   const handleReset = () => {
     setIsFlipped(false);
     setAnswered(false);
+    setFeedbackMessage(null);
   };
 
-  const handleMarkLearned = () => {
+  const toggleLearned = () => {
+    const newLearnedState = !flashcard.learned;
     updateFlashcard(flashcard.id, {
-      learned: true,
+      learned: newLearnedState,
       lastReviewed: Date.now(),
+    });
+    
+    toast({
+      title: newLearnedState ? "Markerad som inlärd" : "Markering borttagen",
+      description: newLearnedState 
+        ? "Detta kort har markerats som inlärt i din profil."
+        : "Detta kort är inte längre markerat som inlärt.",
     });
   };
 
@@ -130,10 +183,29 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         </motion.div>
       </div>
 
+      {/* Feedback message */}
+      <AnimatePresence>
+        {feedbackMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className={cn(
+              "mt-4 p-3 rounded-lg text-center font-medium",
+              feedbackMessage.includes("träna") 
+                ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
+                : "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
+            )}
+          >
+            {feedbackMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {showControls && (
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           {!answered ? (
-            <>
+            <div className="flex flex-wrap justify-center gap-2">
               <Button
                 variant="outline"
                 size="lg"
@@ -156,13 +228,22 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               <Button
                 variant="outline"
                 size="lg"
-                className="mt-2 border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-32"
-                onClick={handleMarkLearned}
+                className="border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-32"
+                onClick={toggleLearned}
               >
-                <BookmarkPlus className="mr-2 h-5 w-5" />
-                Markera inlärd
+                {flashcard.learned ? (
+                  <>
+                    <BookmarkX className="mr-2 h-5 w-5" />
+                    Avmarkera
+                  </>
+                ) : (
+                  <>
+                    <BookmarkPlus className="mr-2 h-5 w-5" />
+                    Markera inlärd
+                  </>
+                )}
               </Button>
-            </>
+            </div>
           ) : (
             <Button
               variant="outline"

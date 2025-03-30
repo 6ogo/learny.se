@@ -91,8 +91,8 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           {/* Front of the card */}
           <motion.div 
             className={cn(
-              "absolute w-full h-full bg-white rounded-xl p-6 flex flex-col justify-center items-center shadow-lg border border-gray-200 backface-hidden",
-              flashcard.learned && "bg-gray-50 border-green-200"
+              "absolute w-full h-full bg-white dark:bg-gray-800 rounded-xl p-6 flex flex-col justify-center items-center shadow-lg border border-gray-200 dark:border-gray-700 backface-hidden",
+              flashcard.learned && "bg-gray-50 dark:bg-gray-700 border-green-200 dark:border-green-800"
             )}
           >
             <div className={`absolute top-4 left-4 w-3 h-3 rounded-full ${getDifficultyColor()}`} />
@@ -103,11 +103,11 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               </div>
             )}
             
-            <p className="text-xl md:text-2xl font-medium text-center">
+            <p className="text-xl md:text-2xl font-medium text-center dark:text-white">
               {flashcard.question}
             </p>
             
-            <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-gray-400">
+            <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-gray-400 dark:text-gray-300">
               Klicka för att vända kortet
             </div>
           </motion.div>
@@ -115,15 +115,15 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           {/* Back of the card */}
           <motion.div
             style={{ rotateY: 180 }}
-            className="absolute w-full h-full bg-white rounded-xl p-6 flex flex-col justify-center items-center shadow-lg border border-gray-200 backface-hidden"
+            className="absolute w-full h-full bg-white dark:bg-gray-800 rounded-xl p-6 flex flex-col justify-center items-center shadow-lg border border-gray-200 dark:border-gray-700 backface-hidden"
           >
             <div className={`absolute top-4 left-4 w-3 h-3 rounded-full ${getDifficultyColor()}`} />
             
-            <p className="text-xl md:text-2xl font-medium mb-4 text-center text-learny-purple">
+            <p className="text-xl md:text-2xl font-medium mb-4 text-center text-learny-purple dark:text-learny-purple-dark">
               Svar:
             </p>
             
-            <p className="text-lg text-center">
+            <p className="text-lg text-center dark:text-white">
               {flashcard.answer}
             </p>
           </motion.div>
@@ -137,7 +137,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               <Button
                 variant="outline"
                 size="lg"
-                className="border-learny-red hover:bg-learny-red/5 hover:text-learny-red w-32"
+                className="border-learny-red hover:bg-learny-red/5 hover:text-learny-red dark:border-learny-red dark:hover:bg-learny-red/20 dark:text-white dark:hover:text-learny-red-dark w-32"
                 onClick={handleIncorrect}
               >
                 <XCircle className="mr-2 h-5 w-5" />
@@ -146,7 +146,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               
               <Button
                 size="lg"
-                className="bg-learny-green hover:bg-learny-green/90 w-32"
+                className="bg-learny-green hover:bg-learny-green/90 dark:bg-learny-green-dark dark:hover:bg-learny-green/90 w-32"
                 onClick={handleCorrect}
               >
                 <CheckCircle className="mr-2 h-5 w-5" />
@@ -156,7 +156,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               <Button
                 variant="outline"
                 size="lg"
-                className="mt-2 border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple w-32"
+                className="mt-2 border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-32"
                 onClick={handleMarkLearned}
               >
                 <BookmarkPlus className="mr-2 h-5 w-5" />
@@ -167,7 +167,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             <Button
               variant="outline"
               size="lg"
-              className="mt-2"
+              className="mt-2 dark:border-gray-600 dark:text-white"
               onClick={handleReset}
             >
               <RotateCcw className="mr-2 h-5 w-5" />

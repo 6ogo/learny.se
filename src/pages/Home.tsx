@@ -13,14 +13,18 @@ const Home = () => {
   const { categories, programs, flashcards, userStats, updateUserStats } = useLocalStorage();
 
   useEffect(() => {
-    // Update streak on page visit
+    // Update streak on page visit - men bara en gång när komponenten laddas
+    // med tom dependency array för att undvika loopar
     updateUserStats({});
-  }, [updateUserStats]);
+  }, []); // Tom dependency array för att undvika infinite loop
 
-  // Get a random flashcard for the "Daily Challenge" section
-  const randomFlashcard = flashcards.length > 0 
-    ? flashcards[Math.floor(Math.random() * flashcards.length)]
-    : null;
+  // Använd memo för att få samma flashcard varje gång komponenten renderas
+  // istället för att välja ett nytt kort varje render
+  const randomFlashcard = React.useMemo(() => {
+    return flashcards.length > 0 
+      ? flashcards[Math.floor(Math.random() * flashcards.length)]
+      : null;
+  }, [flashcards]);
 
   // Get recently completed programs
   const recentlyCompletedPrograms = programs
@@ -65,31 +69,31 @@ const Home = () => {
       {/* Stats Section */}
       <section className="mb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center mb-2">
-              <BookOpen className="h-5 w-5 text-learny-purple mr-2" />
+              <BookOpen className="h-5 w-5 text-learny-purple dark:text-learny-purple-dark mr-2" />
               <h3 className="text-lg font-medium">Streak</h3>
             </div>
-            <p className="text-3xl font-bold">{userStats.streak} dagar</p>
-            <p className="text-sm text-gray-500 mt-1">Fortsätt din inlärningsresa</p>
+            <p className="text-3xl font-bold dark:text-white">{userStats.streak} dagar</p>
+            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Fortsätt din inlärningsresa</p>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center mb-2">
-              <Award className="h-5 w-5 text-learny-yellow mr-2" />
+              <Award className="h-5 w-5 text-learny-yellow dark:text-learny-yellow-dark mr-2" />
               <h3 className="text-lg font-medium">Prestationer</h3>
             </div>
-            <p className="text-3xl font-bold">{userStats.achievements.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Upplåsta utmärkelser</p>
+            <p className="text-3xl font-bold dark:text-white">{userStats.achievements.length}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Upplåsta utmärkelser</p>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center mb-2">
-              <TrendingUp className="h-5 w-5 text-learny-green mr-2" />
+              <TrendingUp className="h-5 w-5 text-learny-green dark:text-learny-green-dark mr-2" />
               <h3 className="text-lg font-medium">Flashcards</h3>
             </div>
-            <p className="text-3xl font-bold">{userStats.cardsLearned} / {flashcards.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Inlärda kort</p>
+            <p className="text-3xl font-bold dark:text-white">{userStats.cardsLearned} / {flashcards.length}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Inlärda kort</p>
           </div>
         </div>
       </section>
@@ -97,8 +101,8 @@ const Home = () => {
       {/* Daily Challenge Section */}
       {randomFlashcard && (
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Dagens utmaning</h2>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-2xl font-bold mb-6 dark:text-white">Dagens utmaning</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <Flashcard flashcard={randomFlashcard} />
           </div>
         </section>
@@ -106,7 +110,7 @@ const Home = () => {
 
       {/* Categories Section */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">Ämnen</h2>
+        <h2 className="text-2xl font-bold mb-6 dark:text-white">Ämnen</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((category) => (
             <CategoryCard key={category.id} category={category} />
@@ -116,7 +120,7 @@ const Home = () => {
 
       {/* Programs Section */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">Träningsprogram</h2>
+        <h2 className="text-2xl font-bold mb-6 dark:text-white">Träningsprogram</h2>
         <Tabs defaultValue="popular">
           <TabsList className="mb-6">
             <TabsTrigger value="popular">Populära</TabsTrigger>
@@ -132,7 +136,7 @@ const Home = () => {
             
             {popularPrograms.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-500">Inga program tillgängliga ännu.</p>
+                <p className="text-gray-500 dark:text-gray-400">Inga program tillgängliga ännu.</p>
               </div>
             )}
           </TabsContent>
@@ -145,8 +149,8 @@ const Home = () => {
             </div>
             
             {recentlyCompletedPrograms.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Du har inte slutfört några program ännu.</p>
+              <div className="text-center py-8 dark:text-gray-300">
+                <p className="text-gray-500 dark:text-gray-400">Du har inte slutfört några program ännu.</p>
                 <Button asChild className="mt-4">
                   <Link to="/category/medicine">Hitta program att slutföra</Link>
                 </Button>

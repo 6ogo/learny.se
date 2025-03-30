@@ -22,7 +22,12 @@ export const NavBar: React.FC = () => {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-learny-purple dark:text-learny-purple-dark">Learny.se</span>
+              <img 
+                src="/lovable-uploads/3977d71f-39ec-4118-af1f-b71f31832d06.png" 
+                alt="Learny.se" 
+                className="h-10 w-auto mr-2" 
+              />
+              <span className="text-xl font-bold text-learny-purple dark:text-learny-purple-dark ml-2">Learny.se</span>
             </Link>
           </div>
 
@@ -61,12 +66,12 @@ export const NavBar: React.FC = () => {
                 size="sm"
                 className={cn(
                   "flex flex-col items-center justify-center h-14 px-2 md:px-3 relative",
-                  isActive('/achievements') ? 'bg-learny-purple text-white dark:bg-learny-purple-dark' : 'text-gray-600 hover:text-learny-purple dark:text-gray-300 dark:hover:text-learny-purple-dark'
+                  isActive('/achievements') ? 'bg-learny-purple text-white dark:bg-learny-purple-dark' : 'text-gray-700 hover:text-learny-purple dark:text-gray-100 dark:hover:text-learny-purple-dark'
                 )}
                 aria-label="Prestationer"
               >
                 <Trophy className="h-5 w-5 mb-1" />
-                <span className="text-xs">Prestationer</span>
+                <span className="text-xs font-medium">Prestationer</span>
                 {userStats.achievements.some(a => !a.displayed) && (
                   <span className="absolute top-2 right-1 flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-learny-red opacity-75"></span>
@@ -88,7 +93,7 @@ export const NavBar: React.FC = () => {
 
             <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1 ml-2">
               <BookOpen className="h-4 w-4 text-learny-purple dark:text-learny-purple-dark mr-1" />
-              <span className="text-sm font-medium dark:text-white">{userStats.streak} dagars streak</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-100">{userStats.streak} dagars streak</span>
             </div>
           </div>
         </div>

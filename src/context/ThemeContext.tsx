@@ -19,6 +19,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    } else {
+      // Kontrollera om användarens system föredrar dark mode
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        setTheme('dark');
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('learny-theme', 'dark');
+      }
     }
   }, []);
 

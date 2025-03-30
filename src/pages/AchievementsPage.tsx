@@ -30,40 +30,40 @@ const AchievementsPage = () => {
 
   return (
     <div className="container px-4 py-8 mx-auto">
-      <Link to="/" className="inline-flex items-center text-gray-600 hover:text-learny-purple mb-6">
+      <Link to="/" className="inline-flex items-center text-gray-600 hover:text-learny-purple mb-6 dark:text-gray-300 dark:hover:text-learny-purple-dark">
         <ChevronLeft className="h-5 w-5 mr-1" />
         Tillbaka till startsidan
       </Link>
 
       <div className="flex items-center mb-6">
-        <Trophy className="h-8 w-8 text-learny-purple mr-3" />
-        <h1 className="text-3xl font-bold">Dina prestationer</h1>
+        <Trophy className="h-8 w-8 text-learny-purple dark:text-learny-purple-dark mr-3" />
+        <h1 className="text-3xl font-bold dark:text-white">Dina prestationer</h1>
       </div>
 
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Statistik</h2>
+          <h2 className="text-xl font-bold dark:text-white">Statistik</h2>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-500 mb-1">Prestationer</p>
-            <p className="text-2xl font-bold">{userStats.achievements.length}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Prestationer</p>
+            <p className="text-2xl font-bold dark:text-white">{userStats.achievements.length}</p>
           </div>
           
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-500 mb-1">Streak</p>
-            <p className="text-2xl font-bold">{userStats.streak} dagar</p>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Streak</p>
+            <p className="text-2xl font-bold dark:text-white">{userStats.streak} dagar</p>
           </div>
           
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-500 mb-1">Rätta svar</p>
-            <p className="text-2xl font-bold">{userStats.totalCorrect}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Rätta svar</p>
+            <p className="text-2xl font-bold dark:text-white">{userStats.totalCorrect}</p>
           </div>
           
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-500 mb-1">Inlärda kort</p>
-            <p className="text-2xl font-bold">{userStats.cardsLearned}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Inlärda kort</p>
+            <p className="text-2xl font-bold dark:text-white">{userStats.cardsLearned}</p>
           </div>
         </div>
       </div>
@@ -71,7 +71,7 @@ const AchievementsPage = () => {
       {newAchievements.length > 0 && (
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Nya prestationer</h2>
+            <h2 className="text-xl font-bold dark:text-white">Nya prestationer</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -88,7 +88,7 @@ const AchievementsPage = () => {
 
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Alla prestationer</h2>
+          <h2 className="text-xl font-bold dark:text-white">Alla prestationer</h2>
         </div>
         
         {oldAchievements.length > 0 ? (
@@ -101,10 +101,10 @@ const AchievementsPage = () => {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
-            <Award className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-lg font-medium mb-2">Inga prestationer ännu</h3>
-            <p className="text-gray-500 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+            <Award className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <h3 className="text-lg font-medium mb-2 dark:text-white">Inga prestationer ännu</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
               Fortsätt att studera och slutför träningsprogram för att låsa upp prestationer.
             </p>
             <Button asChild>

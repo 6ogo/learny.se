@@ -1,4 +1,4 @@
-
+// src/pages/Home.tsx
 import React, { useEffect, useState } from 'react';
 import { CategoryCard } from '@/components/CategoryCard';
 import { ProgramCard } from '@/components/ProgramCard';
@@ -18,12 +18,14 @@ const Home = () => {
     // Update streak on page visit
     updateUserStats({});
 
-    // Select a random category on first render
-    if (categories.length > 0) {
+    // Select a random category on first render if categories exist
+    if (categories.length > 0 && !selectedCategory) {
       const randomCategoryId = categories[Math.floor(Math.random() * categories.length)].id;
       setSelectedCategory(randomCategoryId);
     }
-  }, []);
+  // Only run once on mount, or if categories change and selectedCategory is still null
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, updateUserStats]);
 
   // When selectedCategory changes, pick a random flashcard from that category
   useEffect(() => {
@@ -32,16 +34,23 @@ const Home = () => {
       if (categoryCards.length > 0) {
         const randomCard = categoryCards[Math.floor(Math.random() * categoryCards.length)];
         setCategoryFlashcard(randomCard);
+      } else {
+        setCategoryFlashcard(null); // No flashcards in this category
       }
+    } else {
+      setCategoryFlashcard(null);
     }
   }, [selectedCategory, flashcards]);
 
   // Get recently completed programs
   const recentlyCompletedPrograms = programs
     .filter(program => userStats.completedPrograms.includes(program.id))
+    // Sort by completion date if available, otherwise just take the latest ones added
+    // For simplicity, we just take the first few matches
     .slice(0, 3);
 
-  // Get popular programs (top 3 by difficulty level)
+  // Get popular programs (e.g., beginner programs, or based on some metric if available)
+  // For now, let's just show the first few beginner programs
   const popularPrograms = programs
     .filter(program => program.difficulty === 'beginner')
     .slice(0, 3);
@@ -49,28 +58,19 @@ const Home = () => {
   // Handle selecting another category for challenge
   const handleNewCategoryChallenge = () => {
     if (categories.length > 0) {
-      // Select a different category than the current one
       let availableCategories = categories.filter(c => c.id !== selectedCategory);
       if (availableCategories.length === 0) {
-        availableCategories = categories; // Fallback if only one category exists
+        availableCategories = categories; // Fallback if only one category or none different
       }
-      const newCategoryId = availableCategories[Math.floor(Math.random() * availableCategories.length)].id;
-      setSelectedCategory(newCategoryId);
+      if (availableCategories.length > 0) {
+        const newCategoryId = availableCategories[Math.floor(Math.random() * availableCategories.length)].id;
+        setSelectedCategory(newCategoryId);
+      }
     }
   };
 
-  // Group categories by type
-  const academicCategories = categories.filter(cat => 
-    ['medicine', 'math', 'science', 'history'].includes(cat.id)
-  );
-  
-  const techLanguageCategories = categories.filter(cat => 
-    ['coding', 'languages'].includes(cat.id)
-  );
-  
-  const practicalCategories = categories.filter(cat => 
-    ['geography', 'vehicles', 'economics'].includes(cat.id)
-  );
+  // Get the name of the selected category
+  const selectedCategoryName = categories.find(c => c.id === selectedCategory)?.name || 'Kategori';
 
   return (
     <div className="container px-4 py-8 mx-auto">
@@ -108,25 +108,25 @@ const Home = () => {
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center mb-2">
               <BookOpen className="h-5 w-5 text-learny-purple dark:text-learny-purple-dark mr-2" />
-              <h3 className="text-lg font-medium">Streak</h3>
+              <h3 className="text-lg font-medium dark:text-white">Streak</h3>
             </div>
             <p className="text-3xl font-bold dark:text-white">{userStats.streak} dagar</p>
             <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Fortsätt din inlärningsresa</p>
           </div>
-          
+
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center mb-2">
               <Award className="h-5 w-5 text-learny-yellow dark:text-learny-yellow-dark mr-2" />
-              <h3 className="text-lg font-medium">Prestationer</h3>
+              <h3 className="text-lg font-medium dark:text-white">Prestationer</h3>
             </div>
             <p className="text-3xl font-bold dark:text-white">{userStats.achievements.length}</p>
             <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Upplåsta utmärkelser</p>
           </div>
-          
+
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center mb-2">
               <TrendingUp className="h-5 w-5 text-learny-green dark:text-learny-green-dark mr-2" />
-              <h3 className="text-lg font-medium">Flashcards</h3>
+              <h3 className="text-lg font-medium dark:text-white">Flashcards</h3>
             </div>
             <p className="text-3xl font-bold dark:text-white">{userStats.cardsLearned} / {flashcards.length}</p>
             <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Inlärda kort</p>
@@ -139,13 +139,13 @@ const Home = () => {
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold dark:text-white">
-              Kategoriutmaning: {categories.find(c => c.id === selectedCategory)?.name || 'Kategori'}
+              Kategoriutmaning: {selectedCategoryName}
             </h2>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleNewCategoryChallenge}
-              className="text-learny-purple dark:text-learny-purple-dark"
+              className="text-learny-purple dark:text-learny-purple-dark border-learny-purple hover:bg-learny-purple/10 dark:border-learny-purple-dark dark:text-learny-purple-dark dark:hover:bg-learny-purple-dark/10"
             >
               Byt kategori
             </Button>
@@ -155,34 +155,27 @@ const Home = () => {
           </div>
         </section>
       )}
+       {!categoryFlashcard && selectedCategory && (
+         <section className="mb-12 text-center text-gray-500 dark:text-gray-400">
+             Inga flashcards hittades för kategorin "{selectedCategoryName}". Skapa några!
+         </section>
+       )}
 
-      {/* Categories Section - Organized by topic groups */}
+
+      {/* Categories Section - REMOVED GROUPING */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 dark:text-white">Ämnen</h2>
-        
-        {/* Academic Subjects */}
-        <h3 className="text-xl font-medium mb-4 dark:text-gray-200">Akademiska ämnen</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {academicCategories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
-        </div>
-        
-        {/* Technology & Languages */}
-        <h3 className="text-xl font-medium mb-4 dark:text-gray-200">Teknologi & Språk</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
-          {techLanguageCategories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
-        </div>
-        
-        {/* Practical Knowledge */}
-        <h3 className="text-xl font-medium mb-4 dark:text-gray-200">Praktisk kunskap</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {practicalCategories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
-        </div>
+        <h2 className="text-2xl font-bold mb-6 dark:text-white">Välj ett ämne</h2>
+        {categories.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {categories.map((category) => (
+              <CategoryCard key={category.id} category={category} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            Inga kategorier hittades. Du kan skapa flashcards och kategorier via 'Skapa'-sidan.
+          </div>
+        )}
       </section>
 
       {/* Programs Section */}
@@ -191,36 +184,44 @@ const Home = () => {
         <Tabs defaultValue="popular">
           <TabsList className="mb-6">
             <TabsTrigger value="popular">Populära</TabsTrigger>
-            <TabsTrigger value="completed">Slutförda</TabsTrigger>
+            <TabsTrigger value="completed">Nyligen slutförda</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="popular">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {popularPrograms.map((program) => (
                 <ProgramCard key={program.id} program={program} />
               ))}
             </div>
-            
-            {popularPrograms.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-500 dark:text-gray-400">Inga program tillgängliga ännu.</p>
+
+            {popularPrograms.length === 0 && programs.length > 0 && (
+               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                 Inga program markerade som 'Nybörjare' hittades.
+               </div>
+            )}
+            {programs.length === 0 && (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                Inga träningsprogram tillgängliga ännu.
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="completed">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {recentlyCompletedPrograms.map((program) => (
                 <ProgramCard key={program.id} program={program} />
               ))}
             </div>
-            
+
             {recentlyCompletedPrograms.length === 0 && (
-              <div className="text-center py-8 dark:text-gray-300">
-                <p className="text-gray-500 dark:text-gray-400">Du har inte slutfört några program ännu.</p>
-                <Button asChild className="mt-4">
-                  <Link to="/category/medicine">Hitta program att slutföra</Link>
-                </Button>
+              <div className="text-center py-8">
+                <p className="text-gray-500 dark:text-gray-400 mb-4">Du har inte slutfört några program ännu.</p>
+                {categories.length > 0 && (
+                   <Button asChild className="mt-4">
+                     {/* Link to the first category available */}
+                     <Link to={`/category/${categories[0].id}`}>Hitta program att slutföra</Link>
+                   </Button>
+                )}
               </div>
             )}
           </TabsContent>

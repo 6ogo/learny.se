@@ -748,7 +748,7 @@ const initialFlashcards: Flashcard[] = [
     difficulty: 'advanced',
   },
   
-  // AI flashcards
+  // AI flashcards - Completing the incomplete one
   {
     id: 'ai1',
-    question: 'Vad är maskininlärning?',
+    question: 'Vad är maskininlär

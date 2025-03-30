@@ -2,7 +2,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle, ChevronRight } from 'lucide-react';
-import { useLocalStorage, Program } from '@/context/LocalStorageContext';
+import { useLocalStorage } from '@/context/LocalStorageContext';
+import { Program } from '@/types/program';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';

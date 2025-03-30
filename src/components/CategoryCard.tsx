@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Book, Code, Plus, Beaker, Languages, Globe, Car, Banknote } from 'lucide-react';
+import { Book, Code, Plus, Beaker, Languages, Globe, Car, Banknote, History, AtomIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Category } from '@/context/LocalStorageContext';
+import { Category } from '@/types/category';
+import { Badge } from '@/components/ui/badge';
 
 interface CategoryCardProps {
   category: Category;
@@ -20,7 +21,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
       case 'plus':
         return <Plus className="h-6 w-6" />;
       case 'flask':
-        return <Beaker className="h-6 w-6" />; // Changed Flask to Beaker which exists in lucide-react
+        return <Beaker className="h-6 w-6" />; 
       case 'languages':
         return <Languages className="h-6 w-6" />;
       case 'globe':
@@ -31,6 +32,10 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
         return <Banknote className="h-6 w-6" />;
       case 'book':
         return <Book className="h-6 w-6" />;
+      case 'atom':
+        return <AtomIcon className="h-6 w-6" />;
+      case 'history':
+        return <History className="h-6 w-6" />;
       default:
         return <Book className="h-6 w-6" />;
     }
@@ -59,7 +64,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
       className="block transform transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 rounded-xl"
     >
       <div className={cn(
-        "h-40 w-full rounded-xl relative overflow-hidden shadow-md",
+        "h-48 w-full rounded-xl relative overflow-hidden shadow-md",
         "bg-gradient-to-br", getColorClass()
       )}>
         <div className="absolute inset-0 bg-black/10 dark:bg-black/20"></div>
@@ -68,7 +73,26 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
             {getIcon()}
           </div>
           <h3 className="text-xl font-bold mb-1">{category.name}</h3>
-          <p className="text-sm text-center text-white/90">{category.description}</p>
+          <p className="text-sm text-center text-white/90 mb-3">{category.description}</p>
+          
+          {/* Learning path visualization */}
+          <div className="flex space-x-1">
+            <Badge variant="outline" className="bg-white/20 hover:bg-white/30 text-white text-xs border-none">
+              Nybörjare
+            </Badge>
+            <span className="text-white">→</span>
+            <Badge variant="outline" className="bg-white/20 hover:bg-white/30 text-white text-xs border-none">
+              Medel
+            </Badge>
+            <span className="text-white">→</span>
+            <Badge variant="outline" className="bg-white/20 hover:bg-white/30 text-white text-xs border-none">
+              Avancerad
+            </Badge>
+            <span className="text-white">→</span>
+            <Badge variant="outline" className="bg-white/20 hover:bg-white/30 text-white text-xs border-none">
+              Expert
+            </Badge>
+          </div>
         </div>
       </div>
     </Link>

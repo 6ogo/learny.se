@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, RotateCcw, BookmarkPlus, BookmarkX } from 'lucide-react';
-import { Flashcard as FlashcardType, useLocalStorage } from '@/context/LocalStorageContext';
+import { CheckCircle, XCircle, RotateCcw, BookmarkPlus, BookmarkX, Flag } from 'lucide-react';
+import { Flashcard as FlashcardType } from '@/types/flashcard';
+import { useLocalStorage } from '@/context/LocalStorageContext';
 import { toast } from "@/hooks/use-toast";
 
 // Array of positive feedback messages
@@ -113,6 +114,13 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     });
   };
 
+  const handleReportCard = () => {
+    toast({
+      title: "Kort rapporterat",
+      description: "Tack för din rapportering. Vi kommer att granska detta kort.",
+    });
+  };
+
   // Calculate the difficulty indicator
   const getDifficultyColor = () => {
     switch (flashcard.difficulty) {
@@ -203,47 +211,63 @@ export const Flashcard: React.FC<FlashcardProps> = ({
       </AnimatePresence>
 
       {showControls && (
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-6 flex flex-col gap-3">
           {!answered ? (
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-learny-red hover:bg-learny-red/5 hover:text-learny-red dark:border-learny-red dark:hover:bg-learny-red/20 dark:text-white dark:hover:text-learny-red-dark w-32"
-                onClick={handleIncorrect}
-              >
-                <XCircle className="mr-2 h-5 w-5" />
-                Fel
-              </Button>
+            <>
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-learny-red hover:bg-learny-red/5 hover:text-learny-red dark:border-learny-red dark:hover:bg-learny-red/20 dark:text-white dark:hover:text-learny-red-dark w-32"
+                  onClick={handleIncorrect}
+                >
+                  <XCircle className="mr-2 h-5 w-5" />
+                  Fel
+                </Button>
+                
+                <Button
+                  size="lg"
+                  className="bg-learny-green hover:bg-learny-green/90 dark:bg-learny-green-dark dark:hover:bg-learny-green/90 w-32"
+                  onClick={handleCorrect}
+                >
+                  <CheckCircle className="mr-2 h-5 w-5" />
+                  Rätt
+                </Button>
+              </div>
               
-              <Button
-                size="lg"
-                className="bg-learny-green hover:bg-learny-green/90 dark:bg-learny-green-dark dark:hover:bg-learny-green/90 w-32"
-                onClick={handleCorrect}
-              >
-                <CheckCircle className="mr-2 h-5 w-5" />
-                Rätt
-              </Button>
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-full"
+                  onClick={toggleLearned}
+                >
+                  {flashcard.learned ? (
+                    <>
+                      <BookmarkX className="mr-2 h-5 w-5" />
+                      Avmarkera inlärd
+                    </>
+                  ) : (
+                    <>
+                      <BookmarkPlus className="mr-2 h-5 w-5" />
+                      Markera inlärd
+                    </>
+                  )}
+                </Button>
+              </div>
               
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-32"
-                onClick={toggleLearned}
-              >
-                {flashcard.learned ? (
-                  <>
-                    <BookmarkX className="mr-2 h-5 w-5" />
-                    Avmarkera
-                  </>
-                ) : (
-                  <>
-                    <BookmarkPlus className="mr-2 h-5 w-5" />
-                    Markera inlärd
-                  </>
-                )}
-              </Button>
-            </div>
+              <div className="flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-500 hover:text-learny-red"
+                  onClick={handleReportCard}
+                >
+                  <Flag className="mr-2 h-4 w-4" />
+                  Rapportera kort
+                </Button>
+              </div>
+            </>
           ) : (
             <Button
               variant="outline"

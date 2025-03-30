@@ -1,286 +1,385 @@
-
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, RotateCcw, BookmarkPlus, BookmarkX, Flag } from 'lucide-react';
-import { Flashcard as FlashcardType } from '@/types/flashcard';
-import { useLocalStorage } from '@/context/LocalStorageContext';
-import { toast } from "@/hooks/use-toast";
-
-// Array of positive feedback messages
-const POSITIVE_FEEDBACK = [
-  "Bra jobbat!",
-  "Helt rätt!",
-  "Perfekt!",
-  "Utmärkt!",
-  "Bravo!",
-  "Mycket bra!",
-  "Korrekt!",
-  "Snyggt!",
-  "Rätt tänkt!",
-  "Imponerande!",
-  "Bra minne!",
-  "Du klarade det!",
-  "Helt korrekt!",
-  "Fantastiskt!",
-  "Briljant!",
-  "Bra gjort!",
-  "Tummen upp!",
-  "Du har förstått det!",
-  "Du har koll på det här!",
-  "Fortsätt så!"
-];
+import { 
+  ThumbsUp, 
+  ThumbsDown, 
+  Check, 
+  Edit, 
+  Trash2, 
+  Clock, 
+  RotateCcw,
+  ChevronLeft, 
+  ChevronRight 
+} from 'lucide-react';
+import { useLocalStorage, Flashcard as FlashcardType } from '@/context/LocalStorageContext';
+import { formatDistanceToNow } from 'date-fns';
+import { sv } from 'date-fns/locale';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface FlashcardProps {
   flashcard: FlashcardType;
-  onCorrect?: () => void;
-  onIncorrect?: () => void;
+  showKnowledgeOptions?: boolean;
   showControls?: boolean;
+  onEdit?: (id: string) => void;
+  onNext?: () => void;
+  onPrevious?: () => void;
+  showNavigation?: boolean;
+  resetOnNavigate?: boolean;
 }
 
-export const Flashcard: React.FC<FlashcardProps> = ({
-  flashcard,
-  onCorrect,
-  onIncorrect,
-  showControls = true,
+export const Flashcard: React.FC<FlashcardProps> = ({ 
+  flashcard, 
+  showKnowledgeOptions = false,
+  showControls = false,
+  onEdit,
+  onNext,
+  onPrevious,
+  showNavigation = false,
+  resetOnNavigate = true
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [answered, setAnswered] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const { updateFlashcard } = useLocalStorage();
-
-  // Reset states when flashcard changes
-  useEffect(() => {
-    setIsFlipped(false);
-    setAnswered(false);
-    setFeedbackMessage(null);
-  }, [flashcard.id]);
+  const { markReviewed, deleteFlashcard } = useLocalStorage();
 
   const handleFlip = () => {
-    if (!answered) {
-      setIsFlipped(!isFlipped);
-    }
+    setIsFlipped(!isFlipped);
   };
 
-  const getRandomPositiveFeedback = () => {
-    return POSITIVE_FEEDBACK[Math.floor(Math.random() * POSITIVE_FEEDBACK.length)];
-  };
-
-  const handleCorrect = () => {
-    setAnswered(true);
-    const feedback = getRandomPositiveFeedback();
-    setFeedbackMessage(feedback);
-    
-    updateFlashcard(flashcard.id, {
-      correctCount: (flashcard.correctCount || 0) + 1,
-      lastReviewed: Date.now(),
-    });
-    
-    if (onCorrect) onCorrect();
-  };
-
-  const handleIncorrect = () => {
-    setAnswered(true);
-    setFeedbackMessage("Du behöver träna mer på det här. Fortsätt öva!");
-    
-    updateFlashcard(flashcard.id, {
-      incorrectCount: (flashcard.incorrectCount || 0) + 1,
-      lastReviewed: Date.now(),
-      reviewLater: true,
-    });
-    
-    if (onIncorrect) onIncorrect();
-  };
-
-  const handleReset = () => {
+  const handleKnowledgeLevel = (level: number) => {
+    markReviewed(flashcard.id, level);
     setIsFlipped(false);
-    setAnswered(false);
-    setFeedbackMessage(null);
   };
 
-  const toggleLearned = () => {
-    const newLearnedState = !flashcard.learned;
-    updateFlashcard(flashcard.id, {
-      learned: newLearnedState,
-      lastReviewed: Date.now(),
-    });
-    
-    toast({
-      title: newLearnedState ? "Markerad som inlärd" : "Markering borttagen",
-      description: newLearnedState 
-        ? "Detta kort har markerats som inlärt i din profil."
-        : "Detta kort är inte längre markerat som inlärt.",
-    });
+  const handleDelete = () => {
+    deleteFlashcard(flashcard.id);
   };
 
-  const handleReportCard = () => {
-    toast({
-      title: "Kort rapporterat",
-      description: "Tack för din rapportering. Vi kommer att granska detta kort.",
-    });
+  const handleNext = () => {
+    if (resetOnNavigate) {
+      setIsFlipped(false);
+    }
+    if (onNext) onNext();
   };
 
-  // Calculate the difficulty indicator
-  const getDifficultyColor = () => {
-    switch (flashcard.difficulty) {
-      case 'beginner':
-        return 'bg-learny-green';
-      case 'intermediate':
-        return 'bg-learny-blue';
-      case 'advanced':
-        return 'bg-learny-purple';
-      case 'expert':
-        return 'bg-learny-red';
-      default:
-        return 'bg-learny-blue';
+  const handlePrevious = () => {
+    if (resetOnNavigate) {
+      setIsFlipped(false);
+    }
+    if (onPrevious) onPrevious();
+  };
+
+  // Format difficulty for display
+  const getDifficultyLabel = (difficulty: string) => {
+    switch (difficulty) {
+      case 'beginner': return 'Nybörjare';
+      case 'intermediate': return 'Medel';
+      case 'advanced': return 'Avancerad';
+      case 'expert': return 'Expert';
+      default: return difficulty;
     }
   };
+
+  // Format difficulty for color
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'beginner': return 'bg-learny-green/10 text-learny-green border-learny-green/20';
+      case 'intermediate': return 'bg-learny-blue/10 text-learny-blue border-learny-blue/20';
+      case 'advanced': return 'bg-learny-purple/10 text-learny-purple border-learny-purple/20';
+      case 'expert': return 'bg-learny-red/10 text-learny-red border-learny-red/20';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  // Extract topic from question if it exists
+  const extractTopic = (question: string) => {
+    const match = question.match(/^\[([^\]]+)\]/);
+    return match ? match[1] : null;
+  };
+
+  // Clean question by removing topic prefix
+  const cleanQuestion = (question: string) => {
+    return question.replace(/^\[[^\]]+\]\s*/, '');
+  };
+
+  const topic = extractTopic(flashcard.question);
+  const questionText = cleanQuestion(flashcard.question);
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="perspective-1000">
       <div 
-        className="relative w-full aspect-[3/2] cursor-pointer perspective-1000"
-        onClick={handleFlip}
+        className={`relative transform-style-3d transition-transform duration-500 w-full ${
+          isFlipped ? 'rotate-y-180' : ''
+        }`}
+        style={{ transformStyle: 'preserve-3d' }}
       >
-        <motion.div
-          initial={false}
-          animate={{ rotateY: isFlipped ? 180 : 0 }}
-          transition={{ duration: 0.6, type: 'spring', stiffness: 300, damping: 30 }}
-          className="w-full h-full relative preserve-3d"
+        {/* Front side */}
+        <Card 
+          className={`backface-hidden w-full ${
+            isFlipped ? 'hidden' : 'block'
+          }`}
         >
-          {/* Front of the card */}
-          <motion.div 
-            className={cn(
-              "absolute w-full h-full bg-white dark:bg-gray-800 rounded-xl p-6 flex flex-col justify-center items-center shadow-lg border border-gray-200 dark:border-gray-700 backface-hidden",
-              flashcard.learned && "bg-gray-50 dark:bg-gray-700 border-green-200 dark:border-green-800"
-            )}
-          >
-            <div className={`absolute top-4 left-4 w-3 h-3 rounded-full ${getDifficultyColor()}`} />
-            
-            {flashcard.learned && (
-              <div className="absolute top-3 right-3">
-                <CheckCircle className="w-5 h-5 text-learny-green" />
-              </div>
-            )}
-            
-            <p className="text-xl md:text-2xl font-medium text-center dark:text-white">
-              {flashcard.question}
-            </p>
-            
-            <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-gray-400 dark:text-gray-300">
-              Klicka för att vända kortet
-            </div>
-          </motion.div>
-
-          {/* Back of the card */}
-          <motion.div
-            style={{ rotateY: 180 }}
-            className="absolute w-full h-full bg-white dark:bg-gray-800 rounded-xl p-6 flex flex-col justify-center items-center shadow-lg border border-gray-200 dark:border-gray-700 backface-hidden"
-          >
-            <div className={`absolute top-4 left-4 w-3 h-3 rounded-full ${getDifficultyColor()}`} />
-            
-            <p className="text-xl md:text-2xl font-medium mb-4 text-center text-learny-purple dark:text-learny-purple-dark">
-              Svar:
-            </p>
-            
-            <p className="text-lg text-center dark:text-white">
-              {flashcard.answer}
-            </p>
-          </motion.div>
-        </motion.div>
-      </div>
-
-      {/* Feedback message */}
-      <AnimatePresence>
-        {feedbackMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className={cn(
-              "mt-4 p-3 rounded-lg text-center font-medium",
-              feedbackMessage.includes("träna") 
-                ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
-                : "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
-            )}
-          >
-            {feedbackMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {showControls && (
-        <div className="mt-6 flex flex-col gap-3">
-          {!answered ? (
-            <>
-              <div className="flex justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-learny-red hover:bg-learny-red/5 hover:text-learny-red dark:border-learny-red dark:hover:bg-learny-red/20 dark:text-white dark:hover:text-learny-red-dark w-32"
-                  onClick={handleIncorrect}
-                >
-                  <XCircle className="mr-2 h-5 w-5" />
-                  Fel
-                </Button>
+          <CardContent className="pt-6 pb-4">
+            <div className="min-h-[120px] flex flex-col justify-between">
+              <div>
+                {/* Meta information - topic and difficulty */}
+                <div className="flex justify-between items-center mb-2">
+                  {topic && (
+                    <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                      {topic}
+                    </span>
+                  )}
+                  <span className={`text-xs px-2 py-1 rounded-full ${getDifficultyColor(flashcard.difficulty)}`}>
+                    {getDifficultyLabel(flashcard.difficulty)}
+                  </span>
+                </div>
                 
-                <Button
-                  size="lg"
-                  className="bg-learny-green hover:bg-learny-green/90 dark:bg-learny-green-dark dark:hover:bg-learny-green/90 w-32"
-                  onClick={handleCorrect}
-                >
-                  <CheckCircle className="mr-2 h-5 w-5" />
-                  Rätt
-                </Button>
+                {/* Main question */}
+                <p className="text-lg font-medium mb-4">{questionText}</p>
+                
+                {/* Review information */}
+                {flashcard.lastReviewed && (
+                  <div className="text-xs text-muted-foreground mt-4 flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Senast repeterad: {formatDistanceToNow(flashcard.lastReviewed, { locale: sv, addSuffix: true })}
+                  </div>
+                )}
               </div>
               
-              <div className="flex justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-full"
-                  onClick={toggleLearned}
-                >
-                  {flashcard.learned ? (
+              <div className="mt-4 flex justify-between items-center">
+                {/* Navigation controls */}
+                {showNavigation && (
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={handlePrevious}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={handleNext}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Edit/Delete controls */}
+                {showControls && (
+                  <div className="flex gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onEdit && onEdit(flashcard.id)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Redigera</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Är du säker?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Detta kommer permanent radera flashcardet. Denna åtgärd kan inte ångras.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-500 hover:bg-red-600"
+                            onClick={handleDelete}
+                          >
+                            Radera
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                
+                {/* Show answer button */}
+                <div className={showControls || showNavigation ? "ml-auto" : "w-full text-right"}>
+                  <Button onClick={handleFlip}>Visa svar</Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Back side */}
+        <Card 
+          className={`backface-hidden absolute inset-0 w-full rotate-y-180 ${
+            isFlipped ? 'block' : 'hidden'
+          }`}
+          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+        >
+          <CardContent className="pt-6 pb-4">
+            <div className="min-h-[120px] flex flex-col justify-between">
+              <div>
+                {/* Meta information - topic and difficulty */}
+                <div className="flex justify-between items-center mb-2">
+                  {topic && (
+                    <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                      {topic}
+                    </span>
+                  )}
+                  <span className={`text-xs px-2 py-1 rounded-full ${getDifficultyColor(flashcard.difficulty)}`}>
+                    {getDifficultyLabel(flashcard.difficulty)}
+                  </span>
+                </div>
+                
+                {/* Question and answer */}
+                <p className="text-lg font-medium mb-2">{questionText}</p>
+                <div className="border-t pt-2">
+                  <p className="text-muted-foreground">{flashcard.answer}</p>
+                </div>
+                
+                {/* Knowledge level indicator if it exists */}
+                {flashcard.knowledgeLevel && (
+                  <div className="mt-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">Din kunskap:</span>
+                      {flashcard.knowledgeLevel === 1 && (
+                        <span className="text-red-500 flex items-center">
+                          <ThumbsDown className="h-3 w-3 mr-1" />
+                          Svårt
+                        </span>
+                      )}
+                      {flashcard.knowledgeLevel === 2 && (
+                        <span className="text-amber-500 flex items-center">
+                          <Check className="h-3 w-3 mr-1" />
+                          OK
+                        </span>
+                      )}
+                      {flashcard.knowledgeLevel === 3 && (
+                        <span className="text-green-500 flex items-center">
+                          <ThumbsUp className="h-3 w-3 mr-1" />
+                          Lätt
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-4 flex justify-between items-center">
+                {/* Navigation controls */}
+                {showNavigation && (
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={handlePrevious}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={handleNext}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+
+                {/* Reset review status */}
+                {flashcard.reviewCount && showControls && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => markReviewed(flashcard.id, 0)}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Återställ repetitionsstatusen</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                
+                {/* Knowledge rating buttons or go back button */}
+                <div className={showControls || showNavigation ? "ml-auto" : "w-full text-right"}>
+                  {showKnowledgeOptions ? (
                     <>
-                      <BookmarkX className="mr-2 h-5 w-5" />
-                      Avmarkera inlärd
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-red-500"
+                        onClick={() => handleKnowledgeLevel(1)}
+                      >
+                        <ThumbsDown className="h-4 w-4 mr-1" />
+                        Svårt
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-amber-500 ml-2"
+                        onClick={() => handleKnowledgeLevel(2)}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        OK
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-green-500 ml-2"
+                        onClick={() => handleKnowledgeLevel(3)}
+                      >
+                        <ThumbsUp className="h-4 w-4 mr-1" />
+                        Lätt
+                      </Button>
                     </>
                   ) : (
-                    <>
-                      <BookmarkPlus className="mr-2 h-5 w-5" />
-                      Markera inlärd
-                    </>
+                    <Button onClick={handleFlip}>Tillbaka</Button>
                   )}
-                </Button>
+                </div>
               </div>
-              
-              <div className="flex justify-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-500 hover:text-learny-red"
-                  onClick={handleReportCard}
-                >
-                  <Flag className="mr-2 h-4 w-4" />
-                  Rapportera kort
-                </Button>
-              </div>
-            </>
-          ) : (
-            <Button
-              variant="outline"
-              size="lg"
-              className="mt-2 dark:border-gray-600 dark:text-white"
-              onClick={handleReset}
-            >
-              <RotateCcw className="mr-2 h-5 w-5" />
-              Nästa kort
-            </Button>
-          )}
-        </div>
-      )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -1,10 +1,12 @@
+
 import React from 'react';
-import { useRouter } from 'next/router';
+import { useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FlashcardsByLevel } from '@/components/FlashcardsByLevel';
 import { useLocalStorage } from '@/context/LocalStorageContext';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
+import { Layout } from '@/components/layout/Layout';
 
 const difficultyLevels = [
   { id: 'beginner', label: 'Nybörjare', color: 'bg-learny-green' },
@@ -54,12 +56,11 @@ const categoryInfo: Record<string, { title: string, description: string }> = {
 };
 
 export default function CategoryPage() {
-  const router = useRouter();
-  const { categoryId } = router.query;
-  const { getFlashcardsByCategory } = useLocalStorage();
+  const { categoryId } = useParams<{ categoryId: string }>();
+  const { getFlashcardsByCategory, getTopicsByCategory } = useLocalStorage();
   
   // Ensure categoryId is a string
-  const category = typeof categoryId === 'string' ? categoryId : '';
+  const category = categoryId || '';
   
   // Get info for this category
   const info = categoryInfo[category] || { 
@@ -69,34 +70,47 @@ export default function CategoryPage() {
   
   // Get total flashcard count for this category
   const totalFlashcards = getFlashcardsByCategory(category).length;
+  const topics = getTopicsByCategory(category);
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <Link href="/" passHref>
-          <Button variant="ghost" className="px-0">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Tillbaka till ämnen
-          </Button>
-        </Link>
+    <Layout>
+      <div className="container mx-auto px-4 py-6">
+        <div className="mb-6">
+          <Link to="/">
+            <Button variant="ghost" className="px-0">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Tillbaka till ämnen
+            </Button>
+          </Link>
+        </div>
+        
+        <div className="mb-6">
+          <h1 className="text-4xl font-bold">{info.title}</h1>
+          <p className="text-muted-foreground mt-2">{info.description}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Totalt {totalFlashcards} flashcards i denna kategori
+          </p>
+          
+          {topics.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {topics.map(topic => (
+                <span key={topic} className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                  {topic}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Show flashcards by difficulty level */}
+        {difficultyLevels.map(level => (
+          <FlashcardsByLevel
+            key={level.id}
+            categoryId={category}
+            difficulty={level.id as any}
+          />
+        ))}
       </div>
-      
-      <div className="mb-6">
-        <h1 className="text-4xl font-bold">{info.title}</h1>
-        <p className="text-muted-foreground mt-2">{info.description}</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Totalt {totalFlashcards} flashcards i denna kategori
-        </p>
-      </div>
-      
-      {/* Show flashcards by difficulty level */}
-      {difficultyLevels.map(level => (
-        <FlashcardsByLevel
-          key={level.id}
-          categoryId={category}
-          difficulty={level.id as any}
-        />
-      ))}
-    </div>
+    </Layout>
   );
 }

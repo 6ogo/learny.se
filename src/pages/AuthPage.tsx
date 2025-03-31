@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -31,7 +31,7 @@ import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { LogIn, UserPlus, Apple, Mail } from 'lucide-react';
+import { LogIn, UserPlus, Apple, Mail, Home } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
 
 const loginSchema = z.object({
@@ -222,6 +222,17 @@ const AuthPage: React.FC = () => {
                 ? "Logga in på Learny.se" 
                 : "Skapa ett konto"}
           </h2>
+          <div className="mt-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-gray-800 flex items-center"
+              onClick={() => navigate('/')}
+            >
+              <Home className="mr-2 h-5 w-5" />
+              <span>Tillbaka till startsidan</span>
+            </Button>
+          </div>
         </div>
 
         {isResetPassword ? (

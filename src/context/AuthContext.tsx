@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -106,9 +107,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
 
       if (data) {
-        setTier(data.subscription_tier as SubscriptionTier || 'free');
-        setIsAdmin(data.is_admin === true || data.is_super_admin === 'yes');
-        setDailyUsage(data.daily_usage || 0);
+        const userProfile = data as UserProfile;
+        setTier(userProfile.subscription_tier as SubscriptionTier || 'free');
+        setIsAdmin(userProfile.is_admin === true || userProfile.is_super_admin === 'yes');
+        setDailyUsage(userProfile.daily_usage || 0);
       } else {
         await supabase
           .from('user_profiles')

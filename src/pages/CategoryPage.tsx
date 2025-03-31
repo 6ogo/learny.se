@@ -25,7 +25,7 @@ const CategoryPage = () => {
           <h1 className="text-2xl font-bold mb-4 dark:text-white">Kategori hittades inte</h1>
           <p className="text-gray-500 dark:text-gray-400 mb-4">Den kategori du söker verkar inte finnas.</p>
           <Button asChild>
-            <Link to="/">Tillbaka till startsidan</Link>
+            <Link to="/Home">Tillbaka till startsidan</Link>
           </Button>
         </div>
       </div>
@@ -36,7 +36,7 @@ const CategoryPage = () => {
     <div>
       <div className="mb-6 flex items-center">
         <Button variant="ghost" size="icon" asChild className="mr-2">
-          <Link to="/">
+          <Link to="/Home">
             <ArrowLeft className="h-5 w-5" />
             <span className="sr-only">Tillbaka till startsidan</span>
           </Link>

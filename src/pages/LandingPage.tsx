@@ -20,13 +20,13 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="flex-1 space-y-6">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter text-white">
-                Lär dig snabbare med Learny.se
+                Lär dig snabbare med Learny
               </h1>
               <p className="text-lg md:text-xl text-gray-300">
                 Interaktiva flashcards och anpassade studieprogram för effektiv inlärning inom medicin, kodning, språk och mer.
               </p>
               <p className="text-lg md:text-xl text-learny-yellow font-medium">
-                Är du trött på ändlöst scrollande? Låt Learny.se förvandla skärmtiden till värdefull kunskap!
+                Är du trött på ändlöst scrollande? Låt Learny förvandla skärmtid till värdefull kunskap!
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" className="bg-learny-purple hover:bg-learny-purple-dark text-white">
@@ -59,7 +59,7 @@ const LandingPage: React.FC = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Våra funktioner</h2>
             <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-              Learny.se erbjuder smarta verktyg för att göra din inlärning mer effektiv och rolig.
+              Learny erbjuder smarta verktyg för att göra din inlärning effektiv och rolig.
             </p>
           </div>
           
@@ -94,7 +94,7 @@ const LandingPage: React.FC = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Hur det fungerar</h2>
             <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-              Kom igång med Learny.se på bara några minuter och börja förbättra din inlärning direkt.
+              Kom igång med Learny på bara några minuter och börja förbättra din inlärning direkt.
             </p>
           </div>
           
@@ -150,9 +150,6 @@ const LandingPage: React.FC = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Redo att förbättra ditt lärande?
           </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Gå med i tusentals användare som redan har förbättrat sin inlärning med Learny.se.
-          </p>
           <Button size="lg" className="bg-learny-purple hover:bg-learny-purple-dark text-white text-lg px-8">
             <Link to="/auth" className="flex items-center gap-2">
               Kom igång gratis <ArrowRight className="h-5 w-5" />

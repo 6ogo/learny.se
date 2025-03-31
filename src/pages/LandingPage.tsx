@@ -46,10 +46,6 @@ const LandingPage: React.FC = () => {
                     alt="Learny.se Flashcards" 
                     className="w-full h-auto rounded-t-lg"
                   />
-                  <div className="p-6 bg-gray-800">
-                    <h2 className="text-xl font-semibold text-white mb-2">Optimerad inlärning</h2>
-                    <p className="text-gray-300">Vill du sluta doomscrolla? Låt oss hjälpa dig göra mobilen till ett hjälpmedel!</p>
-                  </div>
                 </div>
               </div>
             </div>

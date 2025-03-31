@@ -1,91 +1,94 @@
 import { Flashcard } from '@/types/flashcard';
 
 export const scienceFlashcards: Flashcard[] = [
-  // --- Science - Beginner ---
+  // --- Biology - Beginner ---
   { id: 'sci-beg1', question: 'Vad är fotosyntes?', answer: 'Processen där växter använder solljus, vatten och koldioxid för att skapa sin egen näring (socker) och syre.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci-beg2', question: 'Vilka är de tre aggregationstillstånden för materia?', answer: 'Fast, flytande och gas.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg3', question: 'Vad är gravitation?', answer: 'Den kraft som drar objekt med massa mot varandra.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg4', question: 'Vad är en atom?', answer: 'Den minsta byggstenen av ett grundämne.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg5', question: 'Vad är energi?', answer: 'Förmågan att utföra arbete. Finns i olika former (rörelse, värme, ljus etc.).', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg6', question: 'Vad är en planet?', answer: 'En stor himlakropp som kretsar kring en stjärna (som solen).', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg7', question: 'Vad är en cell?', answer: 'Den grundläggande enheten i allt levande.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg8', question: 'Vad är skillnaden mellan en växt och ett djur?', answer: 'Växter producerar oftast sin egen mat (fotosyntes), djur äter andra organismer.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg9', question: 'Vad är ljud?', answer: 'Vibrationer som färdas genom ett medium (som luft) och kan uppfattas av örat.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg10', question: 'Vad är ljus?', answer: 'Elektromagnetisk strålning som är synlig för det mänskliga ögat.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg11', question: 'Vad är en magnet?', answer: 'Ett objekt som skapar ett magnetfält och kan attrahera eller repellera vissa material (som järn).', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg12', question: 'Vad är elektricitet?', answer: 'Flödet av elektriska laddningar (oftast elektroner).', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg13', question: 'Vad är en fossil?', answer: 'Bevarade rester eller spår av tidigare livsformer, oftast i sten.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg14', question: 'Vad är ett ekosystem?', answer: 'Ett område där levande organismer (biotiska faktorer) interagerar med varandra och sin icke-levande miljö (abiotiska faktorer).', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg15', question: 'Vad är väder?', answer: 'Atmosfärens tillstånd vid en viss tid och plats (temperatur, nederbörd, vind etc.).', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg16', question: 'Vad är de fyra huvudsakliga väderstrecken?', answer: 'Norr, söder, öster och väster.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg17', question: 'Vad är en kemisk reaktion?', answer: 'En process där ett eller flera ämnen (reaktanter) omvandlas till nya ämnen (produkter).', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg18', question: 'Vad är H₂O?', answer: 'Den kemiska formeln för vatten (två väteatomer och en syreatom).', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg19', question: 'Vad är syre?', answer: 'En gas (O₂) som är nödvändig för andning hos de flesta djur och för förbränning.', category: 'science', difficulty: 'beginner'},
-  { id: 'sci_beg20', question: 'Vad är koldioxid?', answer: 'En gas (CO₂) som växter använder i fotosyntesen och som djur andas ut.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_bio_beg2', question: 'Vad är en cell?', answer: 'Den grundläggande byggstenen i allt levande.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_bio_beg3', question: 'Vad är skillnaden mellan en växtcell och en djurcell?', answer: 'Växtceller har cellvägg, kloroplaster och oftast en stor vakuol, vilket djurceller saknar.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_bio_beg4', question: 'Vad är DNA?', answer: 'Molekylen som bär den genetiska informationen (arvsmassan).', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_bio_beg5', question: 'Vad är ett ekosystem?', answer: 'Ett område där levande organismer interagerar med varandra och sin icke-levande miljö.', category: 'science', difficulty: 'beginner'},
 
-  // --- Science - Intermediate ---
+  // --- Chemistry - Beginner ---
+  { id: 'sci-beg2', question: 'Vilka är de tre vanligaste aggregationstillstånden för materia?', answer: 'Fast, flytande och gas.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_chem_beg2', question: 'Vad är en atom?', answer: 'Den minsta byggstenen av ett grundämne som behåller ämnets kemiska egenskaper.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_chem_beg3', question: 'Vad är en molekyl?', answer: 'Två eller flera atomer som är kemiskt bundna till varandra.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_chem_beg4', question: 'Vad är den kemiska formeln för vatten?', answer: 'H₂O (två väteatomer och en syreatom).', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_chem_beg5', question: 'Vad är en kemisk reaktion?', answer: 'En process där ett eller flera ämnen (reaktanter) omvandlas till nya ämnen (produkter) genom att bindningar bryts och bildas.', category: 'science', difficulty: 'beginner'},
+
+  // --- Physics - Beginner ---
+  { id: 'sci_phy_beg1', question: 'Vad är gravitation?', answer: 'Den attraherande kraften mellan objekt som har massa.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_phy_beg2', question: 'Vad är energi?', answer: 'Förmågan att utföra arbete. Kan inte skapas eller förstöras, bara omvandlas.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_phy_beg3', question: 'Vad är ljud?', answer: 'Vibrationer som färdas som vågor genom ett medium (t.ex. luft, vatten).', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_phy_beg4', question: 'Vad är ljus?', answer: 'Elektromagnetisk strålning som är synlig för det mänskliga ögat.', category: 'science', difficulty: 'beginner'},
+  { id: 'sci_phy_beg5', question: 'Vad är en magnet?', answer: 'Ett objekt som skapar ett magnetfält och kan attrahera järn.', category: 'science', difficulty: 'beginner'},
+
+
+  // --- Biology - Intermediate ---
+  { id: 'sci_bio_int1', question: 'Vad är cellandning?', answer: 'Processen där celler bryter ner glukos med syre för att frigöra energi (ATP), koldioxid och vatten. Sker främst i mitokondrierna.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_bio_int2', question: 'Vad är evolution genom naturligt urval?', answer: 'Processen där organismer med fördelaktiga egenskaper har större chans att överleva och fortplanta sig, vilket leder till anpassning över tid.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_bio_int3', question: 'Vad är skillnaden mellan mitos och meios?', answer: 'Mitos = vanlig celldelning (två identiska diploida celler). Meios = reduktionsdelning (producerar haploida könsceller).', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_bio_int4', question: 'Vad är ett enzym?', answer: 'Ett protein som fungerar som en biologisk katalysator och påskyndar specifika kemiska reaktioner i cellen.', category: 'science', difficulty: 'intermediate'},
+  { id: 'bio-adv1', question: 'Vad är ATP och dess roll i cellen?', answer: 'ATP (Adenosintrifosfat) är den primära, universella energibäraren i celler, används för att driva de flesta energikrävande processer.', category: 'science', difficulty: 'intermediate'}, // Reclassified as Intermediate
+
+  // --- Chemistry - Intermediate ---
+  { id: 'sci_int6', question: 'Vad är pH-skalan och vad mäter den?', answer: 'Mäter surhetsgrad (koncentration av vätejoner). Lågt pH (<7) = surt, högt pH (>7) = basiskt, 7 = neutralt.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_int9', question: 'Vad är en kemisk bindning? Ge exempel.', answer: 'Kraften som håller samman atomer. Exempel: Kovalent (delade elektroner), Jonbindning (elektrostatisk attraktion), Metallbindning.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_int10', question: 'Vad är det periodiska systemet?', answer: 'En tabell som organiserar grundämnen efter atomnummer, elektronkonfiguration och återkommande kemiska egenskaper.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_int16', question: 'Vad är en katalysator inom kemi?', answer: 'Ett ämne som ökar reaktionshastigheten utan att själv förbrukas permanent i reaktionen.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_chem_int5', question: 'Vad är en isotop?', answer: 'Atomer av samma grundämne (samma antal protoner) men med olika antal neutroner (olika masstal).', category: 'science', difficulty: 'intermediate'},
+
+  // --- Physics - Intermediate ---
   { id: 'phys1', question: 'Vad är Newtons första lag (tröghetslagen)?', answer: 'Ett objekt förblir i vila eller likformig rörelse om ingen yttre nettokraft verkar på det.', category: 'science', difficulty: 'intermediate'},
-  { id: 'phys2', question: 'Vad mäter enheten Newton (N)?', answer: 'Kraft. 1 N = 1 kg·m/s².', category: 'science', difficulty: 'intermediate'},
-  { id: 'phys3', question: 'Vad är energiprincipen (energibevarande)?', answer: 'Energi kan varken skapas eller förstöras, endast omvandlas mellan olika former.', category: 'science', difficulty: 'intermediate'},
-  { id: 'phys4', question: 'Vad är skillnaden mellan massa och vikt?', answer: 'Massa är mått på materia (kg). Vikt är gravitationskraften på massan (N).', category: 'science', difficulty: 'intermediate'},
-  { id: 'phys5', question: 'Vad är Pascals princip?', answer: 'Tryck i en innesluten vätska fortplantas oförminskat i alla riktningar.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int6', question: 'Vad är pH-skalan och vad mäter den?', answer: 'Mäter surhetsgrad (0-14). Lågt pH = surt, högt pH = basiskt, 7 = neutralt.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int7', question: 'Vad är DNA och dess huvudfunktion?', answer: 'DNA (Deoxiribonukleinsyra) bär den genetiska informationen (arvsmassan) i celler.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int8', question: 'Vad är cellandning?', answer: 'Processen där celler bryter ner glukos (socker) med syre för att frigöra energi (ATP), koldioxid och vatten.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int9', question: 'Vad är en kemisk bindning?', answer: 'Kraften som håller samman atomer i molekyler eller joner i kristaller. Typer: kovalent, jon-, metallbindning.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int10', question: 'Vad är det periodiska systemet?', answer: 'En tabell som organiserar alla kända grundämnen baserat på deras atomnummer, elektronkonfiguration och kemiska egenskaper.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int11', question: 'Vad är evolution genom naturligt urval?', answer: 'Processen där organismer med egenskaper som är bättre anpassade till miljön har större chans att överleva och fortplanta sig, vilket leder till förändring över generationer.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int12', question: 'Vad är skillnaden mellan värme och temperatur?', answer: 'Temperatur är ett mått på den genomsnittliga kinetiska energin hos partiklar. Värme är överföringen av termisk energi mellan system med olika temperatur.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int13', question: 'Vad är Arkimedes princip?', answer: 'Lyftkraften på ett nedsänkt föremål är lika stor som tyngden av den undanträngda vätskan.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int14', question: 'Vad är en våglängd och frekvens för en våg?', answer: 'Våglängd är avståndet mellan två motsvarande punkter på vågen. Frekvens är antalet vågsvängningar per tidsenhet (Hertz, Hz).', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int15', question: 'Vad är det elektromagnetiska spektrumet?', answer: 'Hela omfånget av elektromagnetisk strålning, från radiovågor (låg frekvens) till gammastrålning (hög frekvens), inklusive synligt ljus.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int16', question: 'Vad är en katalysator?', answer: 'Ett ämne som påskyndar en kemisk reaktion utan att själv förbrukas i processen.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int17', question: 'Vad är osmos?', answer: 'Nettorörelsen av vattenmolekyler genom ett semipermeabelt membran från ett område med högre vattenkoncentration till ett med lägre.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int18', question: 'Vad är Newtons andra lag?', answer: 'Kraften (F) som verkar på ett objekt är lika med objektets massa (m) multiplicerat med dess acceleration (a): F = ma.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int19', question: 'Vad är en isotop?', answer: 'Atomer av samma grundämne (samma antal protoner) men med olika antal neutroner, vilket ger olika masstal.', category: 'science', difficulty: 'intermediate'},
-  { id: 'sci_int20', question: 'Vad är växthuseffekten?', answer: 'Processen där vissa gaser i atmosfären (växthusgaser) absorberar värmestrålning från jorden och hindrar den från att stråla ut i rymden, vilket värmer planeten.', category: 'science', difficulty: 'intermediate'},
+  { id: 'phys2', question: 'Vad mäter enheten Newton (N)?', answer: 'Kraft. Definition: den kraft som ger massan 1 kg accelerationen 1 m/s². (F=ma).', category: 'science', difficulty: 'intermediate'},
+  { id: 'phys3', question: 'Vad är energiprincipen (energibevarande)?', answer: 'Energi kan varken skapas eller förstöras, endast omvandlas mellan olika former (t.ex. kinetisk, potentiell, termisk).', category: 'science', difficulty: 'intermediate'},
+  { id: 'phys4', question: 'Vad är skillnaden mellan massa och tyngd?', answer: 'Massa är ett mått på mängden materia (kg). Tyngd är gravitationskraften som verkar på massan (N).', category: 'science', difficulty: 'intermediate'}, // Renamed from 'vikt' to 'tyngd'
+  { id: 'phys5', question: 'Vad är Pascals princip?', answer: 'Tryckförändringar i en innesluten, inkompressibel vätska fortplantas oförminskat till alla delar av vätskan och kärlets väggar.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_phy_int6', question: 'Vad är Arkimedes princip?', answer: 'Lyftkraften på ett helt eller delvis nedsänkt föremål är lika stor som tyngden av den vätska som föremålet tränger undan.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_phy_int7', question: 'Vad är skillnaden mellan värme och temperatur?', answer: 'Temperatur är ett mått på partiklarnas genomsnittliga kinetiska energi. Värme är överföringen av termisk energi pga temperaturskillnad.', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_phy_int8', question: 'Vad är en våglängd och frekvens för en våg?', answer: 'Våglängd (λ) är avståndet mellan två motsvarande punkter. Frekvens (f) är antalet svängningar per sekund (Hz). Relaterade via v = λf (v=våghastighet).', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_phy_int9', question: 'Vad är det elektromagnetiska spektrumet?', answer: 'Hela omfånget av elektromagnetisk strålning ordnat efter våglängd/frekvens (radio, mikro, IR, synligt ljus, UV, röntgen, gamma).', category: 'science', difficulty: 'intermediate'},
+  { id: 'sci_phy_int10', question: 'Vad är Dopplereffekten?', answer: 'Förändringen i observerad frekvens hos en våg när källan och observatören rör sig relativt varandra.', category: 'science', difficulty: 'intermediate'},
 
-  // --- Science - Advanced ---
-  { id: 'chem-adv1', question: 'Förklara begreppet entalpi (H).', answer: 'Ett mått på den totala energin i ett termodynamiskt system vid konstant tryck. Entalpiändring (ΔH) anger värmeutbytet i en process.', category: 'science', difficulty: 'advanced'},
-  { id: 'bio-adv1', question: 'Vad är ATP och dess roll i cellen?', answer: 'ATP (Adenosintrifosfat) är den primära energibäraren i celler, används för att driva metaboliska processer.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv3', question: 'Vad är termodynamikens andra huvudsats (entropi)?', answer: 'Den totala entropin (oordningen) i ett isolerat system tenderar att öka över tid.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv4', question: 'Förklara Bohrs atommodell.', answer: 'Modell där elektroner kretsar i specifika, kvantiserade energinivåer runt kärnan. Förklarade väteatomens spektrum.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv5', question: 'Vad är den speciella relativitetsteorin?', answer: 'Einsteins teori som beskriver fysikens lagar i inertialsystem och postulerar ljushastighetens konstans. Leder till tidsdilation och längdkontraktion.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv6', question: 'Vad är kvantmekanikens våg-partikeldualitet?', answer: 'Konceptet att elementarpartiklar (som elektroner och fotoner) kan uppvisa egenskaper hos både vågor och partiklar.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv7', question: 'Förklara Heisenbergs osäkerhetsprincip.', answer: 'Det är omöjligt att samtidigt exakt bestämma vissa par av fysikaliska egenskaper hos en partikel, t.ex. dess position och rörelsemängd.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv8', question: 'Vad är en redoxreaktion?', answer: 'En kemisk reaktion där oxidationstalet för atomer ändras; innebär överföring av elektroner. Oxidation = elektronförlust, Reduktion = elektronvinst.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv9', question: 'Vad är enzymer?', answer: 'Biologiska katalysatorer (oftast proteiner) som påskyndar specifika kemiska reaktioner i levande organismer genom att sänka aktiveringsenergin.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv10', question: 'Förklara den centrala dogmen inom molekylärbiologi.', answer: 'Beskriver informationsflödet i biologiska system: DNA -> (transkription) -> RNA -> (translation) -> Protein.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv11', question: 'Vad är placktektonik?', answer: 'Teorin att jordens litosfär är uppdelad i stora plattor som rör sig långsamt, vilket orsakar jordbävningar, vulkanism och bergskedjebildning.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv12', question: 'Vad är Big Bang-teorin?', answer: 'Den ledande kosmologiska modellen för universums uppkomst och utveckling från ett extremt hett och tätt tillstånd för cirka 13.8 miljarder år sedan.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv13', question: 'Vad är mörk materia och mörk energi?', answer: 'Hypotetiska former av materia och energi som inte interagerar med ljus. Utgör majoriteten av universums massa/energiinnehåll och driver dess accelererande expansion.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv14', question: 'Vad är en svart hål?', answer: 'Ett område i rymden med så stark gravitation att ingenting, inte ens ljus, kan undkomma dess dragningskraft när det väl passerat händelsehorisonten.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv15', question: 'Vad är termodynamikens första huvudsats?', answer: 'En formulering av energiprincipen: förändringen i ett systems inre energi är lika med tillfört värme minus utfört arbete (ΔU = Q - W).', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv16', question: 'Vad är en isomer inom kemi?', answer: 'Molekyler som har samma kemiska formel (samma antal atomer av varje slag) men olika struktur och därmed olika egenskaper.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv17', question: 'Vad är PCR (Polymerase Chain Reaction)?', answer: 'En teknik för att snabbt amplifiera (kopiera upp) specifika DNA-sekvenser miljontals gånger.', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv18', question: 'Vad är skillnaden mellan mitos och meios?', answer: 'Mitos är vanlig celldelning som ger två identiska dotterceller (diploida). Meios är reduktionsdelning som producerar könsceller (gameter) med halverat antal kromosomer (haploida).', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv19', question: 'Vad är Dopplereffekten?', answer: 'Förändringen i frekvens (och våglängd) hos en våg i förhållande till en observatör som rör sig relativt vågkällan (t.ex. ljud från en ambulans, ljus från stjärnor).', category: 'science', difficulty: 'advanced'},
-  { id: 'sci_adv20', question: 'Vad är radioaktivt sönderfall?', answer: 'Processen där en instabil atomkärna spontant omvandlas och avger energi i form av strålning (alfa, beta, gamma) för att nå ett stabilare tillstånd.', category: 'science', difficulty: 'advanced'},
+  // --- Biology - Advanced ---
+  { id: 'sci_bio_adv1', question: 'Förklara den centrala dogmen inom molekylärbiologi.', answer: 'Beskriver informationsflödet: DNA -> (transkription) -> RNA -> (translation) -> Protein. (Undantag finns, t.ex. retrovirus).', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_bio_adv2', question: 'Vad är PCR (Polymerase Chain Reaction)?', answer: 'En metod för att exponentiellt amplifiera (kopiera) specifika DNA-segment in vitro.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_bio_adv3', question: 'Vad är apoptos?', answer: 'Programmerad, kontrollerad celldöd som är nödvändig för normal utveckling och vävnadshomeostas.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_bio_adv4', question: 'Vad är neurotransmittorer? Ge exempel.', answer: 'Kemiska signalsubstanser som överför nervsignaler över synapser. Exempel: acetylkolin, dopamin, serotonin, GABA.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_bio_adv5', question: 'Vad är ett antigen och en antikropp?', answer: 'Antigen: molekyl (ofta främmande) som kan trigga immunsvar. Antikropp: protein producerat av B-celler som specifikt binder till ett antigen.', category: 'science', difficulty: 'advanced'},
 
-  // --- Science - Expert ---
-  { id: 'sci-ex1', question: 'Beskriv Schrödingerekvationen och dess betydelse.', answer: 'Fundamental ekvation i kvantmekanik som beskriver tidsutvecklingen av ett kvantsystems vågfunktion. Lösningarna ger sannolikheter för systemets tillstånd.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex2', question: 'Vad är Maxwells ekvationer?', answer: 'Fyra ekvationer som utgör grunden för klassisk elektromagnetism; beskriver relationen mellan elektriska/magnetiska fält, laddningar och strömmar.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex3', question: 'Förklara den speciella och allmänna relativitetsteorin.', answer: 'Speciella: fysikens lagar och ljushastigheten är konstanta i inertialsystem. Allmänna: gravitation beskrivs som krökning av rumtiden orsakad av massa/energi.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex4', question: 'Vad är Standardmodellen inom partikelfysik?', answer: 'Teori som beskriver de kända elementarpartiklarna (kvarkar, leptoner) och tre fundamentala krafter (elektromagnetiska, svaga, starka). Inkluderar ej gravitation.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex5', question: 'Förklara begreppet kvantfältteori (QFT).', answer: 'Ramverk som kombinerar kvantmekanik, speciell relativitetsteori och klassisk fältteori. Beskriver partiklar som excitationer av underliggande kvantfält.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex6', question: 'Vad är kvantsammanflätning (entanglement)?', answer: 'Ett kvantmekaniskt fenomen där två eller flera partiklars tillstånd är korrelerade på ett sätt som inte kan beskrivas klassiskt, oavsett avståndet mellan dem.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex7', question: 'Diskutera termodynamikens tredje huvudsats.', answer: 'Det är omöjligt att nå den absoluta nollpunkten (0 Kelvin) genom ett ändligt antal processer. Entropin för en perfekt kristall vid 0 K är noll.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex8', question: 'Vad är suprafuiditet och supraledning?', answer: 'Suprafluiditet: vätska med noll viskositet (t.ex. He-II). Supraledning: material med noll elektrisk resistans under en kritisk temperatur.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex9', question: 'Förklara mekanismerna bakom CRISPR-Cas9 genredigering.', answer: 'Systemet använder en guide-RNA för att hitta en specifik DNA-sekvens och Cas9-enzymet för att klippa DNA:t där. Cellens reparationsmekanismer kan sedan användas för att infoga/ta bort/ändra gener.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex10', question: 'Vad är Hawkingstrålning?', answer: 'Teoretisk strålning som förutsägs emitteras från svarta hål på grund av kvanteffekter nära händelsehorisonten. Leder till att svarta hål långsamt "avdunstar".', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex11', question: 'Vad är skillnaden mellan Bose-Einstein-kondensat och Fermi-Dirac-kondensat?', answer: 'Båda är kvantmekaniska materietillstånd vid extremt låga temperaturer. BEC bildas av bosoner (partiklar med heltalspinn), FDC av fermioner (halvtalspinn).', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex12', question: 'Förklara begreppet kiralitet inom kemi.', answer: 'Egenskapen hos en molekyl att inte vara överlagringsbar med sin spegelbild (som vänster och höger hand). Sådana molekyler kallas enantiomerer.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex13', question: 'Vad är Ficks diffusionslagar?', answer: 'Beskriver diffusion (partikeltransport från hög till låg koncentration). Första lagen relaterar flöde till koncentrationsgradient. Andra lagen beskriver hur koncentrationen ändras över tid.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex14', question: 'Diskutera betydelsen av p53-proteinet i cancer.', answer: 'p53 är en tumörsuppressorgen ("genomets väktare"). Det kan stoppa cellcykeln, initiera DNA-reparation eller inducera apoptos vid DNA-skada. Mutationer i p53 är vanliga i cancer.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex15', question: 'Vad är lambda-CDM-modellen inom kosmologi?', answer: 'Standardmodellen för kosmologi. Beskriver ett universum dominerat av kall mörk materia (CDM) och mörk energi representerad av den kosmologiska konstanten (Lambda, Λ).', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex16', question: 'Förklara principen bakom NMR-spektroskopi.', answer: 'Nuclear Magnetic Resonance utnyttjar atomkärnors spinn i ett starkt magnetfält. Genom att applicera radiovågor kan man få information om molekylers struktur och dynamik.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex17', question: 'Vad är kaosteori?', answer: 'Studiet av dynamiska system som är mycket känsliga för initialvillkor ("fjärilseffekten"). Uppvisar komplext, deterministiskt men till synes slumpmässigt beteende.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex18', question: 'Vad är topologiska isolatorer?', answer: 'Material som är elektriska isolatorer i bulk men har ledande tillstånd på ytan, skyddade av topologiska egenskaper.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex19', question: 'Förklara Hodgkin-Huxley-modellen.', answer: 'En matematisk modell som beskriver hur aktionspotentialer i nervceller initieras och fortplantas genom att modellera flödet av joner (Na+, K+) genom spänningskänsliga jonkanaler.', category: 'science', difficulty: 'expert'},
-  { id: 'sci_ex20', question: 'Vad är strängteori?', answer: 'Ett teoretiskt ramverk där punktlika partiklar ersätts av endimensionella "strängar". Syftar till att förena kvantmekanik och allmän relativitetsteori (en "teori om allt").', category: 'science', difficulty: 'expert'},
+  // --- Chemistry - Advanced ---
+  { id: 'chem-adv1', question: 'Förklara begreppet entalpi (H).', answer: 'Ett termodynamiskt tillståndsmått som representerar systemets totala värmeinnehåll vid konstant tryck. ΔH = värmeutbytet i en reaktion.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_adv8', question: 'Vad är en redoxreaktion?', answer: 'En kemisk reaktion där oxidationstal ändras; innebär överföring av elektroner. Oxidation = ökning i oxidationstal, Reduktion = minskning.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_chem_adv3', question: 'Vad är termodynamikens andra huvudsats (entropi)?', answer: 'Den totala entropin (mått på oordning/energispridning) i ett isolerat system ökar alltid eller förblir konstant vid spontana processer.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_chem_adv4', question: 'Vad är en isomer inom kemi?', answer: 'Molekyler som har samma molekylformel men olika struktur (atomernas arrangemang) och därmed olika egenskaper.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_chem_adv5', question: 'Vad är aktiveringsenergi?', answer: 'Den minimienergi som krävs för att starta en kemisk reaktion.', category: 'science', difficulty: 'advanced'},
+
+  // --- Physics - Advanced ---
+  { id: 'sci_adv5', question: 'Vad är den speciella relativitetsteorin?', answer: 'Einsteins teori (1905) baserad på två postulat: fysikens lagar är desamma i alla inertialsystem & ljushastigheten i vakuum är konstant för alla observatörer. Leder till tidsdilation, längdkontraktion, E=mc².', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_adv6', question: 'Vad är kvantmekanikens våg-partikeldualitet?', answer: 'Konceptet att mikroskopiska objekt (t.ex. elektroner, fotoner) kan uppvisa egenskaper hos både vågor (interferens, diffraktion) och partiklar (lokaliserad position, rörelsemängd).', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_adv7', question: 'Förklara Heisenbergs osäkerhetsprincip.', answer: 'Det finns en fundamental gräns för hur exakt man samtidigt kan känna till vissa par av komplementära variabler för en partikel, t.ex. position (Δx) och rörelsemängd (Δp): Δx * Δp ≥ ħ/2.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_phy_adv4', question: 'Vad är Big Bang-teorin?', answer: 'Den ledande kosmologiska modellen som beskriver universums expansion från ett extremt hett och tätt initialtillstånd för ca 13.8 miljarder år sedan.', category: 'science', difficulty: 'advanced'},
+  { id: 'sci_phy_adv5', question: 'Vad är radioaktivt sönderfall?', answer: 'Spontan process där instabila atomkärnor omvandlas till stabilare kärnor genom att utsända partiklar (alfa, beta) och/eller energi (gamma).', category: 'science', difficulty: 'advanced'},
+
+
+  // --- Biology - Expert ---
+  { id: 'sci_bio_ex1', question: 'Diskutera CRISPR-Cas9 genredigering.', answer: 'Ett system (ursprungligen bakteriellt immunförsvar) som möjliggör precis redigering av DNA-sekvenser. Cas9-enzymet klipper DNA vid en plats specificerad av ett guide-RNA.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_bio_ex2', question: 'Vad är epigenetik?', answer: 'Studiet av ärftliga förändringar i genuttryck som inte beror på ändringar i DNA-sekvensen (t.ex. DNA-metylering, histonmodifiering).', category: 'science', difficulty: 'expert'},
+  { id: 'sci_bio_ex3', question: 'Förklara mekanismen bakom långtidspotentiering (LTP) i nervsystemet.', answer: 'En varaktig förstärkning av synaptisk signalöverföring, tros vara viktig för inlärning/minne. Involverar ofta NMDA-receptoraktivering och postsynaptiska förändringar.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_bio_ex4', question: 'Vad är HPA-axeln (Hypothalamus-Pituitary-Adrenal axis)?', answer: 'Ett centralt neuroendokrint system som reglerar stressrespons och många kroppsfunktioner via frisättning av CRH, ACTH och kortisol.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_bio_ex5', question: 'Diskutera betydelsen av mikrobiomet för människans hälsa.', answer: 'Samlingen mikroorganismer (främst i tarmen) påverkar matsmältning, immunförsvar, metabolism och kan kopplas till diverse sjukdomar.', category: 'science', difficulty: 'expert'},
+
+  // --- Chemistry - Expert ---
+  { id: 'sci_chem_ex1', question: 'Vad är Schrödingerekvationen?', answer: 'En fundamental ekvation i kvantmekaniken som beskriver hur kvanttillståndet (vågfunktionen) för ett fysikaliskt system förändras över tid.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_chem_ex2', question: 'Vad är kvantfältteori (QFT)?', answer: 'Teoretiskt ramverk som kombinerar kvantmekanik, speciell relativitetsteori och klassisk fältteori för att beskriva elementarpartiklar och deras interaktioner.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_chem_ex3', question: 'Förklara begreppet kiralitet inom kemi.', answer: 'Egenskapen hos en molekyl att vara icke-överlagringsbar med sin spegelbild (som händer). Leder till enantiomerer.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_chem_ex4', question: 'Vad är Ficks diffusionslagar?', answer: 'Beskriver diffusion (partikeltransport pga koncentrationsgradient). Första lagen: flöde ~ gradient. Andra lagen: koncentrationsändring över tid.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_chem_ex5', question: 'Förklara principen bakom NMR-spektroskopi.', answer: 'Nuclear Magnetic Resonance utnyttjar atomkärnors spinn i magnetfält för att bestämma molekylers struktur och dynamik.', category: 'science', difficulty: 'expert'},
+
+  // --- Physics - Expert ---
+  { id: 'sci_ex2', question: 'Vad är Maxwells ekvationer?', answer: 'Fyra fundamentala ekvationer som beskriver klassisk elektromagnetism (elektriska/magnetiska fält, laddningar, strömmar).', category: 'science', difficulty: 'expert'},
+  { id: 'sci_ex3', question: 'Förklara den allmänna relativitetsteorin.', answer: 'Einsteins teori (1915) som beskriver gravitationen som en geometrisk egenskap hos rumtiden, vilken kröks av massa och energi.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_ex4', question: 'Vad är Standardmodellen inom partikelfysik?', answer: 'Teori som beskriver de kända elementarpartiklarna (kvarkar, leptoner), deras interaktioner via kraftförmedlare (bosoner) för de starka, svaga och elektromagnetiska krafterna.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_ex6', question: 'Vad är kvantsammanflätning (entanglement)?', answer: 'Ett kvantmekaniskt fenomen där partiklars tillstånd är korrelerade oavsett avstånd, så mätning på en omedelbart påverkar den andra.', category: 'science', difficulty: 'expert'},
+  { id: 'sci_ex10', question: 'Vad är Hawkingstrålning?', answer: 'Teoretisk termisk strålning som förutsägs emitteras från svarta hål pga kvanteffekter nära händelsehorisonten.', category: 'science', difficulty: 'expert'},
 ];

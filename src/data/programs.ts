@@ -106,6 +106,15 @@ export const initialPrograms: Program[] = [
     flashcards: ['html_adv1', 'html_adv2', 'html_adv3', 'html_adv4', 'html_adv5'],
     hasExam: true,
   },
+  {
+    id: 'html-expert-expanded',
+    name: 'HTML Expert',
+    description: 'Kommer snart...',
+    category: 'coding',
+    difficulty: 'expert',
+    flashcards: [],
+    hasExam: false,
+  },
   // Subcategory: Python
   {
     id: 'python-basics-expanded',

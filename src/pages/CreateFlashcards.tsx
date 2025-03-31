@@ -60,7 +60,7 @@ const CreateFlashcardsPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 text-foreground bg-background">
+    <div>
       <h1 className="text-3xl font-bold mb-4">Skapa Flashcards</h1>
       <p className="text-muted-foreground mb-8">
         Skapa nya flashcards eller importera från befintliga källor

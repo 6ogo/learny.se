@@ -123,7 +123,7 @@ const ExamPage = () => {
   const isPassed = getScorePercentage() >= 70;
   
   return (
-    <div className="container px-4 py-8 mx-auto">
+    <div>
       <Link to={`/study/${programId}`} className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-learny-purple dark:hover:text-learny-purple-dark mb-6">
         <ChevronLeft className="h-5 w-5 mr-1" />
         Tillbaka till programmet

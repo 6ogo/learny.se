@@ -30,7 +30,7 @@ const AchievementsPage = () => {
   const oldAchievements = sortedAchievements.filter(a => a.displayed);
 
   return (
-    <div className="container px-4 py-8 mx-auto bg-background">
+    <div>
       <Link to="/home" className="inline-flex items-center text-gray-600 hover:text-learny-purple mb-6 dark:text-gray-300 dark:hover:text-learny-purple-dark">
         <ChevronLeft className="h-5 w-5 mr-1" />
         Tillbaka till startsidan

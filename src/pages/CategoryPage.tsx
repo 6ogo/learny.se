@@ -20,7 +20,7 @@ const CategoryPage = () => {
 
   if (!category) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div>
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4 dark:text-white">Kategori hittades inte</h1>
           <p className="text-gray-500 dark:text-gray-400 mb-4">Den kategori du söker verkar inte finnas.</p>
@@ -33,7 +33,7 @@ const CategoryPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div>
       <div className="mb-6 flex items-center">
         <Button variant="ghost" size="icon" asChild className="mr-2">
           <Link to="/">

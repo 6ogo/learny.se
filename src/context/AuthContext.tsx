@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +11,7 @@ type Achievement = {
   name: string;
   description: string;
   icon: string;
-  dateEarned: string;
+  dateEarned: string; // Keep as string from DB
   displayed: boolean;
 };
 
@@ -52,10 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
-      
+      // Keep loading until user details are fetched
+      // setIsLoading(false); <-- Move this
+
       if (session?.user) {
         await fetchUserDetails(session.user.id);
+      } else {
+        setIsLoading(false); // Not logged in, stop loading
       }
     };
 
@@ -65,19 +67,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        setIsLoading(false);
-        
+        // setIsLoading(false); <-- Move this
+
         if (session?.user) {
-          await fetchUserDetails(session.user.id);
+          await fetchUserDetails(session.user.id); // This will set isLoading to false
         } else {
           setTier('free');
           setIsAdmin(false);
           setDailyUsage(0);
           setAchievements([]);
+          setIsLoading(false); // Not logged in, stop loading
         }
       }
     );
 
+    // --- Daily usage logic remains the same ---
     const today = new Date().toISOString().split('T')[0];
     const storedData = localStorage.getItem('learny_usage');
     if (storedData) {
@@ -94,54 +98,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Run only once on mount
 
   const fetchUserDetails = async (userId: string) => {
+    setIsLoading(true); // Start loading when fetching details
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('*') // Fetch all needed fields
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
-
-      if (data) {
-        const userProfile = data as UserProfile;
-        setTier(userProfile.subscription_tier as SubscriptionTier || 'free');
-        setIsAdmin(userProfile.is_admin === true || userProfile.is_super_admin === 'yes');
-        setDailyUsage(userProfile.daily_usage || 0);
-      } else {
-        await supabase
-          .from('user_profiles')
-          .insert([
-            { id: userId, subscription_tier: 'free', daily_usage: 0, is_admin: false, is_super_admin: null }
-          ]);
-        
-        setIsAdmin(false);
+      if (error && error.code !== 'PGRST116') { // Allow 'PGRST116' (0 rows)
+         console.error('Error fetching user profile (select):', error);
+         throw error;
       }
 
+      let userProfile = data as UserProfile | null;
+
+      // If profile doesn't exist, create it
+      if (!userProfile) {
+        const { data: insertedData, error: insertError } = await supabase
+          .from('user_profiles')
+          .insert([{
+              id: userId,
+              subscription_tier: 'free',
+              daily_usage: 0,
+              is_admin: false,
+              is_super_admin: null // Default value
+          }])
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating user profile:', insertError);
+          throw insertError;
+        }
+        userProfile = insertedData as UserProfile;
+      }
+
+      // Now we are sure userProfile exists (either fetched or created)
+      setTier((userProfile.subscription_tier || 'free') as SubscriptionTier);
+      // Use the updated check assuming is_super_admin is text 'yes'
+      setIsAdmin(userProfile.is_admin === true || userProfile.is_super_admin === 'yes');
+      setDailyUsage(userProfile.daily_usage || 0);
+
+
+      // Fetch achievements
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('user_achievements')
         .select('*')
         .eq('user_id', userId);
 
-      if (achievementsError) throw achievementsError;
-
-      if (achievementsData) {
+      if (achievementsError) {
+        console.error('Error fetching achievements:', achievementsError);
+        // Don't throw, just log and continue with empty achievements
+        setAchievements([]);
+      } else if (achievementsData) {
         const formattedAchievements: Achievement[] = achievementsData.map(a => ({
           id: a.id,
           name: a.name,
           description: a.description,
           icon: a.icon,
-          dateEarned: a.date_earned,
+          dateEarned: a.date_earned, // Keep as string
           displayed: a.displayed
         }));
         setAchievements(formattedAchievements);
+      } else {
+        setAchievements([]);
       }
+
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('General error fetching user details:', error);
+      // Set defaults on error
+      setTier('free');
       setIsAdmin(false);
+      setDailyUsage(0);
+      setAchievements([]);
+    } finally {
+      setIsLoading(false); // Stop loading after fetching/error
     }
   };
 
@@ -297,7 +332,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updatePassword,
     signInWithProvider,
     tier,
-    isAdmin,
+    isAdmin, // Use the state managed here
     dailyUsage,
     incrementDailyUsage,
     resetDailyUsage,

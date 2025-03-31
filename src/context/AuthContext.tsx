@@ -95,7 +95,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data) {
         setTier(data.subscription_tier as SubscriptionTier || 'free');
-        setIsAdmin(data.is_admin || false);
+        // Handle the is_admin field safely with a fallback
+        setIsAdmin(data.is_admin === true);
         setDailyUsage(data.daily_usage || 0);
       } else {
         // Create new user profile if it doesn't exist

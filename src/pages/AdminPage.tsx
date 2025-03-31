@@ -29,7 +29,7 @@ const AdminPage = () => {
         // Check if user is admin directly from database
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('is_admin')
+          .select('*')
           .eq('id', user.id)
           .single();
           
@@ -38,8 +38,8 @@ const AdminPage = () => {
           throw error;
         }
         
-        // Check if the user is admin
-        if (data && data.is_admin) {
+        // Check if the user is admin - handle the case where the field might not exist yet
+        if (data && data.is_admin === true) {
           setIsAdmin(true);
         } else {
           toast({

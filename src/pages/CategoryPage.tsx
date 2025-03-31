@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { ProgramsByCategory } from '@/components/ProgramsByCategory';
-import { FlashcardsBySubcategory } from '@/components/FlashcardsBySubcategory';
+import { FlashcardsByLevel } from '@/components/FlashcardsByLevel'; // Using existing component
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -54,9 +54,15 @@ const CategoryPage = () => {
       {/* Display Programs */}
       <ProgramsByCategory categoryId={category.id} />
 
-      {/* Display Flashcards by Subcategory and Difficulty */}
+      {/* Display Flashcards by Difficulty Level */}
       {hasFlashcards && (
-        <FlashcardsBySubcategory categoryId={category.id} />
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-6 dark:text-white">Flashcards</h2>
+          <FlashcardsByLevel categoryId={category.id} difficulty="beginner" />
+          <FlashcardsByLevel categoryId={category.id} difficulty="intermediate" />
+          <FlashcardsByLevel categoryId={category.id} difficulty="advanced" />
+          <FlashcardsByLevel categoryId={category.id} difficulty="expert" />
+        </div>
       )}
 
       {/* Show message if no flashcards */}

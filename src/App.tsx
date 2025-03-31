@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   createBrowserRouter,
@@ -5,6 +6,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from '@/context/AuthContext';
 import { LocalStorageProvider } from '@/context/LocalStorageContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import { ProtectedRoute, PublicRoute } from '@/components/ProtectedRoute';
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
@@ -84,7 +86,9 @@ function App() {
   return (
     <AuthProvider>
       <LocalStorageProvider>
-        <RouterProvider router={router} />
+        <ThemeProvider>
+          <RouterProvider router={router} />
+        </ThemeProvider>
       </LocalStorageProvider>
     </AuthProvider>
   );

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -23,14 +24,14 @@ import {
   Moon,
   ShieldCheck
 } from 'lucide-react';
-import { useTheme } from '@/components/ui/use-theme';
+import { useTheme } from '@/context/ThemeContext';
 
 export const NavBar: React.FC = () => {
   const { user, signOut, tier } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast()
-  const { setTheme } = useTheme()
+  const { toggleTheme } = useTheme()
 
   const isAuthPage = location.pathname === '/auth';
 
@@ -107,7 +108,7 @@ export const NavBar: React.FC = () => {
            <Button
               variant="ghost"
               size="sm"
-              onClick={() => setTheme(theme => theme === "light" ? "dark" : "light")}
+              onClick={toggleTheme}
             >
               <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

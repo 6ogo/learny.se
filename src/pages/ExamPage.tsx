@@ -161,14 +161,14 @@ const ExamPage = () => {
                 {currentOptions.map((option, index) => (
                   <div
                     key={index}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors min-h-[60px] flex items-center ${
                       selectedOption === option 
                         ? 'border-learny-purple bg-learny-purple/10 dark:border-learny-purple-dark dark:bg-learny-purple-dark/10' 
                         : 'border-gray-200 hover:border-learny-purple/50 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-learny-purple-dark/50 dark:hover:bg-gray-700'
                     }`}
                     onClick={() => handleOptionSelect(option)}
                   >
-                    <p className="dark:text-white">{option}</p>
+                    <p className="dark:text-white w-full">{option}</p>
                   </div>
                 ))}
               </div>

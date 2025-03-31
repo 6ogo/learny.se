@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Award, Flame, Trophy, Medal, Star } from 'lucide-react';
@@ -41,13 +42,13 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
       animate={isNew ? { scale: 1, opacity: 1 } : {}}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className={cn(
-        "bg-white rounded-lg border p-4 relative overflow-hidden",
-        isNew ? "border-learny-purple shadow-md" : "border-gray-200"
+        "dark:bg-gray-800 rounded-lg border p-4 relative overflow-hidden",
+        isNew ? "border-learny-purple dark:border-learny-purple-dark shadow-md" : "border-gray-200 dark:border-gray-700"
       )}
     >
       {isNew && (
         <div className="absolute top-0 right-0">
-          <div className="bg-learny-purple text-white text-xs font-bold px-2 py-1 transform rotate-12 translate-x-2 -translate-y-2">
+          <div className="bg-learny-purple text-white text-xs font-bold px-2 py-1 transform rotate-12 translate-x-2 -translate-y-2 dark:bg-learny-purple-dark">
             NY!
           </div>
         </div>
@@ -56,24 +57,24 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
       <div className="flex items-start space-x-4">
         <div className={cn(
           "flex-shrink-0 rounded-full p-3",
-          isNew ? "bg-learny-purple/10 text-learny-purple" : "bg-gray-100 text-gray-600"
+          isNew ? "bg-learny-purple/10 text-learny-purple dark:bg-learny-purple-dark/10 dark:text-learny-purple-dark" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
         )}>
           {getIcon()}
         </div>
         
         <div className="flex-1">
           <h3 className={cn(
-            "text-lg font-medium",
-            isNew && "text-learny-purple"
+            "text-lg font-medium dark:text-white",
+            isNew && "text-learny-purple dark:text-learny-purple-dark"
           )}>
             {achievement.name}
           </h3>
           
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {achievement.description}
           </p>
           
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
             Uppnådd: {formatDate(achievement.dateEarned)}
           </p>
         </div>

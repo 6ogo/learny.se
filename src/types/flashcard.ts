@@ -17,3 +17,10 @@ export type Flashcard = {
   reportReason?: string[];
   isApproved?: boolean;
 };
+
+export type ReportReason = 
+  | 'incorrect_information'
+  | 'inappropriate_content'
+  | 'duplicate'
+  | 'copyright_violation'
+  | 'other';

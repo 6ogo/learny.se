@@ -5,27 +5,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { generateShareableLink } from '@/services/groqService';
-import { Flashcard } from '@/types/flashcard';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Check, Copy, Link as LinkIcon, Loader2 } from 'lucide-react';
 
 interface FlashcardSharingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  flashcards: Flashcard[];
+  flashcardIds: string[];
 }
 
 export const FlashcardSharingDialog: React.FC<FlashcardSharingDialogProps> = ({
   open,
   onOpenChange,
-  flashcards
+  flashcardIds
 }) => {
   const [shareableLink, setShareableLink] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
 
   const handleGenerateLink = async () => {
-    if (flashcards.length === 0) {
+    if (flashcardIds.length === 0) {
       toast({
         title: "Inga flashcards att dela",
         description: "Det finns inga flashcards att dela.",
@@ -36,11 +36,6 @@ export const FlashcardSharingDialog: React.FC<FlashcardSharingDialogProps> = ({
 
     try {
       setIsGenerating(true);
-      
-      // Get the IDs of the flashcards (if they have them)
-      const flashcardIds = flashcards
-        .filter(fc => fc.id)
-        .map(fc => fc.id);
       
       if (flashcardIds.length === 0) {
         toast({

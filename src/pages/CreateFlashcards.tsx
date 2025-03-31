@@ -4,16 +4,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useSubscription } from '@/context/SubscriptionContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { AIFlashcardGenerator } from '@/components/AIFlashcardGenerator';
-import { useLocalStorage } from '@/context/LocalStorageContext';
-import { generateFlashcards, AIFlashcardRequest } from '@/services/groqService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pencil, Brain, Upload, Share2 } from 'lucide-react';
+import { AIFlashcardGenerator } from '@/components/AIFlashcardGenerator';
+import { useLocalStorage } from '@/context/LocalStorageContext';
+import { useToast } from '@/hooks/use-toast';
 import { FlashcardSharingDialog } from '@/components/FlashcardSharingDialog';
 
 const CreateFlashcardsPage = () => {
@@ -65,7 +60,7 @@ const CreateFlashcardsPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 text-foreground">
+    <div className="container mx-auto py-8 text-foreground bg-background">
       <h1 className="text-3xl font-bold mb-4">Skapa Flashcards</h1>
       <p className="text-muted-foreground mb-8">
         Skapa nya flashcards eller importera från befintliga källor

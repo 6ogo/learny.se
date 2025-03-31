@@ -16,6 +16,7 @@ type AuthContextType = {
   updatePassword: (password: string) => Promise<{ error: any }>;
   signInWithProvider: (provider: 'google' | 'apple') => Promise<void>;
   tier: SubscriptionTier;
+  isAdmin: boolean;
   dailyUsage: number;
   incrementDailyUsage: () => void;
   resetDailyUsage: () => void;
@@ -28,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [tier, setTier] = useState<SubscriptionTier>('free');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [dailyUsage, setDailyUsage] = useState(0);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await fetchUserDetails(session.user.id);
         } else {
           setTier('free');
+          setIsAdmin(false);
           setDailyUsage(0);
         }
       }
@@ -92,17 +95,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data) {
         setTier(data.subscription_tier as SubscriptionTier || 'free');
+        setIsAdmin(data.is_admin || false);
         setDailyUsage(data.daily_usage || 0);
       } else {
         // Create new user profile if it doesn't exist
         await supabase
           .from('user_profiles')
           .insert([
-            { id: userId, subscription_tier: 'free', daily_usage: 0 }
+            { id: userId, subscription_tier: 'free', daily_usage: 0, is_admin: false }
           ]);
+        
+        setIsAdmin(false);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      setIsAdmin(false);
     }
   };
 
@@ -156,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     await supabase.auth.signOut();
     setTier('free');
+    setIsAdmin(false);
     setDailyUsage(0);
   };
 
@@ -186,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updatePassword,
     signInWithProvider,
     tier,
+    isAdmin,
     dailyUsage,
     incrementDailyUsage,
     resetDailyUsage,

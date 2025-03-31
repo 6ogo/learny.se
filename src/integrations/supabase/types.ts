@@ -208,6 +208,7 @@ export type Database = {
           created_at: string
           daily_usage: number
           id: string
+          is_admin: boolean
           subscription_tier: string
           updated_at: string
         }
@@ -215,6 +216,7 @@ export type Database = {
           created_at?: string
           daily_usage?: number
           id: string
+          is_admin?: boolean
           subscription_tier?: string
           updated_at?: string
         }
@@ -222,6 +224,7 @@ export type Database = {
           created_at?: string
           daily_usage?: number
           id?: string
+          is_admin?: boolean
           subscription_tier?: string
           updated_at?: string
         }
@@ -232,6 +235,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
       reset_daily_usage: {
         Args: Record<PropertyKey, never>
         Returns: undefined

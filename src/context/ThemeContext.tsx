@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect } from 'react';
 
 interface ThemeContextType {
@@ -15,6 +16,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     // Force dark mode
     document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
     localStorage.setItem('learny-theme', 'dark');
   }, []);
 

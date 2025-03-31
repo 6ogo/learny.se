@@ -12,7 +12,7 @@ import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminPage = () => {
-  const { user, tier } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -26,17 +26,10 @@ const AdminPage = () => {
       }
       
       try {
-        // Check if user has super tier from auth context
-        if (tier === 'super') {
-          setIsAdmin(true);
-          setIsLoading(false);
-          return;
-        }
-        
-        // As a backup, check directly from database
+        // Check if user is admin directly from database
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('subscription_tier')
+          .select('is_admin')
           .eq('id', user.id)
           .single();
           
@@ -45,8 +38,8 @@ const AdminPage = () => {
           throw error;
         }
         
-        // Check if the subscription tier is 'super'
-        if (data && data.subscription_tier === 'super') {
+        // Check if the user is admin
+        if (data && data.is_admin) {
           setIsAdmin(true);
         } else {
           toast({
@@ -70,7 +63,7 @@ const AdminPage = () => {
     };
     
     checkAdminStatus();
-  }, [user, tier, navigate, toast]);
+  }, [user, navigate, toast]);
   
   if (isLoading) {
     return (

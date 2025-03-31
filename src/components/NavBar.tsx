@@ -25,7 +25,7 @@ import {
 import { useTheme } from '@/context/ThemeContext';
 
 export const NavBar: React.FC = () => {
-  const { user, signOut, tier } = useAuth();
+  const { user, signOut, tier, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -91,13 +91,13 @@ export const NavBar: React.FC = () => {
                     <span>Konto</span>
                   </Link>
                 </DropdownMenuItem>
-                {tier === 'super' && (
-                  <Link to="/admin">
-                    <Button variant="ghost" size="sm" className="w-full justify-start">
-                      <ShieldCheck className="mr-2 h-5 w-5" />
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin">
+                      <ShieldCheck className="mr-2 h-4 w-4" />
                       <span>Admin</span>
-                    </Button>
-                  </Link>
+                    </Link>
+                  </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>

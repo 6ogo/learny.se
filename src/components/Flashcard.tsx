@@ -96,6 +96,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     }
     
     setAnswered(true);
+    // Always set feedback message for correct answers
     const feedback = getRandomPositiveFeedback();
     setFeedbackMessage(feedback);
     
@@ -115,6 +116,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     }
     
     setAnswered(true);
+    // Always set feedback message for incorrect answers
     const feedback = getRandomNegativeFeedback();
     setFeedbackMessage(feedback);
     
@@ -147,7 +149,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         : "Detta kort är inte längre markerat som inlärt.",
     });
     
-    // We don't move to the next card here anymore
+    // We don't move to the next card here
   };
 
   const handleReportCard = () => {
@@ -227,7 +229,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         </motion.div>
       </div>
 
-      {/* Feedback message */}
+      {/* Feedback message - Always show when there's a message */}
       <AnimatePresence>
         {feedbackMessage && (
           <motion.div
@@ -236,7 +238,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             exit={{ opacity: 0 }}
             className={cn(
               "mt-4 p-3 rounded-lg text-center font-medium",
-              feedbackMessage.includes("träna") || feedbackMessage.includes("Inte") || feedbackMessage.includes("svårt") || feedbackMessage.includes("misstag")
+              feedbackMessage.includes("träna") || feedbackMessage.includes("Inte") || 
+              feedbackMessage.includes("svårt") || feedbackMessage.includes("misstag") || 
+              feedbackMessage.includes("öva") || feedbackMessage.includes("fallgrop")
                 ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
                 : "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
             )}
@@ -254,7 +258,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-learny-red hover:bg-learny-red/5 hover:text-learny-red dark:border-learny-red dark:hover:bg-learny-red/20 dark:text-white dark:hover:text-learny-red-dark w-32"
+                  className="border-learny-red hover:bg-learny-red/5 hover:text-learny-red dark:border-learny-red dark:hover:bg-learny-red/20 dark:text-white dark:hover:text-learny-red-dark w-full"
                   onClick={handleIncorrect}
                 >
                   <XCircle className="mr-2 h-5 w-5" />
@@ -263,7 +267,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
                 
                 <Button
                   size="lg"
-                  className="bg-learny-green hover:bg-learny-green/90 dark:bg-learny-green-dark dark:hover:bg-learny-green/90 w-32"
+                  className="bg-learny-green hover:bg-learny-green/90 dark:bg-learny-green-dark dark:hover:bg-learny-green/90 w-full"
                   onClick={handleCorrect}
                 >
                   <CheckCircle className="mr-2 h-5 w-5" />
@@ -274,7 +278,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               <div className="flex justify-center">
                 <Button
                   variant="outline"
-                  className="border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-64"
+                  className="border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-full"
                   onClick={toggleLearned}
                 >
                   {flashcard.learned ? (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -35,8 +34,8 @@ export const ReportedFlashcards: React.FC = () => {
       const { data: flashcardsData } = await supabase
         .from('flashcards')
         .select('*')
-        .gt('reportCount', 0)
-        .order('reportCount', { ascending: false });
+        .gt('report_count', 0)
+        .order('report_count', { ascending: false });
       
       if (flashcardsData) {
         setReportedCards(flashcardsData.map(card => ({
@@ -46,9 +45,12 @@ export const ReportedFlashcards: React.FC = () => {
           category: card.category,
           subcategory: card.subcategory || undefined,
           difficulty: card.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-          reportCount: card.reportCount || 0,
-          reportReason: card.reportReason || [],
-          isApproved: card.isApproved || false
+          reportCount: card.report_count || 0,
+          reportReason: card.report_reason || [],
+          isApproved: card.is_approved || false,
+          report_count: card.report_count || 0,
+          report_reason: card.report_reason || [],
+          is_approved: card.is_approved || false
         })));
         
         // Extract unique categories
@@ -76,9 +78,9 @@ export const ReportedFlashcards: React.FC = () => {
       await supabase
         .from('flashcards')
         .update({ 
-          isApproved: true,
-          reportCount: 0,
-          reportReason: [] 
+          is_approved: true,
+          report_count: 0,
+          report_reason: [] 
         })
         .eq('id', card.id);
       
@@ -143,9 +145,9 @@ export const ReportedFlashcards: React.FC = () => {
         .update({ 
           question: editedQuestion,
           answer: editedAnswer,
-          isApproved: true,
-          reportCount: 0,
-          reportReason: [] 
+          is_approved: true,
+          report_count: 0,
+          report_reason: [] 
         })
         .eq('id', currentFlashcard.id);
       

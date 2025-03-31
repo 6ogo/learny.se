@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,7 +84,7 @@ export const AdminAnalytics: React.FC = () => {
       
       if (flashcardsError) throw flashcardsError;
       
-      const reportedCount = flashcardsData.filter(f => f.reportCount && f.reportCount > 0).length;
+      const reportedCount = flashcardsData.filter(f => f.report_count && f.report_count > 0).length;
       
       // Calculate category distribution
       const categoryCount: Record<string, number> = {};

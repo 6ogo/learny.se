@@ -24,6 +24,10 @@ export type Flashcard = {
   module_id?: string;
   user_id?: string;
   next_review?: string;
+  // Additional DB fields for reporting functionality
+  report_count?: number;
+  report_reason?: string[];
+  is_approved?: boolean;
 };
 
 export type ReportReason = 

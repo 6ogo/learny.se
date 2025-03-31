@@ -5,7 +5,7 @@ export const initialPrograms: Program[] = [
   // --- Medicine ---
   {
     id: 'med-basics-expanded', // New ID for expanded program
-    name: 'Medicinska Grundbegrepp (Utökad)',
+    name: 'Medicinska Grundbegrepp',
     description: 'Utökad genomgång av grundläggande medicinska termer och koncept.',
     category: 'medicine',
     difficulty: 'beginner',
@@ -44,7 +44,7 @@ export const initialPrograms: Program[] = [
   // Subcategory: JavaScript
   {
     id: 'js-basics-expanded',
-    name: 'JavaScript Grunder (Utökad)',
+    name: 'JavaScript Grunder',
     description: 'Grundläggande JavaScript: variabler, funktioner, loopar, events, DOM-koppling.',
     category: 'coding',
     difficulty: 'beginner',
@@ -53,7 +53,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'js-intermediate-expanded',
-    name: 'JavaScript Fortsättning (Utökad)',
+    name: 'JavaScript Fortsättning',
     description: 'DOM-manipulation, callbacks, Promises, scope, array-metoder, `this`.',
     category: 'coding',
     difficulty: 'intermediate',
@@ -62,7 +62,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'js-advanced-expanded',
-    name: 'Avancerad JavaScript (Utökad)',
+    name: 'Avancerad JavaScript',
     description: 'Async/await, closures, prototyper, event loop, hoisting, Web Workers.',
     category: 'coding',
     difficulty: 'advanced',
@@ -71,7 +71,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'js-expert-expanded',
-    name: 'JavaScript Expert (Utökad)',
+    name: 'JavaScript Expert',
     description: 'Generators, Proxies, WeakMap/Set, minneshantering, micro/macro tasks, Web Components.',
     category: 'coding',
     difficulty: 'expert',
@@ -81,7 +81,7 @@ export const initialPrograms: Program[] = [
   // Subcategory: HTML
   {
     id: 'html-basics-expanded',
-    name: 'HTML Grunder (Utökad)',
+    name: 'HTML Grunder',
     description: 'Lär dig grundläggande HTML-taggar och attribut för webbstruktur.',
     category: 'coding',
     difficulty: 'beginner',
@@ -90,7 +90,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'html-intermediate-expanded',
-    name: 'HTML Fortsättning (Utökad)',
+    name: 'HTML Fortsättning',
     description: 'Semantiska element, formulär, tabeller, media, block vs inline.',
     category: 'coding',
     difficulty: 'intermediate',
@@ -99,7 +99,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'html-advanced-expanded',
-    name: 'Avancerad HTML (Utökad)',
+    name: 'Avancerad HTML',
     description: 'ARIA för tillgänglighet, Canvas för grafik, SVG för vektorer, Web Components.',
     category: 'coding',
     difficulty: 'advanced',
@@ -109,7 +109,7 @@ export const initialPrograms: Program[] = [
   // Subcategory: Python
   {
     id: 'python-basics-expanded',
-    name: 'Python Grundkurs (Utökad)',
+    name: 'Python Grundkurs',
     description: 'Grundläggande Python-syntax, datatyper, funktioner, loopar.',
     category: 'coding',
     difficulty: 'beginner',
@@ -118,7 +118,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'python-intermediate-expanded',
-    name: 'Python Fortsättning (Utökad)',
+    name: 'Python Fortsättning',
     description: 'List comprehensions, klasser/objekt, moduler, filhantering, *args/**kwargs.',
     category: 'coding',
     difficulty: 'intermediate',
@@ -127,7 +127,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'python-advanced-expanded',
-    name: 'Avancerad Python (Utökad)',
+    name: 'Avancerad Python',
     description: 'Decorators, generators, context managers, asyncio, GIL, descriptors, properties.',
     category: 'coding',
     difficulty: 'advanced',
@@ -136,7 +136,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'python-expert-expanded',
-    name: 'Python Expert (Utökad)',
+    name: 'Python Expert',
     description: 'Metaclasses, datamodellen, minneshantering, ABCs, coroutines, WSGI.',
     category: 'coding',
     difficulty: 'expert',
@@ -147,7 +147,7 @@ export const initialPrograms: Program[] = [
   // --- Math ---
   {
     id: 'math-algebra-beginner-expanded',
-    name: 'Algebra Grunder (Utökad)',
+    name: 'Algebra Grunder',
     description: 'Grundläggande algebra, ekvationslösning, förenkling.',
     category: 'math',
     difficulty: 'beginner',
@@ -156,7 +156,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'math-geometry-beginner-expanded',
-    name: 'Geometri Grunder (Utökad)',
+    name: 'Geometri Grunder',
     description: 'Pythagoras, area, omkrets, grundläggande figurer.',
     category: 'math',
     difficulty: 'beginner',
@@ -174,7 +174,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'math-algebra-intermediate-expanded',
-    name: 'Algebra Fortsättning (Utökad)',
+    name: 'Algebra Fortsättning',
     description: 'Andragradsekvationer, funktioner, logaritmer, system.',
     category: 'math',
     difficulty: 'intermediate',
@@ -239,7 +239,7 @@ export const initialPrograms: Program[] = [
   // --- Languages ---
   {
     id: 'swedish-basics-expanded',
-    name: 'Svenska för Nybörjare (Utökad)',
+    name: 'Svenska för Nybörjare',
     description: 'Grundläggande svenska ord, fraser, räkneord och enkla frågor.',
     category: 'languages',
     difficulty: 'beginner',
@@ -257,7 +257,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'swedish-advanced-expanded',
-    name: 'Avancerad Svenska (Utökad)',
+    name: 'Avancerad Svenska',
     description: 'Konjunktiv, ordföljd (V2, bisats), pronomen, particip, nominalfraser.',
     category: 'languages',
     difficulty: 'advanced',
@@ -278,7 +278,7 @@ export const initialPrograms: Program[] = [
   // --- Science ---
   {
     id: 'biology-basics-expanded',
-    name: 'Biologi Grunder (Utökad)',
+    name: 'Biologi Grunder',
     description: 'Cellen, fotosyntes, DNA, ekosystem, näringskedjor, artbegreppet.',
     category: 'science',
     difficulty: 'beginner',
@@ -287,7 +287,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'chemistry-basics-expanded',
-    name: 'Kemi Grunder (Utökad)',
+    name: 'Kemi Grunder',
     description: 'Aggregationsformer, atom/molekyl, vatten, reaktioner, grundämne, blandning.',
     category: 'science',
     difficulty: 'beginner',
@@ -296,7 +296,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'physics-basics-expanded',
-    name: 'Fysik Grunder (Utökad)',
+    name: 'Fysik Grunder',
     description: 'Gravitation, energi, ljud, ljus, magnetism, kraft, elektricitet, friktion.',
     category: 'science',
     difficulty: 'beginner',
@@ -305,7 +305,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'biology-intermediate-expanded',
-    name: 'Biologi Medel (Utökad)',
+    name: 'Biologi Medel',
     description: 'Cellandning, evolution, mitos/meios, enzymer, ATP, celltyper, DNA-struktur.',
     category: 'science',
     difficulty: 'intermediate',
@@ -314,7 +314,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'chemistry-intermediate-expanded',
-    name: 'Kemi Medel (Utökad)',
+    name: 'Kemi Medel',
     description: 'pH, bindningstyper, periodiska systemet, katalysatorer, isotoper, syra/bas, molbegreppet, redox.',
     category: 'science',
     difficulty: 'intermediate',
@@ -323,7 +323,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'physics-intermediate-expanded',
-    name: 'Fysik Medel (Utökad)',
+    name: 'Fysik Medel',
     description: 'Newtons lagar, energi, tryck/lyftkraft, värme/temperatur, vågor, E/M-spektrum, Doppler.',
     category: 'science',
     difficulty: 'intermediate',
@@ -332,7 +332,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'biology-advanced-expanded',
-    name: 'Biologi Avancerad (Utökad)',
+    name: 'Biologi Avancerad',
     description: 'Centrala dogmen, PCR, apoptos, neurotransmission, immunitet, cellsignalering.',
     category: 'science',
     difficulty: 'advanced',
@@ -341,7 +341,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'chemistry-advanced-expanded',
-    name: 'Kemi Avancerad (Utökad)',
+    name: 'Kemi Avancerad',
     description: 'Termodynamik (entalpi, entropi, Gibbs), redox, isomeri, kinetik (Arrhenius), jämvikt (Le Chatelier).',
     category: 'science',
     difficulty: 'advanced',
@@ -350,7 +350,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'physics-advanced-expanded',
-    name: 'Fysik Avancerad (Utökad)',
+    name: 'Fysik Avancerad',
     description: 'Speciell relativitet, kvantmekanik (våg-partikel, Heisenberg), Big Bang, radioaktivitet, fotoner, halvledare.',
     category: 'science',
     difficulty: 'advanced',
@@ -359,7 +359,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'biology-expert-expanded',
-    name: 'Biologi Expert (Utökad)',
+    name: 'Biologi Expert',
     description: 'CRISPR, epigenetik, synaptisk plasticitet, HPA-axeln, mikrobiomets roll.',
     category: 'science',
     difficulty: 'expert',
@@ -368,7 +368,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'chemistry-expert-expanded',
-    name: 'Kemi Expert (Utökad)',
+    name: 'Kemi Expert',
     description: 'Schrödinger, QFT, kiralitet, diffusion, NMR-spektroskopi.',
     category: 'science',
     difficulty: 'expert',
@@ -377,7 +377,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'physics-expert-expanded',
-    name: 'Fysik Expert (Utökad)',
+    name: 'Fysik Expert',
     description: 'Maxwells ekv., allmän relativitet, Standardmodellen, kvantsammanflätning, Hawkingstrålning.',
     category: 'science',
     difficulty: 'expert',
@@ -389,7 +389,7 @@ export const initialPrograms: Program[] = [
   // --- Geography ---
   {
     id: 'geography-basics-expanded',
-    name: 'Geografi Grunder (Utökad)',
+    name: 'Geografi Grunder',
     description: 'Grundläggande termer, kartor, kontinenter, hav, landformer.',
     category: 'geography',
     difficulty: 'beginner',
@@ -398,7 +398,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'geography-intermediate-expanded',
-    name: 'Geografi Medel (Utökad)',
+    name: 'Geografi Medel',
     description: 'Klimatfenomen, landformer, kartografi, demografi, havsströmmar.',
     category: 'geography',
     difficulty: 'intermediate',
@@ -407,7 +407,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'geography-advanced-expanded',
-    name: 'Geografi Avancerad (Utökad)',
+    name: 'Geografi Avancerad',
     description: 'ENSO, Corioliseffekt, GIS, HDI, geomorfologi, hållbarhet.',
     category: 'geography',
     difficulty: 'advanced',
@@ -416,7 +416,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'geography-expert-expanded',
-    name: 'Geografi Expert (Utökad)',
+    name: 'Geografi Expert',
     description: 'Klimatklassificering, plattektonik, termohalin cirkulation, geopolitik, antropocen.',
     category: 'geography',
     difficulty: 'expert',
@@ -427,7 +427,7 @@ export const initialPrograms: Program[] = [
   // --- Vehicles ---
    {
     id: 'car-basics-expanded',
-    name: 'Bilens Grunder (Utökad)',
+    name: 'Bilens Grunder',
     description: 'Motorprinciper, bromsar, växellåda, säkerhetsutrustning.',
     category: 'vehicles',
     difficulty: 'beginner',
@@ -436,7 +436,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'car-intermediate-expanded',
-    name: 'Bilteknik Medel (Utökad)',
+    name: 'Bilteknik Medel',
     description: 'Motor/drivlina (turbo, RWD/FWD/AWD, differential), chassi (kylning, fjädring), elsystem (generator).',
     category: 'vehicles',
     difficulty: 'intermediate',
@@ -445,7 +445,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'car-advanced-expanded',
-    name: 'Avancerad Bilteknik (Utökad)',
+    name: 'Avancerad Bilteknik',
     description: 'CVT, el/hybrid-drivlinor, motorcykler (Atkinson), aktiv fjädring, LiDAR, VVT, DCT.',
     category: 'vehicles',
     difficulty: 'advanced',
@@ -454,7 +454,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'car-expert-expanded',
-    name: 'Bilteknik Expert (Utökad)',
+    name: 'Bilteknik Expert',
     description: 'Regenerativ bromsning, batteriteknik, HCCI, SCR/AdBlue, material, Miller-cykel, CAN-buss, säkerhet, lambda.',
     category: 'vehicles',
     difficulty: 'expert',
@@ -463,7 +463,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'boating-basics-expanded',
-    name: 'Båtens Grunder (Utökad)',
+    name: 'Båtens Grunder',
     description: 'Grundläggande båttermer (för/akter, styrbord/babord), säkerhet, framdrivning (propeller, segel).',
     category: 'vehicles',
     difficulty: 'beginner',
@@ -472,7 +472,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'boating-intermediate-expanded',
-    name: 'Sjöfart Medel (Utökad)',
+    name: 'Sjöfart Medel',
     description: 'Deplacement, båttyper, styrning (roder), stabilitet (köl), navigation (knop, sjökort, GPS, kryssning).',
     category: 'vehicles',
     difficulty: 'intermediate',
@@ -481,7 +481,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'boating-advanced-expanded',
-    name: 'Avancerad Sjöfart (Utökad)',
+    name: 'Avancerad Sjöfart',
     description: 'Planing, barlast, vindtermer, manövrering (bogpropeller), AIS, skrovformer, hydrofoil, riggtyper.',
     category: 'vehicles',
     difficulty: 'advanced',
@@ -490,7 +490,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'naval-expert-expanded',
-    name: 'Fartygsteknik Expert (Utökad)',
+    name: 'Fartygsteknik Expert',
     description: 'Arkimedes/stabilitet (GM, GZ), tonnage, roder/propeller (kavitation), Froudes tal, avancerade propellrar.',
     category: 'vehicles',
     difficulty: 'expert',
@@ -499,7 +499,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'airplane-basics-expanded',
-    name: 'Flygplan Grunder (Utökad)',
+    name: 'Flygplan Grunder',
     description: 'Flygplanets delar (vinge, cockpit, kropp, stjärt), start/landning, pilotens roll.',
     category: 'vehicles',
     difficulty: 'beginner',
@@ -508,7 +508,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'airplane-intermediate-expanded',
-    name: 'Flygningens Principer (Utökad)',
+    name: 'Flygningens Principer',
     description: 'De fyra krafterna, kontrollytor (skev-, höjd-, sidoroder), lyftkraft, luftmotstånd, autopilot.',
     category: 'vehicles',
     difficulty: 'intermediate',
@@ -517,7 +517,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'airplane-advanced-expanded',
-    name: 'Flygteknik Avancerad (Utökad)',
+    name: 'Flygteknik Avancerad',
     description: 'Jetmotorer, tryckkabin, flaps/slats, stall, vingbelastning, markeffekt, V-hastigheter.',
     category: 'vehicles',
     difficulty: 'advanced',
@@ -526,7 +526,7 @@ export const initialPrograms: Program[] = [
   },
   {
     id: 'airplane-expert-expanded',
-    name: 'Flygteknik Expert (Utökad)',
+    name: 'Flygteknik Expert',
     description: 'Aerodynamik (Bernoulli/Newton, L/D), Mach-tal, stabilitet (statisk/dynamisk), Fly-by-wire, Area rule, ETOPS.',
     category: 'vehicles',
     difficulty: 'expert',
@@ -537,7 +537,7 @@ export const initialPrograms: Program[] = [
   // --- Economics ---
   {
     id: 'econ-basics-expanded',
-    name: 'Ekonomi Grunder (Utökad)',
+    name: 'Ekonomi Grunder',
     description: 'Mikro/Makro, alternativkostnad, utbud/efterfrågan, inflation, BNP, budget, ränta, skatt.',
     category: 'economics',
     difficulty: 'beginner',
@@ -546,7 +546,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'econ-intermediate-expanded',
-    name: 'Ekonomi Medel (Utökad)',
+    name: 'Ekonomi Medel',
     description: 'Penning-/finanspolitik, elasticitet, konjunktur, marknadsformer (monopol, oligopol), marginalanalys, externa effekter.',
     category: 'economics',
     difficulty: 'intermediate',
@@ -555,7 +555,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'econ-advanced-expanded',
-    name: 'Ekonomi Avancerad (Utökad)',
+    name: 'Ekonomi Avancerad',
     description: 'Phillipskurvan, informationsproblem (moral hazard, adverse selection), handelsteori, IS-LM, tillväxtmodeller.',
     category: 'economics',
     difficulty: 'advanced',
@@ -575,7 +575,7 @@ export const initialPrograms: Program[] = [
   // --- History ---
    {
     id: 'history-basics-expanded',
-    name: 'Historia Grunder (Utökad)',
+    name: 'Historia Grunder',
     description: 'Mesopotamien, Alexander, Rom, WWI, MLK, pyramider, Columbus, vikingatid, medeltid, WWII.',
     category: 'history',
     difficulty: 'beginner',
@@ -584,7 +584,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'history-intermediate-expanded',
-    name: 'Historia Medel (Utökad)',
+    name: 'Historia Medel',
     description: 'Feodalism, renässans, upplysning, industriell rev, kalla kriget, reformation, Caesar, korståg, digerdöd, franska rev.',
     category: 'history',
     difficulty: 'intermediate',
@@ -593,7 +593,7 @@ export const initialPrograms: Program[] = [
   },
    {
     id: 'history-advanced-expanded',
-    name: 'Historia Avancerad (Utökad)',
+    name: 'Historia Avancerad',
     description: 'Franska rev orsaker, Versailles, Förintelsen, Berlinmuren, Marshallplanen, Amerikanska rev, Sidenvägen, Roms fall, Meiji, Westfaliska freden.',
     category: 'history',
     difficulty: 'advanced',

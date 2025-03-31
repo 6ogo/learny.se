@@ -1,3 +1,4 @@
+// src/components/FlashcardsBySubcategory.tsx
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { Flashcard } from '@/components/Flashcard';
@@ -15,149 +16,107 @@ interface FlashcardsBySubcategoryProps {
 export const FlashcardsBySubcategory: React.FC<FlashcardsBySubcategoryProps> = ({ categoryId }) => {
   const { getFlashcardsByCategory } = useLocalStorage();
   const [currentIndices, setCurrentIndices] = useState<Record<string, Record<string, number>>>({});
-  
-  // Get all flashcards for this category
-  const flashcards = getFlashcardsByCategory(categoryId);
-  
-  // Function to identify subcategories (based on flashcard ID prefixes or other logic)
-  const identifySubcategory = (flashcard: FlashcardType): string => {
-    // This is a simple example - you may need to adjust based on your actual data structure
-    // Looking at program names like "JavaScript Grunder", "Python Grundkurs", "Algebra Grunder"
-    // We can extract subcategories like JavaScript, Python, Algebra
-    
-    const id = flashcard.id;
-    
-    // Check for common prefixes in your flashcard IDs
-    if (id.startsWith('js_') || id.startsWith('code')) return 'JavaScript';
-    if (id.startsWith('py') || id.startsWith('py_')) return 'Python';
-    if (id.startsWith('html_')) return 'HTML';
-    if (id.startsWith('css_')) return 'CSS';
-    
-    if (id.startsWith('math_alg_')) return 'Algebra';
-    if (id.startsWith('math_geo_')) return 'Geometri';
-    if (id.startsWith('math_arith_')) return 'Aritmetik';
-    if (id.startsWith('math_calc_')) return 'Kalkyl';
-    if (id.startsWith('math_linalg_')) return 'Linjär Algebra';
-    if (id.startsWith('math_disc_')) return 'Diskret Matematik';
-    if (id.startsWith('math_prob_')) return 'Sannolikhet';
-    if (id.startsWith('calc')) return 'Kalkyl';
-    if (id.startsWith('math')) return 'Grundläggande Matematik';
-    
-    if (id.startsWith('med_') || id.startsWith('med-')) return 'Medicinska Termer';
-    
-    if (id.startsWith('swe_')) return 'Svenska';
-    if (id.startsWith('eng_')) return 'Engelska';
-    
-    if (id.startsWith('sci_bio_')) return 'Biologi';
-    if (id.startsWith('sci_chem_')) return 'Kemi';
-    if (id.startsWith('sci_phy_')) return 'Fysik';
-    if (id.startsWith('phys')) return 'Fysik';
-    if (id.startsWith('chem')) return 'Kemi';
-    if (id.startsWith('bio')) return 'Biologi';
-    if (id.startsWith('sci')) return 'Allmän Vetenskap';
-    
-    if (id.startsWith('geo_')) return 'Allmän Geografi';
-    if (id.startsWith('geo')) return 'Allmän Geografi';
-    
-    if (id.startsWith('car_')) return 'Bilar';
-    if (id.startsWith('boat_')) return 'Båtar';
-    if (id.startsWith('plane_')) return 'Flygplan';
-    if (id.startsWith('veh')) return 'Fordon';
-    
-    if (id.startsWith('econ_')) return 'Ekonomi';
-    if (id.startsWith('econ')) return 'Ekonomi';
-    
-    if (id.startsWith('hist_')) return 'Historia';
-    if (id.startsWith('hist')) return 'Historia';
-    
-    // Default subcategory if no match
-    return 'Allmänt';
-  };
-  
-  // Group flashcards by subcategory and difficulty
-  const flashcardGroups = flashcards.reduce((groups, flashcard) => {
-    const subcategory = identifySubcategory(flashcard);
-    const difficulty = flashcard.difficulty;
-    
-    if (!groups[subcategory]) {
-      groups[subcategory] = {};
-    }
-    
-    if (!groups[subcategory][difficulty]) {
-      groups[subcategory][difficulty] = [];
-    }
-    
-    groups[subcategory][difficulty].push(flashcard);
-    return groups;
-  }, {} as Record<string, Record<string, FlashcardType[]>>);
-  
-  // Initialize currentIndices
+  const [flashcardGroups, setFlashcardGroups] = useState<Record<string, Record<string, FlashcardType[]>>>({});
+
+  // Get all flashcards for this category and group them
   useEffect(() => {
+    const allFlashcards = getFlashcardsByCategory(categoryId);
+
+    const grouped = allFlashcards.reduce((groups, flashcard) => {
+      // Use the explicit subcategory, fallback to 'Allmänt' if undefined/missing
+      const subcategory = flashcard.subcategory || 'Allmänt';
+      const difficulty = flashcard.difficulty;
+
+      if (!groups[subcategory]) {
+        groups[subcategory] = {};
+      }
+
+      if (!groups[subcategory][difficulty]) {
+        groups[subcategory][difficulty] = [];
+      }
+
+      groups[subcategory][difficulty].push(flashcard);
+      return groups;
+    }, {} as Record<string, Record<string, FlashcardType[]>>);
+
+    setFlashcardGroups(grouped);
+
+    // Initialize currentIndices based on the new groups
     const initialIndices: Record<string, Record<string, number>> = {};
-    Object.keys(flashcardGroups).forEach(subcategory => {
+    Object.keys(grouped).forEach(subcategory => {
       initialIndices[subcategory] = {};
-      Object.keys(flashcardGroups[subcategory]).forEach(difficulty => {
+      Object.keys(grouped[subcategory]).forEach(difficulty => {
         initialIndices[subcategory][difficulty] = 0;
       });
     });
     setCurrentIndices(initialIndices);
-  }, [flashcardGroups]);
-  
+
+  }, [categoryId, getFlashcardsByCategory]); // Re-run if categoryId changes
+
   const handlePrevious = (subcategory: string, difficulty: string) => {
     setCurrentIndices(prev => {
+      const cardsInGroup = flashcardGroups[subcategory]?.[difficulty] || []; // Safety check
+      if (cardsInGroup.length === 0) return prev; // Avoid errors if group somehow becomes empty
       const currentIndex = prev[subcategory]?.[difficulty] || 0;
-      const cardsInGroup = flashcardGroups[subcategory][difficulty].length;
-      
       return {
         ...prev,
         [subcategory]: {
-          ...prev[subcategory],
-          [difficulty]: currentIndex > 0 ? currentIndex - 1 : cardsInGroup - 1
+          ...(prev[subcategory] || {}), // Ensure subcategory exists
+          [difficulty]: currentIndex > 0 ? currentIndex - 1 : cardsInGroup.length - 1
         }
       };
     });
   };
-  
+
   const handleNext = (subcategory: string, difficulty: string) => {
     setCurrentIndices(prev => {
+      const cardsInGroup = flashcardGroups[subcategory]?.[difficulty] || []; // Safety check
+      if (cardsInGroup.length === 0) return prev; // Avoid errors if group somehow becomes empty
       const currentIndex = prev[subcategory]?.[difficulty] || 0;
-      const cardsInGroup = flashcardGroups[subcategory][difficulty].length;
-      
       return {
         ...prev,
         [subcategory]: {
-          ...prev[subcategory],
-          [difficulty]: currentIndex < cardsInGroup - 1 ? currentIndex + 1 : 0
+          ...(prev[subcategory] || {}), // Ensure subcategory exists
+          [difficulty]: currentIndex < cardsInGroup.length - 1 ? currentIndex + 1 : 0
         }
       };
     });
   };
-  
+
   const getDifficultyLabel = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner': return 'Nybörjare';
       case 'intermediate': return 'Medel';
       case 'advanced': return 'Avancerad';
       case 'expert': return 'Expert';
-      default: return difficulty;
+      default: return difficulty; // Fallback
     }
   };
-  
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner': return 'border-learny-green dark:border-learny-green-dark';
       case 'intermediate': return 'border-learny-blue dark:border-learny-blue-dark';
       case 'advanced': return 'border-learny-purple dark:border-learny-purple-dark';
       case 'expert': return 'border-learny-red dark:border-learny-red-dark';
-      default: return '';
+      default: return 'border-gray-300 dark:border-gray-600'; // Fallback border color
     }
   };
-  
+
   // Sort difficulties in a logical order
   const difficultyOrder = ['beginner', 'intermediate', 'advanced', 'expert'];
   const sortedDifficulties = (difficulties: string[]) => {
     return difficulties.sort((a, b) => difficultyOrder.indexOf(a) - difficultyOrder.indexOf(b));
   };
+
+  // Sort subcategories alphabetically for display
+  const sortedSubcategories = Object.keys(flashcardGroups).sort((a, b) => {
+      // Optional: Keep 'Allmänt' first or last if desired
+      if (a === 'Allmänt') return -1;
+      if (b === 'Allmänt') return 1;
+      return a.localeCompare(b);
+  });
+
 
   if (Object.keys(flashcardGroups).length === 0) {
     return (
@@ -184,52 +143,68 @@ export const FlashcardsBySubcategory: React.FC<FlashcardsBySubcategoryProps> = (
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="w-full">
-          {Object.keys(flashcardGroups).sort().map(subcategory => (
-            <AccordionItem key={subcategory} value={subcategory}>
-              <AccordionTrigger className="text-lg font-medium">{subcategory}</AccordionTrigger>
-              <AccordionContent>
-                {sortedDifficulties(Object.keys(flashcardGroups[subcategory])).map(difficulty => {
-                  const cardsInGroup = flashcardGroups[subcategory][difficulty];
-                  const currentCardIndex = currentIndices[subcategory]?.[difficulty] || 0;
-                  
-                  return (
-                    <Card key={difficulty} className={cn("mb-4 border-l-4", getDifficultyColor(difficulty))}>
-                      <CardHeader>
-                        <CardTitle className="flex justify-between items-center">
-                          <span>{getDifficultyLabel(difficulty)} ({cardsInGroup.length} kort)</span>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => handlePrevious(subcategory, difficulty)}
-                              disabled={cardsInGroup.length <= 1}
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => handleNext(subcategory, difficulty)}
-                              disabled={cardsInGroup.length <= 1}
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {cardsInGroup.length > 0 && (
-                          <Flashcard 
-                            flashcard={cardsInGroup[currentCardIndex]} 
-                            showControls={true}
-                          />
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </AccordionContent>
-            </AccordionItem>
+          {/* Iterate over sorted subcategories */}
+          {sortedSubcategories.map(subcategory => (
+            // Check if the subcategory actually has any flashcards before rendering the AccordionItem
+            Object.keys(flashcardGroups[subcategory]).length > 0 && (
+              <AccordionItem key={subcategory} value={subcategory}>
+                <AccordionTrigger className="text-lg font-medium">{subcategory}</AccordionTrigger>
+                <AccordionContent>
+                  {/* Iterate over sorted difficulties for the current subcategory */}
+                  {sortedDifficulties(Object.keys(flashcardGroups[subcategory])).map(difficulty => {
+                    const cardsInGroup = flashcardGroups[subcategory]?.[difficulty];
+                    const currentCardIndex = currentIndices[subcategory]?.[difficulty] || 0;
+
+                    // Ensure cardsInGroup exists and has items before rendering the Card
+                    if (!cardsInGroup || cardsInGroup.length === 0) return null;
+
+                    return (
+                      <Card key={`${subcategory}-${difficulty}`} className={cn("mb-4 border-l-4", getDifficultyColor(difficulty))}>
+                        <CardHeader>
+                          <CardTitle className="flex justify-between items-center">
+                            <span>{getDifficultyLabel(difficulty)} ({cardsInGroup.length} kort)</span>
+                            {/* Navigation Buttons */}
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePrevious(subcategory, difficulty)}
+                                disabled={cardsInGroup.length <= 1}
+                                aria-label={`Previous card in ${subcategory} - ${difficulty}`}
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleNext(subcategory, difficulty)}
+                                disabled={cardsInGroup.length <= 1}
+                                aria-label={`Next card in ${subcategory} - ${difficulty}`}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {/* Check if the current index is valid before accessing */}
+                          {(currentCardIndex >= 0 && currentCardIndex < cardsInGroup.length) && (
+                            <Flashcard
+                              flashcard={cardsInGroup[currentCardIndex]}
+                              showControls={true} // Show controls for individual flashcards here
+                            />
+                          )}
+                          {/* Optional: Handle case where index might be out of bounds */}
+                           {!(currentCardIndex >= 0 && currentCardIndex < cardsInGroup.length) && (
+                              <p className="text-center text-red-500">Error: Could not display flashcard.</p>
+                           )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </AccordionContent>
+              </AccordionItem>
+            )
           ))}
         </Accordion>
       </CardContent>

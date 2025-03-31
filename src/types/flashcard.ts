@@ -4,6 +4,7 @@ export type Flashcard = {
   question: string;
   answer: string;
   category: string;
+  subcategory?: string; 
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   lastReviewed?: number;
   nextReview?: number;

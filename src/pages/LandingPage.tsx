@@ -42,7 +42,7 @@ const LandingPage: React.FC = () => {
                 <div className="absolute -inset-1 bg-gradient-to-r from-learny-purple to-learny-blue rounded-lg blur-lg opacity-75 animate-pulse"></div>
                 <div className="relative bg-gray-800 rounded-lg overflow-hidden shadow-xl">
                   <img 
-                    src="/lovable-uploads/3977d71f-39ec-4118-af1f-b71f31832d06.png" 
+                    src="/logo.png" 
                     alt="Learny.se Flashcards" 
                     className="w-full h-auto rounded-t-lg"
                   />

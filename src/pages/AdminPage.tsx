@@ -24,14 +24,41 @@ const AdminPage = () => {
         return;
       }
       
-      // Check if user is super admin (tier='super' is considered admin for now)
-      // In a real application, you'd want to check a specific admin role
-      if (tier === 'super') {
-        setIsAdmin(true);
-      } else {
+      try {
+        // Check if user has super or admin role
+        // First check tier from auth context
+        if (tier === 'super') {
+          setIsAdmin(true);
+          return;
+        }
+        
+        // As a backup, check directly from database
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('subscription_tier, is_admin')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error('Error checking admin status:', error);
+          throw error;
+        }
+        
+        if (data && (data.subscription_tier === 'super' || data.is_admin)) {
+          setIsAdmin(true);
+        } else {
+          toast({
+            title: 'Åtkomst nekad',
+            description: 'Du har inte behörighet att komma åt admin-gränssnittet.',
+            variant: 'destructive'
+          });
+          navigate('/home');
+        }
+      } catch (error) {
+        console.error('Error in admin check:', error);
         toast({
-          title: 'Åtkomst nekad',
-          description: 'Du har inte behörighet att komma åt admin-gränssnittet.',
+          title: 'Ett fel uppstod',
+          description: 'Kunde inte verifiera admin-behörighet.',
           variant: 'destructive'
         });
         navigate('/home');

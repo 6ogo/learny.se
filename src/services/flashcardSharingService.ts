@@ -90,21 +90,19 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
     if (!shareCode) return [];
 
     // First, properly fetch and handle the share information
-    const response = await supabase
-      .from('flashcard_shares' as any)
-      .select('flashcard_ids')
+    const { data: shareData, error: shareError } = await supabase
+      .from('flashcard_shares')
+      .select('*')
       .eq('code', shareCode)
       .single();
 
-    if (response.error || !response.data) {
-      console.error('Error fetching share information:', response.error);
+    if (shareError) {
+      console.error('Error fetching share information:', shareError);
       return [];
     }
 
-    // First convert to unknown, then to the expected type to avoid TypeScript errors
-    const shareData = (response.data as unknown) as { flashcard_ids: string[] };
-    
-    if (!shareData.flashcard_ids || !Array.isArray(shareData.flashcard_ids)) {
+    // Check if shareData exists and has flashcard_ids
+    if (!shareData || !Array.isArray(shareData.flashcard_ids)) {
       console.error('Invalid share data structure:', shareData);
       return [];
     }
@@ -120,7 +118,7 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
       return [];
     }
 
-    // Map the database objects to our Flashcard type
+    // Map the database objects to our Flashcard type with proper type conversions
     return flashcardsData.map(card => ({
       id: card.id,
       question: card.question,
@@ -132,16 +130,16 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
       incorrectCount: card.incorrect_count,
       // Convert string timestamp to number if present, otherwise undefined
       lastReviewed: card.last_reviewed ? new Date(card.last_reviewed).getTime() : undefined,
-      learned: card.learned,
-      reviewLater: card.review_later,
+      learned: Boolean(card.learned),
+      reviewLater: Boolean(card.review_later),
       // Include reporting fields
       reportCount: card.report_count,
       reportReason: card.report_reason,
-      isApproved: card.is_approved,
+      isApproved: Boolean(card.is_approved),
       // Add snake_case versions as well
       report_count: card.report_count,
       report_reason: card.report_reason,
-      is_approved: card.is_approved
+      is_approved: Boolean(card.is_approved)
     }));
   } catch (error) {
     console.error('Error getting shared flashcards:', error);

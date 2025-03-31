@@ -1,263 +1,210 @@
 
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Flashcard as FlashcardComponent } from '@/components/Flashcard';
 import { Flashcard } from '@/types/flashcard';
-import { toast } from '@/components/ui/use-toast';
-import { ChevronLeft, Download, ArrowLeft, ArrowRight } from 'lucide-react';
+import { getSharedFlashcards, importSharedFlashcards } from '@/services/flashcardSharingService';
+import { useToast } from '@/hooks/use-toast';
+import { LandingNavBar } from '@/components/LandingNavBar';
+import { Footer } from '@/components/Footer';
+import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { importSharedFlashcards } from '@/services/groqService';
-import { useLocalStorage } from '@/context/LocalStorageContext';
 
 const SharePage = () => {
-  const { shareCode } = useParams<{ shareCode: string }>();
+  const { shareCode } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [importing, setImporting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { addFlashcard } = useLocalStorage();
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [shareTitle, setShareTitle] = useState('Delade Flashcards');
+  const [shareDescription, setShareDescription] = useState('');
+  
   useEffect(() => {
-    const fetchSharedFlashcards = async () => {
-      if (!shareCode) return;
+    const loadShareData = async () => {
+      if (!shareCode) {
+        setIsLoading(false);
+        return;
+      }
       
       try {
-        // First attempt a direct fetch as any to bypass TypeScript checks
-        const response = await supabase
-          .from('flashcard_shares' as any)
-          .select('flashcard_ids')
+        // First fetch share metadata
+        const { data: shareData, error: shareError } = await supabase
+          .from('flashcard_shares')
+          .select('*')
           .eq('code', shareCode)
           .single();
-          
-        // Handle errors and ensure data exists
-        if (response.error) {
-          console.error("Error fetching share:", response.error);
+
+        if (shareError) {
+          console.error('Error fetching share data:', shareError);
           toast({
-            title: "Delningskod ogiltig",
-            description: "Kunde inte hitta flashcards med denna delningskod.",
-            variant: "destructive",
+            title: 'Ogiltig delningskod',
+            description: 'Kunde inte hitta de delade flashcards.',
+            variant: 'destructive',
           });
-          setLoading(false);
+          setIsLoading(false);
           return;
         }
-        
-        // First convert to unknown, then to the expected type to avoid TypeScript errors
-        const shareData = (response.data as unknown) as { flashcard_ids: string[] };
-        
-        if (!shareData || !shareData.flashcard_ids || !Array.isArray(shareData.flashcard_ids)) {
-          console.error("Invalid share data structure:", shareData);
-          toast({
-            title: "Ogiltig delningsdata",
-            description: "Kunde inte läsa delningsinformationen korrekt.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
+
+        if (shareData) {
+          if (shareData.title) setShareTitle(shareData.title);
+          if (shareData.description) setShareDescription(shareData.description);
         }
         
         // Fetch the actual flashcards
-        const { data: flashcardsData, error: flashcardsError } = await supabase
-          .from('flashcards')
-          .select('*')
-          .in('id', shareData.flashcard_ids);
-          
-        if (flashcardsError) {
-          console.error("Error fetching flashcards:", flashcardsError);
+        const cards = await getSharedFlashcards(shareCode);
+        
+        if (cards.length === 0) {
           toast({
-            title: "Kunde inte läsa flashcards",
-            description: "Ett fel uppstod när vi försökte hämta de delade flashcards.",
-            variant: "destructive",
+            title: 'Inga flashcards hittades',
+            description: 'Denna delningskod innehåller inga flashcards.',
+            variant: 'destructive',
           });
-          setLoading(false);
-          return;
+        } else {
+          setFlashcards(cards);
         }
-        
-        // Convert the database flashcards to our Flashcard type
-        const typedFlashcards: Flashcard[] = flashcardsData.map(card => ({
-          id: card.id,
-          question: card.question,
-          answer: card.answer,
-          category: card.category,
-          subcategory: card.subcategory,
-          difficulty: card.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-          reportCount: card.report_count,
-          reportReason: card.report_reason,
-          isApproved: card.is_approved,
-          // Convert string timestamp to number if present, otherwise undefined
-          lastReviewed: card.last_reviewed ? new Date(card.last_reviewed).getTime() : undefined,
-          correctCount: card.correct_count,
-          incorrectCount: card.incorrect_count,
-          createdById: card.user_id,
-          // Add snake_case versions for database compatibility
-          correct_count: card.correct_count,
-          incorrect_count: card.incorrect_count,
-          last_reviewed: card.last_reviewed,
-          created_at: card.created_at,
-          module_id: card.module_id,
-          user_id: card.user_id,
-          report_count: card.report_count,
-          report_reason: card.report_reason,
-          is_approved: card.is_approved
-        }));
-        
-        setFlashcards(typedFlashcards);
       } catch (error) {
-        console.error("Error:", error);
+        console.error('Error loading shared flashcards:', error);
         toast({
-          title: "Ett fel uppstod",
-          description: "Kunde inte hämta de delade flashcards. Försök igen senare.",
-          variant: "destructive",
+          title: 'Ett fel uppstod',
+          description: 'Kunde inte ladda delade flashcards.',
+          variant: 'destructive',
         });
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
-    fetchSharedFlashcards();
-  }, [shareCode]);
-
+    
+    loadShareData();
+  }, [shareCode, toast]);
+  
   const handleImport = async () => {
     if (!shareCode) return;
     
-    try {
-      setImporting(true);
-      const success = await importSharedFlashcards(shareCode);
-      
-      if (success) {
-        // Also add to local storage
-        flashcards.forEach(flashcard => {
-          addFlashcard({
-            question: flashcard.question,
-            answer: flashcard.answer,
-            category: flashcard.category,
-            difficulty: flashcard.difficulty,
-          });
-        });
-        
-        toast({
-          title: "Flashcards importerade",
-          description: `${flashcards.length} flashcards har lagts till i din samling.`,
-        });
-      }
-    } catch (error) {
-      console.error("Import error:", error);
+    if (!user) {
+      // Prompt to sign in first
       toast({
-        title: "Importen misslyckades",
-        description: "Ett fel uppstod. Försök igen senare eller logga in först.",
-        variant: "destructive",
+        title: 'Logga in först',
+        description: 'Du måste vara inloggad för att importera flashcards.',
+        variant: 'default',
       });
-    } finally {
-      setImporting(false);
+      // Redirect to auth with return path
+      navigate(`/auth?returnTo=/share/${shareCode}`);
+      return;
+    }
+    
+    setIsLoading(true);
+    const importedCount = await importSharedFlashcards(shareCode);
+    setIsLoading(false);
+    
+    if (importedCount > 0) {
+      navigate('/home');
     }
   };
-
-  const navigateNext = () => {
+  
+  const handleNext = () => {
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
-
-  const navigatePrev = () => {
+  
+  const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
   };
-
-  return (
-    <div className="container px-4 py-8 mx-auto">
-      <Link to="/" className="inline-flex items-center text-gray-600 hover:text-learny-purple mb-6">
-        <ChevronLeft className="h-5 w-5 mr-1" />
-        Tillbaka till startsidan
-      </Link>
-
-      <h1 className="text-3xl font-bold mb-6">Delade Flashcards</h1>
-      
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin w-8 h-8 border-4 border-learny-purple border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Laddar delade flashcards...</p>
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <LandingNavBar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-learny-purple"></div>
         </div>
-      ) : flashcards.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <h2 className="text-xl font-semibold mb-2">Inga flashcards hittades</h2>
-              <p className="text-gray-600 mb-6">
-                Denna delningskod innehåller inga flashcards eller har upphört att gälla.
-              </p>
-              <Button asChild>
-                <Link to="/">Gå till startsidan</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">
-                    {flashcards.length} delade flashcards
-                  </h2>
-                  <p className="text-gray-600">
-                    Bläddra bland flashcards för att se dem, eller importera alla till din samling.
-                  </p>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-500">
-                      Kort {currentIndex + 1} av {flashcards.length}
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={navigatePrev}
-                        disabled={currentIndex === 0}
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={navigateNext}
-                        disabled={currentIndex === flashcards.length - 1}
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    className="w-full" 
-                    onClick={handleImport}
-                    disabled={importing}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    {importing ? 'Importerar...' : `Importera alla ${flashcards.length} flashcards`}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        <Footer />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="min-h-screen flex flex-col">
+      <LandingNavBar />
+      
+      <div className="flex-1 container mx-auto py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2">{shareTitle}</h1>
+          {shareDescription && (
+            <p className="text-lg mb-8 text-gray-600 dark:text-gray-300">{shareDescription}</p>
+          )}
           
-          <div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-              <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
-                Flashcard
-              </h2>
-              {flashcards[currentIndex] && (
+          {flashcards.length > 0 ? (
+            <div className="space-y-8">
+              <div className="text-right mb-4">
+                <span className="text-gray-600 dark:text-gray-300">
+                  {currentIndex + 1} av {flashcards.length}
+                </span>
+              </div>
+              
+              <Card className="h-[400px] overflow-hidden relative">
                 <FlashcardComponent 
                   flashcard={flashcards[currentIndex]} 
-                  showControls={false} 
+                  onCorrect={() => {}} 
+                  onIncorrect={() => {}}
+                  onNext={handleNext}
                 />
-              )}
+              </Card>
+              
+              <div className="flex justify-between">
+                <Button 
+                  onClick={handlePrev} 
+                  disabled={currentIndex === 0}
+                  variant="outline"
+                >
+                  Föregående
+                </Button>
+                
+                <Button 
+                  onClick={handleNext} 
+                  disabled={currentIndex === flashcards.length - 1}
+                  variant="outline"
+                >
+                  Nästa
+                </Button>
+              </div>
+              
+              <div className="text-center mt-8">
+                <Button 
+                  onClick={handleImport} 
+                  size="lg" 
+                  className="w-full md:w-auto"
+                >
+                  Importera dessa flashcards
+                </Button>
+                
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+                  Importera dessa flashcards till din samling för att studera dem när du vill.
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-semibold mb-4">Inga flashcards hittades</h2>
+              <p className="mb-8">
+                Denna delningskod innehåller inga tillgängliga flashcards eller är ogiltig.
+              </p>
+              <Button onClick={() => navigate('/')}>
+                Gå till startsidan
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+      
+      <Footer />
     </div>
   );
 };

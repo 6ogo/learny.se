@@ -16,4 +16,23 @@ export type Flashcard = {
   reportCount?: number;
   reportReason?: string[];
   isApproved?: boolean;
+  // DB specific fields
+  correct_count?: number;
+  incorrect_count?: number;
+  last_reviewed?: string;
+  created_at?: string;
+  module_id?: string;
+  user_id?: string;
+  next_review?: string;
+  // Additional DB fields for reporting functionality
+  report_count?: number;
+  report_reason?: string[];
+  is_approved?: boolean;
 };
+
+export type ReportReason = 
+  | 'incorrect_information'
+  | 'inappropriate_content'
+  | 'duplicate'
+  | 'copyright_violation'
+  | 'other';

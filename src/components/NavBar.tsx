@@ -1,91 +1,121 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useLocalStorage } from '@/context/LocalStorageContext';
-import { Trophy, PlusCircle, Home, BookOpen } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useToast } from "@/hooks/use-toast"
+import {
+  Home,
+  BookOpen,
+  Plus,
+  ListChecks,
+  User,
+  LogOut,
+  Sun,
+  Moon,
+  ShieldCheck
+} from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
 export const NavBar: React.FC = () => {
+  const { user, signOut, tier } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
-  const { userStats } = useLocalStorage();
+  const { toast } = useToast()
+  const { toggleTheme } = useTheme()
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const isAuthPage = location.pathname === '/auth';
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Utloggad",
+      description: "Du har loggats ut från ditt konto.",
+    })
+    navigate('/auth');
   };
 
   return (
-    <header className="w-full bg-learny-dark shadow-sm z-10">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center">
-              <img 
-                src="/lovable-uploads/3977d71f-39ec-4118-af1f-b71f31832d06.png" 
-                alt="Learny.se" 
-                className="h-10 w-auto mr-2" 
-              />
-              <span className="text-xl font-bold text-learny-purple-dark ml-2">Learny</span>
-            </Link>
-          </div>
+    <nav className="bg-background border-b sticky top-0 z-50">
+      <div className="container flex items-center justify-between py-4">
+        <Link to="/home" className="font-bold text-2xl">Learny</Link>
 
-          <div className="flex items-center gap-1 md:gap-2">
-            <Link to="/">
-              <Button
-                variant={isActive('/') ? 'default' : 'ghost'}
-                size="sm"
-                className={cn(
-                  "flex flex-col items-center justify-center h-14 px-2 md:px-3",
-                  isActive('/') ? 'bg-learny-purple-dark text-white' : 'text-gray-300 hover:text-learny-purple-dark'
+        <div className="flex items-center gap-4">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0 data-[state=open]:bg-muted">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name} />
+                    <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/home">
+                    <Home className="mr-2 h-4 w-4" />
+                    <span>Hem</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/create">
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>Skapa Flashcards</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/achievements">
+                    <ListChecks className="mr-2 h-4 w-4" />
+                    <span>Achievements</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/account">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Konto</span>
+                  </Link>
+                </DropdownMenuItem>
+                {tier === 'super' && (
+                  <Link to="/admin">
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <ShieldCheck className="mr-2 h-5 w-5" />
+                      <span>Admin</span>
+                    </Button>
+                  </Link>
                 )}
-              >
-                <Home className="h-5 w-5 mb-1" />
-                <span className="text-xs">Hem</span>
-              </Button>
-            </Link>
-            
-            <Link to="/create">
-              <Button
-                variant={isActive('/create') ? 'default' : 'ghost'}
-                size="sm"
-                className={cn(
-                  "flex flex-col items-center justify-center h-14 px-2 md:px-3",
-                  isActive('/create') ? 'bg-learny-purple-dark text-white' : 'text-gray-300 hover:text-learny-purple-dark'
-                )}
-              >
-                <PlusCircle className="h-5 w-5 mb-1" />
-                <span className="text-xs">Skapa</span>
-              </Button>
-            </Link>
-            
-            <Link to="/achievements">
-              <Button
-                variant={isActive('/achievements') ? 'default' : 'ghost'}
-                size="sm"
-                className={cn(
-                  "flex flex-col items-center justify-center h-14 px-2 md:px-3 relative",
-                  isActive('/achievements') ? 'bg-learny-purple-dark text-white' : 'text-gray-100 hover:text-learny-purple-dark'
-                )}
-                aria-label="Prestationer"
-              >
-                <Trophy className="h-5 w-5 mb-1" />
-                <span className="text-xs font-medium">Prestationer</span>
-                {userStats.achievements.some(a => !a.displayed) && (
-                  <span className="absolute top-2 right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-learny-red opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-learny-red"></span>
-                  </span>
-                )}
-              </Button>
-            </Link>
-
-            <div className="flex items-center bg-gray-800 rounded-full px-3 py-1 ml-2">
-              <BookOpen className="h-4 w-4 text-learny-purple-dark mr-1" />
-              <span className="text-sm font-medium text-gray-100">{userStats.streak} dagars streak</span>
-            </div>
-          </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logga ut</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            !isAuthPage && <Link to="/auth">Logga in</Link>
+          )}
+           <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+            >
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
         </div>
       </div>
-    </header>
+    </nav>
   );
 };

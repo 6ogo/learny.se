@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { useSubscription } from '@/context/SubscriptionContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { TierDetails } from '@/types/subscription';
+import { LandingNavBar } from '@/components/LandingNavBar';
 
 const PricingPage: React.FC = () => {
   const { tierDetails, currentTier, initiateCheckout } = useSubscription();
@@ -54,9 +55,29 @@ const PricingPage: React.FC = () => {
     }
   };
 
+  const goHome = () => {
+    if (user) {
+      navigate('/home');
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
-    <div className="py-12 bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen">
-      <div className="container px-4 md:px-6">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+      <LandingNavBar />
+      <div className="container px-4 md:px-6 py-12">
+        <div className="flex justify-start mb-6">
+          <Button 
+            onClick={goHome}
+            variant="ghost" 
+            className="text-white hover:bg-gray-800 flex items-center"
+          >
+            <Home className="mr-2 h-5 w-5" />
+            Tillbaka till startsidan
+          </Button>
+        </div>
+        
         <div className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Välj ditt medlemskap</h1>
           <p className="text-gray-300 text-lg max-w-2xl mx-auto">

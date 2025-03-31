@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, FC } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Flashcard } from '@/types/flashcard';
@@ -204,20 +205,49 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
         flashcard.id === id ? { ...flashcard, ...updates, lastReviewed: Date.now() } : flashcard // Ensure lastReviewed updates
       )
     );
-     // Optionally update user stats based on updates (e.g., if learned toggled)
-     if (updates.learned !== undefined) {
-         setUserStats(prev => ({
-             ...prev,
-             cardsLearned: prev.flashcards.filter(f => f.id === id ? updates.learned : f.learned).length
-         }));
-     }
-     if (updates.correctCount !== undefined || updates.incorrectCount !== undefined) {
+    
+    // FIX: Check for learned status changes and update user stats accordingly
+    if (updates.learned !== undefined) {
+        const updatedFlashcards = flashcards.map(f => 
+          f.id === id ? { ...f, learned: updates.learned } : f
+        );
+        const learnedCount = updatedFlashcards.filter(f => f.learned).length;
+        
         setUserStats(prev => ({
             ...prev,
-            totalCorrect: prev.flashcards.reduce((sum, f) => sum + (f.id === id ? (updates.correctCount ?? f.correctCount ?? 0) : (f.correctCount ?? 0)), 0),
-            totalIncorrect: prev.flashcards.reduce((sum, f) => sum + (f.id === id ? (updates.incorrectCount ?? f.incorrectCount ?? 0) : (f.incorrectCount ?? 0)), 0),
+            cardsLearned: learnedCount
         }));
-     }
+    }
+    
+    // FIX: Properly update totals for correct/incorrect counts
+    if (updates.correctCount !== undefined || updates.incorrectCount !== undefined) {
+        // Calculate new totals based on the updated flashcard
+        const updatedFlashcards = flashcards.map(f => 
+          f.id === id 
+            ? { 
+                ...f, 
+                correctCount: updates.correctCount !== undefined ? updates.correctCount : f.correctCount,
+                incorrectCount: updates.incorrectCount !== undefined ? updates.incorrectCount : f.incorrectCount 
+              } 
+            : f
+        );
+        
+        const totalCorrect = updatedFlashcards.reduce(
+          (sum, f) => sum + (f.correctCount || 0), 
+          0
+        );
+        
+        const totalIncorrect = updatedFlashcards.reduce(
+          (sum, f) => sum + (f.incorrectCount || 0), 
+          0
+        );
+        
+        setUserStats(prev => ({
+            ...prev,
+            totalCorrect,
+            totalIncorrect,
+        }));
+    }
   };
 
   const deleteFlashcard = (id: string) => {

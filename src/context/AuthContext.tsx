@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 type SubscriptionTier = 'free' | 'premium' | 'super';
 
@@ -84,20 +84,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('subscription_tier, daily_usage')
+        .select('*')
         .eq('id', userId)
         .single();
 
       if (error) throw error;
 
       if (data) {
-        setTier(data.subscription_tier || 'free');
+        setTier(data.subscription_tier as SubscriptionTier || 'free');
         setDailyUsage(data.daily_usage || 0);
       } else {
         // Create new user profile if it doesn't exist
-        await supabase.from('user_profiles').insert([
-          { id: userId, subscription_tier: 'free', daily_usage: 0 }
-        ]);
+        await supabase
+          .from('user_profiles')
+          .insert([
+            { id: userId, subscription_tier: 'free', daily_usage: 0 }
+          ]);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);

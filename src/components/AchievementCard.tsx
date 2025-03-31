@@ -2,13 +2,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Award, Flame, Trophy, Medal, Star } from 'lucide-react';
-import { UserAchievement } from '@/types/user';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
 interface AchievementCardProps {
-  achievement: UserAchievement;
+  achievement: {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    dateEarned: string;
+    displayed?: boolean;
+  };
   isNew?: boolean;
 }
 
@@ -32,7 +38,7 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
     }
   };
 
-  const formatDate = (date: number) => {
+  const formatDate = (date: string) => {
     return format(new Date(date), 'd MMMM yyyy', { locale: sv });
   };
 

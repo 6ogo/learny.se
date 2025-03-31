@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, FC } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Flashcard } from '@/types/flashcard';
 import { Category } from '@/types/category';
@@ -23,7 +24,6 @@ type LocalStorageContextType = {
   getFlashcardsByCategory: (category: string) => Flashcard[];
   getFlashcardsByProgram: (programId: string) => Flashcard[];
   updateUserStats: (updates: Partial<UserStats>) => void;
-  addAchievement: (achievement: Omit<UserAchievement, 'id' | 'dateEarned'>) => void;
   markProgramCompleted: (programId: string) => void;
   getProgram: (programId: string) => Program | undefined;
   getProgramsByCategory: (category: string) => Program[];
@@ -42,6 +42,7 @@ export const useLocalStorage = () => {
 };
 
 export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const { addAchievement } = useAuth();
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -284,44 +285,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
     }));
   };
 
-
-  const addAchievement = (achievement: Omit<UserAchievement, 'id' | 'dateEarned' | 'displayed'>) => {
-    const newAchievement: UserAchievement = {
-      ...achievement,
-      id: `achievement-${Date.now()}-${Math.random().toString(16).slice(2)}`, // More unique ID
-      dateEarned: Date.now(),
-      displayed: false, // New achievements are not displayed initially
-    };
-
-    // Check if an achievement with the same name already exists
-    const exists = userStats.achievements.some((a) => a.name === achievement.name);
-    if (exists) {
-        console.log(`Achievement "${achievement.name}" already earned.`);
-        return; // Don't add duplicates
-    }
-
-     console.log(`Adding achievement: ${achievement.name}`);
-    setUserStats((prev) => ({
-      ...prev,
-      achievements: [...prev.achievements, newAchievement],
-    }));
-
-    // Show a toast immediately for the new achievement
-    toast({
-      title: 'Ny utmärkelse!',
-      description: `Du har låst upp "${achievement.name}"!`,
-    });
-  };
-
-
   const markProgramCompleted = (programId: string) => {
-    // First update the program state (if needed, though maybe not necessary if only tracking in userStats)
-    // setPrograms((prev) =>
-    //   prev.map((program) =>
-    //     program.id === programId ? { ...program, completedByUser: true } : program
-    //   )
-    // );
-
     const program = programs.find((p) => p.id === programId);
 
     // Add to user's completed programs if not already there
@@ -334,8 +298,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
          completedPrograms: updatedCompletedPrograms,
        }));
 
-
-      // Add achievement for program completion
+      // Add achievement for program completion via the AuthContext
       if (program) {
         addAchievement({
           name: `Avklarat: ${program.name}`,
@@ -353,7 +316,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
             addAchievement({
               name: `${category.name} Mästare`,
               description: `Slutfört alla program i kategorin ${category.name}!`,
-              icon: 'award', // Changed to 'award' for distinction
+              icon: 'award',
             });
           }
         }
@@ -362,7 +325,6 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
         console.log(`Program ${programId} (${program?.name}) was already completed.`);
     }
   };
-
 
   const getProgram = (programId: string): Program | undefined => {
     return programs.find((program) => program.id === programId);
@@ -387,8 +349,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
     getFlashcard,
     getFlashcardsByCategory,
     getFlashcardsByProgram,
-    updateUserStats: updateUserStatsInternal, // Use the internal wrapper
-    addAchievement,
+    updateUserStats: updateUserStatsInternal,
     markProgramCompleted,
     getProgram,
     getProgramsByCategory,

@@ -1,36 +1,37 @@
 
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useLocalStorage } from '@/context/LocalStorageContext';
+import { useAuth } from '@/context/AuthContext';
 import { AchievementCard } from '@/components/AchievementCard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Trophy, Award } from 'lucide-react';
 
 const AchievementsPage = () => {
-  const { userStats, updateUserStats } = useLocalStorage();
+  const { achievements, markAchievementDisplayed } = useAuth();
   
   useEffect(() => {
     // Mark all achievements as displayed
-    const updatedAchievements = userStats.achievements.map(achievement => ({
-      ...achievement,
-      displayed: true,
-    }));
+    const newAchievements = achievements.filter(a => !a.displayed);
     
-    updateUserStats({
-      achievements: updatedAchievements,
-    });
-  }, [userStats.achievements, updateUserStats]);
+    for (const achievement of newAchievements) {
+      markAchievementDisplayed(achievement.id);
+    }
+  }, [achievements, markAchievementDisplayed]);
   
   // Sort achievements by date, with newest first
-  const sortedAchievements = [...userStats.achievements].sort((a, b) => b.dateEarned - a.dateEarned);
+  const sortedAchievements = [...achievements].sort((a, b) => {
+    const dateA = new Date(a.dateEarned).getTime();
+    const dateB = new Date(b.dateEarned).getTime();
+    return dateB - dateA;
+  });
   
   // Separate new (not displayed) achievements
   const newAchievements = sortedAchievements.filter(a => !a.displayed);
   const oldAchievements = sortedAchievements.filter(a => a.displayed);
 
   return (
-    <div className="container px-4 py-8 mx-auto">
-      <Link to="/" className="inline-flex items-center text-gray-600 hover:text-learny-purple mb-6 dark:text-gray-300 dark:hover:text-learny-purple-dark">
+    <div className="container px-4 py-8 mx-auto bg-background">
+      <Link to="/home" className="inline-flex items-center text-gray-600 hover:text-learny-purple mb-6 dark:text-gray-300 dark:hover:text-learny-purple-dark">
         <ChevronLeft className="h-5 w-5 mr-1" />
         Tillbaka till startsidan
       </Link>
@@ -48,23 +49,10 @@ const AchievementsPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Prestationer</p>
-            <p className="text-2xl font-bold dark:text-white">{userStats.achievements.length}</p>
+            <p className="text-2xl font-bold dark:text-white">{achievements.length}</p>
           </div>
           
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Streak</p>
-            <p className="text-2xl font-bold dark:text-white">{userStats.streak} dagar</p>
-          </div>
-          
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Rätta svar</p>
-            <p className="text-2xl font-bold dark:text-white">{userStats.totalCorrect}</p>
-          </div>
-          
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Inlärda kort</p>
-            <p className="text-2xl font-bold dark:text-white">{userStats.cardsLearned}</p>
-          </div>
+          {/* We'll add other stat cards here later when needed */}
         </div>
       </div>
 
@@ -108,7 +96,7 @@ const AchievementsPage = () => {
               Fortsätt att studera och slutför träningsprogram för att låsa upp prestationer.
             </p>
             <Button asChild>
-              <Link to="/">Börja studera</Link>
+              <Link to="/home">Börja studera</Link>
             </Button>
           </div>
         )}

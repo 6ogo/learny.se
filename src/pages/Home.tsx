@@ -1,10 +1,10 @@
 
-// src/pages/Home.tsx
 import React, { useEffect, useState } from 'react';
 import { CategoryCard } from '@/components/CategoryCard';
 import { ProgramCard } from '@/components/ProgramCard';
 import { Flashcard } from '@/components/Flashcard';
 import { useLocalStorage } from '@/context/LocalStorageContext';
+import { useAuth } from '@/context/AuthContext';
 import { BookOpen, Award, TrendingUp } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 
 const Home = () => {
   const { categories, programs, flashcards, userStats, updateUserStats } = useLocalStorage();
+  const { achievements } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryFlashcard, setCategoryFlashcard] = useState<any | null>(null);
 
@@ -120,7 +121,7 @@ const Home = () => {
               <Award className="h-5 w-5 text-learny-yellow mr-2" />
               <h3 className="text-lg font-medium">Prestationer</h3>
             </div>
-            <p className="text-3xl font-bold">{userStats.achievements.length}</p>
+            <p className="text-3xl font-bold">{achievements.length}</p>
             <p className="text-sm text-muted-foreground mt-1">Upplåsta utmärkelser</p>
           </div>
 

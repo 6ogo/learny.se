@@ -2,8 +2,18 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 type SubscriptionTier = 'free' | 'premium' | 'super';
+
+type Achievement = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  dateEarned: string;
+  displayed: boolean;
+};
 
 type AuthContextType = {
   session: Session | null;
@@ -20,6 +30,9 @@ type AuthContextType = {
   dailyUsage: number;
   incrementDailyUsage: () => void;
   resetDailyUsage: () => void;
+  achievements: Achievement[];
+  addAchievement: (achievement: Omit<Achievement, 'id' | 'dateEarned' | 'displayed'>) => Promise<void>;
+  markAchievementDisplayed: (id: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [tier, setTier] = useState<SubscriptionTier>('free');
   const [isAdmin, setIsAdmin] = useState(false);
   const [dailyUsage, setDailyUsage] = useState(0);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
     // Get initial session and set up listener for auth changes
@@ -59,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTier('free');
           setIsAdmin(false);
           setDailyUsage(0);
+          setAchievements([]);
         }
       }
     );
@@ -85,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserDetails = async (userId: string) => {
     try {
+      // Fetch user profile
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -95,8 +111,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data) {
         setTier(data.subscription_tier as SubscriptionTier || 'free');
-        // Handle the is_admin field safely with a fallback
-        setIsAdmin(data.is_admin === true);
+        // Check both is_admin and is_super_admin
+        setIsAdmin(data.is_admin === true || data.is_super_admin === 'yes');
         setDailyUsage(data.daily_usage || 0);
       } else {
         // Create new user profile if it doesn't exist
@@ -108,6 +124,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setIsAdmin(false);
       }
+
+      // Fetch user achievements
+      const { data: achievementsData, error: achievementsError } = await supabase
+        .from('user_achievements')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (achievementsError) throw achievementsError;
+
+      if (achievementsData) {
+        const formattedAchievements: Achievement[] = achievementsData.map(a => ({
+          id: a.id,
+          name: a.name,
+          description: a.description,
+          icon: a.icon,
+          dateEarned: a.date_earned,
+          displayed: a.displayed
+        }));
+        setAchievements(formattedAchievements);
+      }
+      
     } catch (error) {
       console.error('Error fetching user profile:', error);
       setIsAdmin(false);
@@ -151,6 +188,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const addAchievement = async (achievement: Omit<Achievement, 'id' | 'dateEarned' | 'displayed'>) => {
+    if (!user) return;
+
+    try {
+      // Check if achievement already exists
+      const { data: existingAchievements } = await supabase
+        .from('user_achievements')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('name', achievement.name);
+
+      if (existingAchievements && existingAchievements.length > 0) {
+        console.log(`Achievement "${achievement.name}" already earned.`);
+        return;
+      }
+
+      // Insert the new achievement
+      const { data, error } = await supabase
+        .from('user_achievements')
+        .insert([
+          {
+            user_id: user.id,
+            name: achievement.name,
+            description: achievement.description,
+            icon: achievement.icon,
+            displayed: false
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const newAchievement: Achievement = {
+          id: data.id,
+          name: data.name,
+          description: data.description,
+          icon: data.icon,
+          dateEarned: data.date_earned,
+          displayed: data.displayed
+        };
+        
+        setAchievements(prev => [...prev, newAchievement]);
+        
+        // Show toast notification
+        toast({
+          title: 'Ny utmärkelse!',
+          description: `Du har låst upp "${achievement.name}"!`,
+          duration: 10000 // 10 seconds
+        });
+      }
+    } catch (error) {
+      console.error('Error adding achievement:', error);
+    }
+  };
+
+  const markAchievementDisplayed = async (id: string) => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from('user_achievements')
+        .update({ displayed: true })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      setAchievements(prev => 
+        prev.map(a => a.id === id ? { ...a, displayed: true } : a)
+      );
+    } catch (error) {
+      console.error('Error marking achievement as displayed:', error);
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
@@ -166,6 +278,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTier('free');
     setIsAdmin(false);
     setDailyUsage(0);
+    setAchievements([]);
   };
 
   const resetPassword = async (email: string) => {
@@ -199,6 +312,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dailyUsage,
     incrementDailyUsage,
     resetDailyUsage,
+    achievements,
+    addAchievement,
+    markAchievementDisplayed,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

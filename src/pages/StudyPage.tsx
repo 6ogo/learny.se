@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
+import { useAuth } from '@/context/AuthContext';
 import { Flashcard } from '@/components/Flashcard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Trophy, BookOpen, AlertCircle, CheckCircle, FileQuestion } from 'lucide-react';
@@ -17,6 +18,7 @@ const StudyPage = () => {
     updateUserStats, 
     markProgramCompleted 
   } = useLocalStorage();
+  const { addAchievement } = useAuth();
 
   const program = getProgram(programId || '');
   const programFlashcards = getFlashcardsByProgram(programId || '');
@@ -61,6 +63,13 @@ const StudyPage = () => {
       // Mark program as completed if all cards are answered
       if (program) {
         markProgramCompleted(program.id);
+        
+        // Add an achievement to the database
+        addAchievement({
+          name: `Avklarat: ${program.name}`,
+          description: `Slutfört programmet "${program.name}"!`,
+          icon: 'trophy'
+        });
       }
     }
   };
@@ -78,10 +87,10 @@ const StudyPage = () => {
 
   if (!program || programFlashcards.length === 0) {
     return (
-      <div className="container px-4 py-12 mx-auto text-center">
+      <div className="container px-4 py-12 mx-auto text-center bg-background">
         <p className="text-xl text-gray-600 dark:text-gray-300">Programmet hittades inte eller innehåller inga flashcards.</p>
         <Button asChild className="mt-4">
-          <Link to="/">Tillbaka till startsidan</Link>
+          <Link to="/home">Tillbaka till startsidan</Link>
         </Button>
       </div>
     );
@@ -91,8 +100,8 @@ const StudyPage = () => {
   const progress = Math.round(((currentIndex) / programFlashcards.length) * 100);
 
   return (
-    <div className="container px-4 py-8 mx-auto">
-      <Link to="/" className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-learny-purple dark:hover:text-learny-purple-dark mb-6">
+    <div className="container px-4 py-8 mx-auto bg-background">
+      <Link to="/home" className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-learny-purple dark:hover:text-learny-purple-dark mb-6">
         <ChevronLeft className="h-5 w-5 mr-1" />
         Tillbaka till startsidan
       </Link>
@@ -199,7 +208,7 @@ const StudyPage = () => {
                 )}
                 
                 <Button asChild>
-                  <Link to="/">Tillbaka till startsidan</Link>
+                  <Link to="/home">Tillbaka till startsidan</Link>
                 </Button>
               </div>
             </div>

@@ -12,11 +12,11 @@ import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminPage = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdminChecked, setIsAdminChecked] = useState(false);
   
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -25,8 +25,15 @@ const AdminPage = () => {
         return;
       }
       
+      // If we already know the user is an admin from AuthContext
+      if (isAdmin) {
+        setIsAdminChecked(true);
+        setIsLoading(false);
+        return;
+      }
+      
       try {
-        // Check if user is admin directly from database
+        // Double-check admin status with direct database query
         const { data, error } = await supabase
           .from('user_profiles')
           .select('*')
@@ -38,9 +45,9 @@ const AdminPage = () => {
           throw error;
         }
         
-        // Check if the user is admin - handle the case where the field might not exist yet
-        if (data && data.is_admin === true) {
-          setIsAdmin(true);
+        // Check if the user is admin or super_admin
+        if (data && (data.is_admin === true || data.is_super_admin === 'yes')) {
+          setIsAdminChecked(true);
         } else {
           toast({
             title: 'Åtkomst nekad',
@@ -63,7 +70,7 @@ const AdminPage = () => {
     };
     
     checkAdminStatus();
-  }, [user, navigate, toast]);
+  }, [user, navigate, toast, isAdmin]);
   
   if (isLoading) {
     return (
@@ -73,7 +80,7 @@ const AdminPage = () => {
     );
   }
   
-  if (!isAdmin) {
+  if (!isAdminChecked) {
     return (
       <div className="flex items-center justify-center h-screen bg-background text-foreground">
         Kontrollerar behörighet...

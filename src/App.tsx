@@ -9,6 +9,7 @@ import { LocalStorageProvider } from '@/context/LocalStorageContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { ProtectedRoute, PublicRoute } from '@/components/ProtectedRoute';
+import { Toaster } from "@/components/ui/toaster";
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
 import Home from '@/pages/Home';
@@ -95,6 +96,7 @@ function App() {
         <ThemeProvider>
           <SubscriptionProvider>
             <RouterProvider router={router} />
+            <Toaster />
           </SubscriptionProvider>
         </ThemeProvider>
       </LocalStorageProvider>

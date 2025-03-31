@@ -8,7 +8,6 @@ import { useLocalStorage } from '@/context/LocalStorageContext';
 import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 
-// Array of positive feedback messages
 const POSITIVE_FEEDBACK = [
   "Bra jobbat!",
   "Helt rätt!",
@@ -32,7 +31,6 @@ const POSITIVE_FEEDBACK = [
   "Fortsätt så!"
 ];
 
-// Array of negative feedback messages
 const NEGATIVE_FEEDBACK = [
   "Du behöver träna mer på det här. Fortsätt öva!",
   "Inte riktigt. Kolla igenom materialet en gång till!",
@@ -67,7 +65,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const { updateFlashcard } = useLocalStorage();
 
-  // Reset states when flashcard changes
   useEffect(() => {
     setIsFlipped(false);
     setAnswered(false);
@@ -89,13 +86,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   };
 
   const handleCorrect = () => {
-    // Always make sure the card is flipped to show the answer
     setIsFlipped(true);
-    
-    // Only proceed with answering if we haven't already answered
     if (!answered) {
       setAnswered(true);
-      // Always set feedback message for correct answers
       const feedback = getRandomPositiveFeedback();
       setFeedbackMessage(feedback);
       
@@ -109,13 +102,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   };
 
   const handleIncorrect = () => {
-    // Always make sure the card is flipped to show the answer
     setIsFlipped(true);
-    
-    // Only proceed with answering if we haven't already answered
     if (!answered) {
       setAnswered(true);
-      // Always set feedback message for incorrect answers
       const feedback = getRandomNegativeFeedback();
       setFeedbackMessage(feedback);
       
@@ -136,7 +125,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   };
 
   const toggleLearned = (e: React.MouseEvent) => {
-    // Prevent the event from propagating to parent elements
     e.stopPropagation();
     
     const newLearnedState = !flashcard.learned;
@@ -151,18 +139,13 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         ? "Detta kort har markerats som inlärt i din profil."
         : "Detta kort är inte längre markerat som inlärt.",
     });
-    
-    // DO NOT reset or move to next card
   };
 
   const handleReportCard = async () => {
     try {
-      // First check if the flashcard has a real ID (from database)
       if (flashcard.id && flashcard.id.length > 0) {
-        // Get current report counts
         const currentReportCount = flashcard.report_count || 0;
         
-        // Update the flashcard in the database
         await supabase
           .from('flashcards')
           .update({
@@ -213,7 +196,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           transition={{ duration: 0.6, type: 'spring', stiffness: 300, damping: 30 }}
           className="w-full h-full relative preserve-3d"
         >
-          {/* Front of the card */}
           <motion.div 
             className={cn(
               "absolute w-full h-full bg-white dark:bg-gray-800 rounded-xl p-6 flex flex-col justify-center items-center shadow-lg border border-gray-200 dark:border-gray-700 backface-hidden",
@@ -237,7 +219,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             </div>
           </motion.div>
 
-          {/* Back of the card */}
           <motion.div
             style={{ rotateY: 180 }}
             className="absolute w-full h-full bg-white dark:bg-gray-800 rounded-xl p-6 flex flex-col justify-center items-center shadow-lg border border-gray-200 dark:border-gray-700 backface-hidden"
@@ -255,7 +236,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         </motion.div>
       </div>
 
-      {/* Feedback message - Always show when there's a message */}
       <AnimatePresence>
         {feedbackMessage && (
           <motion.div

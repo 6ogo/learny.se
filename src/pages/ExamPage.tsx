@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Trophy, CheckCircle, XCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -12,7 +13,8 @@ import { toast } from '@/components/ui/use-toast';
 const ExamPage = () => {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
-  const { getProgram, getFlashcardsByProgram, markProgramCompleted, addAchievement } = useLocalStorage();
+  const { getProgram, getFlashcardsByProgram, markProgramCompleted } = useLocalStorage();
+  const { addAchievement } = useAuth();
 
   const program = getProgram(programId || '');
   const flashcards = getFlashcardsByProgram(programId || '');

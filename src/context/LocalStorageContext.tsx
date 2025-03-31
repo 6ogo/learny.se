@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, FC } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -28,6 +27,7 @@ type LocalStorageContextType = {
   getProgram: (programId: string) => Program | undefined;
   getProgramsByCategory: (category: string) => Program[];
   getCategory: (categoryId: string) => Category | undefined;
+  addAchievement: (achievement: Omit<UserAchievement, 'id' | 'dateEarned' | 'displayed'>) => void;
 };
 
 // Create the context
@@ -354,6 +354,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
     getProgram,
     getProgramsByCategory,
     getCategory,
+    addAchievement: () => {}
   };
 
   return (

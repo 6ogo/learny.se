@@ -10,6 +10,7 @@ import { FlashcardCreation } from '@/components/admin/FlashcardCreation';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
 import { supabase } from '@/integrations/supabase/client';
+import { UserProfile } from '@/types/user';
 
 const AdminPage = () => {
   const { user, isAdmin } = useAuth();
@@ -46,7 +47,8 @@ const AdminPage = () => {
         }
         
         // Check if the user is admin or super_admin
-        if (data && (data.is_admin === true || data.is_super_admin === 'yes')) {
+        const userProfile = data as UserProfile;
+        if (userProfile && (userProfile.is_admin === true || userProfile.is_super_admin === 'yes')) {
           setIsAdminChecked(true);
         } else {
           toast({

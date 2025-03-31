@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { UserProfile } from '@/types/user';
 
 type SubscriptionTier = 'free' | 'premium' | 'super';
 
@@ -47,7 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
-    // Get initial session and set up listener for auth changes
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -78,7 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check for stored usage data
     const today = new Date().toISOString().split('T')[0];
     const storedData = localStorage.getItem('learny_usage');
     if (storedData) {
@@ -86,7 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (parsedData.date === today) {
         setDailyUsage(parsedData.count);
       } else {
-        // Reset if it's a new day
         localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
       }
     } else {
@@ -100,7 +97,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserDetails = async (userId: string) => {
     try {
-      // Fetch user profile
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -111,21 +107,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data) {
         setTier(data.subscription_tier as SubscriptionTier || 'free');
-        // Check both is_admin and is_super_admin
         setIsAdmin(data.is_admin === true || data.is_super_admin === 'yes');
         setDailyUsage(data.daily_usage || 0);
       } else {
-        // Create new user profile if it doesn't exist
         await supabase
           .from('user_profiles')
           .insert([
-            { id: userId, subscription_tier: 'free', daily_usage: 0, is_admin: false }
+            { id: userId, subscription_tier: 'free', daily_usage: 0, is_admin: false, is_super_admin: null }
           ]);
         
         setIsAdmin(false);
       }
 
-      // Fetch user achievements
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('user_achievements')
         .select('*')
@@ -144,7 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }));
         setAchievements(formattedAchievements);
       }
-      
     } catch (error) {
       console.error('Error fetching user profile:', error);
       setIsAdmin(false);
@@ -168,11 +160,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newCount = dailyUsage + 1;
     setDailyUsage(newCount);
     
-    // Update localStorage
     const today = new Date().toISOString().split('T')[0];
     localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: newCount }));
     
-    // Update in database if logged in
     if (user) {
       updateUserUsage(newCount);
     }
@@ -192,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
 
     try {
-      // Check if achievement already exists
       const { data: existingAchievements } = await supabase
         .from('user_achievements')
         .select('id')
@@ -204,7 +193,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Insert the new achievement
       const { data, error } = await supabase
         .from('user_achievements')
         .insert([
@@ -233,11 +221,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setAchievements(prev => [...prev, newAchievement]);
         
-        // Show toast notification
         toast({
           title: 'Ny utmärkelse!',
           description: `Du har låst upp "${achievement.name}"!`,
-          duration: 10000 // 10 seconds
+          duration: 10000
         });
       }
     } catch (error) {

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,9 +23,9 @@ const SharePage = () => {
       if (!shareCode) return;
       
       try {
-        // Get the shared flashcards information from the new flashcard_shares table
+        // We need to use any here because the flashcard_shares table might not be in the TypeScript types yet
         const { data: shareData, error: shareError } = await supabase
-          .from('flashcard_shares')
+          .from('flashcard_shares' as any)
           .select('flashcard_ids')
           .eq('code', shareCode)
           .single();

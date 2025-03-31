@@ -1,11 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-
-// Use environment variables for sensitive data
-const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY') || '';
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.26.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,53 +14,31 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, category, difficulty, count = 10 } = await req.json();
+    const { topic, category, difficulty, count } = await req.json();
     
-    if (!topic || !category || !difficulty) {
-      throw new Error('Missing required fields: topic, category, or difficulty');
+    // Input validation
+    if (!topic || !category || !difficulty || !count) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameters' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
-    // Get the user ID from the request
-    const authHeader = req.headers.get('Authorization') || '';
-    const token = authHeader.replace('Bearer ', '');
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      throw new Error('Unauthorized: ' + (userError?.message || 'User not found'));
+    // Get the GROQ API key from environment variable
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'GROQ API key not configured' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
 
-    // Check user's subscription tier to ensure they have access to AI features
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('subscription_tier, daily_usage')
-      .eq('id', user.id)
-      .single();
+    // Create a system prompt based on parameters
+    const systemPrompt = `You are an expert flashcard creator for the topic: ${topic} at ${difficulty} level.
+    Create ${count} high-quality flashcards that are clear, concise, and educational.
+    Each flashcard should have a question and answer that helps users understand important concepts about ${topic}.`;
 
-    if (profileError) {
-      throw new Error('Error fetching user profile: ' + profileError.message);
-    }
-
-    // Only allow AI generation for 'super' tier users
-    if (profile.subscription_tier !== 'super') {
-      throw new Error('AI flashcard generation requires Super Learner subscription');
-    }
-
-    // Increment daily usage
-    await supabase
-      .from('user_profiles')
-      .update({ daily_usage: profile.daily_usage + 1 })
-      .eq('id', user.id);
-
-    // Create the GROQ API request
-    const prompt = `
-      Generate ${count} flashcards about ${topic} in the ${category} category with ${difficulty} difficulty level.
-      Each flashcard should have a question and answer.
-      The format should be a valid JSON array with objects containing 'question' and 'answer' keys.
-      Make the questions challenging but clear, and provide comprehensive answers for ${difficulty} level.
-    `;
-
-    console.log('Sending request to GROQ API...');
+    // Make request to GROQ API
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -73,110 +46,165 @@ serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-70b-8192', // Using a large model for better quality
+        model: "llama3-70b-8192",
         messages: [
           {
-            role: 'system',
-            content: 'You are an expert in creating educational flashcards. Your task is to generate accurate, concise, and educational flashcards in the requested format.'
+            role: "system",
+            content: systemPrompt
           },
           {
-            role: 'user',
-            content: prompt
+            role: "user",
+            content: `Please generate ${count} flashcards about ${topic} at ${difficulty} level. Format your response as a JSON array of objects, each with 'question' and 'answer' properties. Make sure your JSON is valid, with no extra text before or after the JSON array.`
           }
         ],
-        temperature: 0.7
+        temperature: 0.7,
+        max_tokens: 4000
       })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('GROQ API error:', errorText);
-      throw new Error('Error calling GROQ API: ' + response.status);
+      const errorData = await response.text();
+      console.error('GROQ API error:', errorData);
+      return new Response(
+        JSON.stringify({ error: 'Error calling GROQ API', details: errorData }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
 
     const data = await response.json();
-    console.log('Received response from GROQ API');
-
-    // Extract flashcards from the response
+    const groqResponse = data.choices[0].message.content;
+    
+    // Extract the JSON array from the response
+    let flashcards;
     try {
-      let flashcardsText = data.choices[0].message.content;
+      // Try to parse the response as JSON directly
+      flashcards = JSON.parse(groqResponse);
       
-      // Clean up the response to ensure it's valid JSON
-      flashcardsText = flashcardsText.replace(/```json/g, '').replace(/```/g, '');
-      const jsonStart = flashcardsText.indexOf('[');
-      const jsonEnd = flashcardsText.lastIndexOf(']') + 1;
-      
-      if (jsonStart >= 0 && jsonEnd > jsonStart) {
-        flashcardsText = flashcardsText.substring(jsonStart, jsonEnd);
+      // Make sure we have an array of objects with question and answer properties
+      if (!Array.isArray(flashcards) || !flashcards.every(card => card.question && card.answer)) {
+        throw new Error('Invalid flashcard format');
       }
+    } catch (e) {
+      console.error('Error parsing GROQ response:', e);
+      console.log('Raw response:', groqResponse);
+      
+      // Try to extract JSON from text (in case model added extra text)
+      const jsonMatch = groqResponse.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          flashcards = JSON.parse(jsonMatch[0]);
+        } catch (e2) {
+          console.error('Failed to extract JSON:', e2);
+          return new Response(
+            JSON.stringify({ error: 'Failed to parse GROQ response', flashcards: [] }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+          );
+        }
+      } else {
+        return new Response(
+          JSON.stringify({ error: 'Failed to parse GROQ response', flashcards: [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+    }
 
-      const flashcards = JSON.parse(flashcardsText);
-
-      // Create module for the flashcards
+    // Get user info from auth token
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      // User is not logged in, return the flashcards but don't save them
+      return new Response(
+        JSON.stringify({ flashcards, saved: false }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // User is logged in, we can save the flashcards
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    try {
+      // Validate user token
+      const authToken = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabase.auth.getUser(authToken);
+      
+      if (userError || !user) {
+        console.error('User auth error:', userError);
+        // Return flashcards but don't save them
+        return new Response(
+          JSON.stringify({ flashcards, saved: false }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Create a flashcard module to store these cards
       const { data: moduleData, error: moduleError } = await supabase
         .from('flashcard_modules')
         .insert({
-          name: `${topic} (${difficulty})`,
+          name: topic,
           description: `AI generated flashcards about ${topic}`,
-          category: category,
+          category,
           user_id: user.id
         })
         .select()
         .single();
-
+      
       if (moduleError) {
-        throw new Error('Error creating module: ' + moduleError.message);
+        console.error('Error creating module:', moduleError);
+        // Return flashcards but mark not saved
+        return new Response(
+          JSON.stringify({ flashcards, saved: false, error: 'Failed to create module' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-
-      // Save flashcards to the database
-      const flashcardsToInsert = flashcards.map(fc => ({
-        question: fc.question,
-        answer: fc.answer,
-        category: category,
-        difficulty: difficulty,
+      
+      // Prepare flashcards for database
+      const flashcardsToInsert = flashcards.map(card => ({
+        question: card.question,
+        answer: card.answer,
+        category,
+        difficulty,
         module_id: moduleData.id,
         user_id: user.id,
-        is_approved: true // Auto-approve AI-generated cards
+        is_approved: true // AI-generated cards are pre-approved
       }));
-
-      const { data: insertedFlashcards, error: insertError } = await supabase
+      
+      // Insert flashcards
+      const { data: savedCards, error: saveError } = await supabase
         .from('flashcards')
         .insert(flashcardsToInsert)
         .select();
-
-      if (insertError) {
-        throw new Error('Error saving flashcards: ' + insertError.message);
+      
+      if (saveError) {
+        console.error('Error saving flashcards:', saveError);
+        return new Response(
+          JSON.stringify({ flashcards, saved: false, error: 'Failed to save flashcards' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-
+      
+      // Success!
       return new Response(
         JSON.stringify({ 
-          flashcards: flashcards,
-          module_id: moduleData.id,
-          saved: true
+          flashcards, 
+          saved: true, 
+          module_id: moduleData.id 
         }),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          } 
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    } catch (parseError) {
-      console.error('Error parsing GROQ response:', parseError);
-      console.log('Raw response:', data.choices[0].message.content);
-      throw new Error('Invalid response format from GROQ API');
+    } catch (error) {
+      console.error('Error saving flashcards:', error);
+      // Return flashcards but mark not saved
+      return new Response(
+        JSON.stringify({ flashcards, saved: false, error: 'Internal server error' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
   } catch (error) {
-    console.error('Error in generate-flashcards function:', error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });

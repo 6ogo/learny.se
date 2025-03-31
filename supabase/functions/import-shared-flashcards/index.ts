@@ -1,9 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.26.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,76 +14,133 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Get share code from request
     const { shareCode } = await req.json();
     
     if (!shareCode) {
-      throw new Error('No share code provided');
+      return new Response(
+        JSON.stringify({ error: 'No share code provided' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
-    // Get the user ID from the request
-    const authHeader = req.headers.get('Authorization') || '';
-    const token = authHeader.replace('Bearer ', '');
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      throw new Error('Unauthorized: ' + (userError?.message || 'User not found'));
+    // Get user from auth header
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
     }
-
-    // Get the shared flashcards
+    
+    const authToken = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(authToken);
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+    
+    // Get the share data
     const { data: shareData, error: shareError } = await supabase
       .from('flashcard_shares')
-      .select('flashcard_ids, user_id')
+      .select('flashcard_ids')
       .eq('code', shareCode)
       .single();
-
+    
     if (shareError || !shareData) {
-      throw new Error('Invalid share code: ' + (shareError?.message || 'Share not found'));
+      return new Response(
+        JSON.stringify({ error: 'Invalid share code' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
     }
-
+    
     // Get the flashcards
-    const { data: flashcards, error: flashcardsError } = await supabase
+    const { data: flashcards, error: flashcardError } = await supabase
       .from('flashcards')
       .select('*')
       .in('id', shareData.flashcard_ids);
-
-    if (flashcardsError) {
-      throw new Error('Error fetching flashcards: ' + flashcardsError.message);
+    
+    if (flashcardError) {
+      console.error('Error fetching flashcards:', flashcardError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch flashcards' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
-
-    // Import flashcards for the current user
-    const importedFlashcards = flashcards.map(fc => ({
-      question: fc.question,
-      answer: fc.answer,
-      category: fc.category,
-      subcategory: fc.subcategory,
-      difficulty: fc.difficulty,
+    
+    if (!flashcards || flashcards.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'No flashcards found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+    
+    // Create a new module for the imported flashcards
+    const { data: moduleData, error: moduleError } = await supabase
+      .from('flashcard_modules')
+      .insert({
+        name: `Imported Flashcards (${new Date().toLocaleDateString()})`,
+        description: `Flashcards imported from share code: ${shareCode}`,
+        category: flashcards[0].category,
+        user_id: user.id
+      })
+      .select()
+      .single();
+    
+    if (moduleError) {
+      console.error('Error creating module:', moduleError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create module' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+    
+    // Prepare the flashcards for insertion
+    const flashcardsToInsert = flashcards.map(card => ({
+      question: card.question,
+      answer: card.answer,
+      category: card.category,
+      subcategory: card.subcategory,
+      difficulty: card.difficulty,
+      module_id: moduleData.id,
       user_id: user.id,
-      module_id: fc.module_id,
-      learned: false,
-      review_later: false,
-      correct_count: 0,
-      incorrect_count: 0
+      is_approved: true
     }));
-
-    const { data: insertedData, error: insertError } = await supabase
+    
+    // Insert the flashcards
+    const { data: insertedFlashcards, error: insertError } = await supabase
       .from('flashcards')
-      .insert(importedFlashcards)
-      .select();
-
+      .insert(flashcardsToInsert);
+    
     if (insertError) {
-      throw new Error('Error importing flashcards: ' + insertError.message);
+      console.error('Error inserting flashcards:', insertError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to import flashcards' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
-
+    
     return new Response(
-      JSON.stringify({ success: true, count: importedFlashcards.length }),
+      JSON.stringify({ 
+        success: true, 
+        count: flashcardsToInsert.length, 
+        module_id: moduleData.id 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in import-shared-flashcards function:', error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Internal server error' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });

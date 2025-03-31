@@ -91,7 +91,7 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
 
     // First, get the share information
     const { data: shareData, error: shareError } = await supabase
-      .from('flashcard_shares')
+      .from('flashcard_shares' as any)
       .select('flashcard_ids')
       .eq('code', shareCode)
       .single();
@@ -127,7 +127,11 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
       // Include reporting fields
       reportCount: card.report_count,
       reportReason: card.report_reason,
-      isApproved: card.is_approved
+      isApproved: card.is_approved,
+      // Add snake_case versions as well
+      report_count: card.report_count,
+      report_reason: card.report_reason,
+      is_approved: card.is_approved
     }));
   } catch (error) {
     console.error('Error getting shared flashcards:', error);

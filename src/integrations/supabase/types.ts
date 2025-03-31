@@ -9,13 +9,200 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          status: string | null
+          stripe_customer_id: string | null
+          subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          status?: string | null
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          status?: string | null
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcard_modules: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          subcategory: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          subcategory?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          subcategory?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcards: {
+        Row: {
+          answer: string
+          category: string
+          correct_count: number
+          created_at: string
+          difficulty: string
+          id: string
+          incorrect_count: number
+          last_reviewed: string | null
+          learned: boolean
+          module_id: string
+          next_review: string | null
+          question: string
+          review_later: boolean
+          subcategory: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          category: string
+          correct_count?: number
+          created_at?: string
+          difficulty: string
+          id?: string
+          incorrect_count?: number
+          last_reviewed?: string | null
+          learned?: boolean
+          module_id: string
+          next_review?: string | null
+          question: string
+          review_later?: boolean
+          subcategory?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          category?: string
+          correct_count?: number
+          created_at?: string
+          difficulty?: string
+          id?: string
+          incorrect_count?: number
+          last_reviewed?: string | null
+          learned?: boolean
+          module_id?: string
+          next_review?: string | null
+          question?: string
+          review_later?: boolean
+          subcategory?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcards_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_achievements: {
+        Row: {
+          date_earned: string
+          description: string
+          displayed: boolean
+          icon: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          date_earned?: string
+          description: string
+          displayed?: boolean
+          icon: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          date_earned?: string
+          description?: string
+          displayed?: boolean
+          icon?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          daily_usage: number
+          id: string
+          subscription_tier: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          daily_usage?: number
+          id: string
+          subscription_tier?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          daily_usage?: number
+          id?: string
+          subscription_tier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_daily_usage: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

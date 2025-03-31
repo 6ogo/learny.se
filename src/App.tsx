@@ -15,6 +15,7 @@ import { ProtectedRoute, PublicRoute } from "@/components/ProtectedRoute";
 // Public pages
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
+import Index from "./pages/Index";
 
 // Protected pages
 import Home from "./pages/Home";
@@ -40,13 +41,14 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <div className="flex flex-col min-h-screen bg-gray-900 transition-colors duration-200">
-                  <NavBar />
+                  {/* NavBar is now conditionally rendered inside route components instead of here */}
                   <main className="flex-grow">
                     <Routes>
                       {/* Public Routes */}
                       <Route element={<PublicRoute />}>
-                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/" element={<Index />} />
                         <Route path="/auth" element={<AuthPage />} />
+                        <Route path="/pricing" element={<PricingPage />} />
                       </Route>
                       
                       {/* Protected Routes */}
@@ -58,7 +60,6 @@ const App = () => (
                         <Route path="/category/:categoryId" element={<CategoryPage />} />
                         <Route path="/achievements" element={<AchievementsPage />} />
                         <Route path="/account" element={<AccountPage />} />
-                        <Route path="/pricing" element={<PricingPage />} />
                       </Route>
                       
                       {/* 404 Route */}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { NavBar } from '@/components/NavBar';
 
 export const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -17,7 +18,12 @@ export const ProtectedRoute: React.FC = () => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <NavBar />
+      <Outlet />
+    </>
+  );
 };
 
 export const PublicRoute: React.FC = () => {

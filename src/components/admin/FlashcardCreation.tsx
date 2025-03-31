@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -37,11 +36,8 @@ export const FlashcardCreation: React.FC = () => {
   const [csvContent, setCsvContent] = useState('');
   const [subcategories, setSubcategories] = useState<string[]>([]);
   
-  // Fetch subcategories when category changes
   useEffect(() => {
     if (selectedCategory) {
-      // In a real app, fetch subcategories for the selected category
-      // For now, we'll use placeholder subcategories
       const mockSubcategories = ['Grundläggande', 'Avancerad', 'Specialiserad'];
       setSubcategories(mockSubcategories);
     } else {
@@ -77,7 +73,6 @@ export const FlashcardCreation: React.FC = () => {
   };
   
   const handlePreview = () => {
-    // Validate if there's enough data to preview
     if (!selectedCategory || batchFlashcards.some(f => !f.question || !f.answer)) {
       toast({
         title: 'Ofullständig data',
@@ -92,7 +87,6 @@ export const FlashcardCreation: React.FC = () => {
   
   const handleImportCSV = () => {
     try {
-      // Parse CSV content
       const rows = csvContent.split('\n');
       const newBatch: typeof batchFlashcards = [];
       
@@ -149,7 +143,6 @@ export const FlashcardCreation: React.FC = () => {
     }
     
     try {
-      // Format the flashcards for saving
       const flashcardsToSave = batchFlashcards.map(f => ({
         question: f.question,
         answer: f.answer,
@@ -157,16 +150,15 @@ export const FlashcardCreation: React.FC = () => {
         subcategory: selectedSubcategory || null,
         difficulty: f.difficulty,
         user_id: user?.id,
-        module_id: selectedCategory, // Simplified; in real app this would be the actual module_id
+        module_id: selectedCategory,
         correct_count: 0,
         incorrect_count: 0,
         learned: false,
         review_later: false,
         reportCount: 0,
-        isApproved: true // Admin-created cards are pre-approved
+        isApproved: true
       }));
       
-      // Save to Supabase
       const { data, error } = await supabase
         .from('flashcards')
         .insert(flashcardsToSave);
@@ -178,7 +170,6 @@ export const FlashcardCreation: React.FC = () => {
         description: `${flashcardsToSave.length} flashcards har lagts till`
       });
       
-      // Reset form
       setBatchFlashcards([{ question: '', answer: '', difficulty: 'beginner' }]);
     } catch (error) {
       console.error('Error saving flashcards:', error);
@@ -191,7 +182,7 @@ export const FlashcardCreation: React.FC = () => {
   };
   
   return (
-    <div>
+    <div className="text-foreground">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Skapa Flashcards</h2>
         <div className="flex gap-2">
@@ -220,7 +211,7 @@ export const FlashcardCreation: React.FC = () => {
         <div>
           <label className="block text-sm font-medium mb-1">Kategori</label>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-background text-foreground">
               <SelectValue placeholder="Välj kategori" />
             </SelectTrigger>
             <SelectContent>
@@ -238,7 +229,7 @@ export const FlashcardCreation: React.FC = () => {
             onValueChange={setSelectedSubcategory}
             disabled={!selectedCategory || subcategories.length === 0}
           >
-            <SelectTrigger>
+            <SelectTrigger className="bg-background text-foreground">
               <SelectValue placeholder="Välj underkategori" />
             </SelectTrigger>
             <SelectContent>
@@ -250,7 +241,7 @@ export const FlashcardCreation: React.FC = () => {
         </div>
       </div>
       
-      <Card>
+      <Card className="bg-card text-card-foreground">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -269,7 +260,7 @@ export const FlashcardCreation: React.FC = () => {
                       value={flashcard.question}
                       onChange={(e) => updateFlashcardField(index, 'question', e.target.value)}
                       placeholder="Skriv frågan här..."
-                      className="min-h-[80px]"
+                      className="min-h-[80px] bg-background text-foreground"
                     />
                   </TableCell>
                   <TableCell>
@@ -277,7 +268,7 @@ export const FlashcardCreation: React.FC = () => {
                       value={flashcard.answer}
                       onChange={(e) => updateFlashcardField(index, 'answer', e.target.value)}
                       placeholder="Skriv svaret här..."
-                      className="min-h-[80px]"
+                      className="min-h-[80px] bg-background text-foreground"
                     />
                   </TableCell>
                   <TableCell>
@@ -285,7 +276,7 @@ export const FlashcardCreation: React.FC = () => {
                       value={flashcard.difficulty} 
                       onValueChange={(value) => updateFlashcardField(index, 'difficulty', value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-background text-foreground">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -322,7 +313,6 @@ export const FlashcardCreation: React.FC = () => {
         </CardFooter>
       </Card>
       
-      {/* Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
@@ -375,7 +365,6 @@ export const FlashcardCreation: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Import Dialog */}
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
         <DialogContent>
           <DialogHeader>

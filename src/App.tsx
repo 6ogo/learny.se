@@ -7,6 +7,7 @@ import {
 import { AuthProvider } from '@/context/AuthContext';
 import { LocalStorageProvider } from '@/context/LocalStorageContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { ProtectedRoute, PublicRoute } from '@/components/ProtectedRoute';
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
@@ -92,7 +93,9 @@ function App() {
     <AuthProvider>
       <LocalStorageProvider>
         <ThemeProvider>
-          <RouterProvider router={router} />
+          <SubscriptionProvider>
+            <RouterProvider router={router} />
+          </SubscriptionProvider>
         </ThemeProvider>
       </LocalStorageProvider>
     </AuthProvider>

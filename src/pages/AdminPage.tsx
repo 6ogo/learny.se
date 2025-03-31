@@ -16,6 +16,7 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -25,10 +26,10 @@ const AdminPage = () => {
       }
       
       try {
-        // Check if user has super or admin role
-        // First check tier from auth context
+        // Check if user has super tier from auth context
         if (tier === 'super') {
           setIsAdmin(true);
+          setIsLoading(false);
           return;
         }
         
@@ -44,7 +45,7 @@ const AdminPage = () => {
           throw error;
         }
         
-        // Since 'is_admin' doesn't exist, we're only checking the subscription tier
+        // Check if the subscription tier is 'super'
         if (data && data.subscription_tier === 'super') {
           setIsAdmin(true);
         } else {
@@ -63,18 +64,32 @@ const AdminPage = () => {
           variant: 'destructive'
         });
         navigate('/home');
+      } finally {
+        setIsLoading(false);
       }
     };
     
     checkAdminStatus();
   }, [user, tier, navigate, toast]);
   
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-learny-purple"></div>
+      </div>
+    );
+  }
+  
   if (!isAdmin) {
-    return <div className="flex items-center justify-center h-screen">Kontrollerar behörighet...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
+        Kontrollerar behörighet...
+      </div>
+    );
   }
   
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 bg-background text-foreground">
       <h1 className="text-3xl font-bold mb-8">Administratörsverktyg</h1>
       
       <Tabs defaultValue="reported" className="w-full">
@@ -85,7 +100,7 @@ const AdminPage = () => {
           <TabsTrigger value="analytics">Analys</TabsTrigger>
         </TabsList>
         
-        <Card className="mt-6">
+        <Card className="mt-6 bg-card text-card-foreground">
           <CardContent className="pt-6">
             <TabsContent value="reported">
               <ReportedFlashcards />

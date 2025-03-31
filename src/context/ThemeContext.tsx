@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 
 interface ThemeContextType {
   toggleTheme: () => void;
@@ -10,37 +9,22 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<string>(() => {
-    // Always default to dark
-    const savedTheme = localStorage.getItem('learny-theme');
-    return savedTheme || 'dark';
-  });
+  // Always use dark theme
+  const theme = 'dark';
 
   useEffect(() => {
-    // Apply the theme when it changes
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('learny-theme', theme);
-  }, [theme]);
-
-  // Force dark mode on initial load
-  useEffect(() => {
+    // Force dark mode
     document.documentElement.classList.add('dark');
+    localStorage.setItem('learny-theme', 'dark');
   }, []);
 
+  // These functions don't change the theme, they keep it dark
   const toggleTheme = () => {
-    setThemeState('dark'); // Force dark mode on toggle
+    // Do nothing - keep dark mode
   };
 
-  const setTheme = (value: string | ((currentTheme: string) => string)) => {
-    if (typeof value === 'function') {
-      setThemeState(value);
-    } else {
-      setThemeState(value);
-    }
+  const setTheme = () => {
+    // Do nothing - keep dark mode
   };
 
   return (

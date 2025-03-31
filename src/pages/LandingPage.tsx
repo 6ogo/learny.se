@@ -20,7 +20,7 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="flex-1 space-y-6">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter text-white">
-                Lär dig snabbare och smartare med Learny.se Flashcards
+                Lär dig snabbare med Learny.se
               </h1>
               <p className="text-lg md:text-xl text-gray-300">
                 Interaktiva flashcards och anpassade studieprogram för effektiv inlärning inom medicin, kodning, språk och mer.
@@ -47,8 +47,8 @@ const LandingPage: React.FC = () => {
                     className="w-full h-auto rounded-t-lg"
                   />
                   <div className="p-6 bg-gray-800">
-                    <h2 className="text-xl font-semibold text-white mb-2">Optimera din inlärning</h2>
-                    <p className="text-gray-300">Vill du att dina barn slutar doomscrolla? Låt de använda sin mobil för lärande och hjärnstimulerande övningar!</p>
+                    <h2 className="text-xl font-semibold text-white mb-2">Optimerad inlärning</h2>
+                    <p className="text-gray-300">Vill du sluta doomscrolla? Låt oss hjälpa dig göra mobilen till ett hjälpmedel!</p>
                   </div>
                 </div>
               </div>

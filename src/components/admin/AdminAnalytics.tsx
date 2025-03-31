@@ -85,7 +85,7 @@ export const AdminAnalytics: React.FC = () => {
       if (flashcardsError) throw flashcardsError;
       
       // Make sure to use the snake_case field names from the database
-      const reportedCount = flashcardsData.filter(f => (f as any).report_count && (f as any).report_count > 0).length;
+      const reportedCount = flashcardsData.filter(f => f.report_count && f.report_count > 0).length;
       
       // Calculate category distribution
       const categoryCount: Record<string, number> = {};
@@ -217,7 +217,7 @@ export const AdminAnalytics: React.FC = () => {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Betalande användare</CardTitle>
+              <CardTitle className="text-sm font-medium">Betalande anv��ndare</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>

@@ -6,6 +6,7 @@ import { CheckCircle, XCircle, ChevronRight, BookmarkPlus, BookmarkX, Flag } fro
 import { Flashcard as FlashcardType } from '@/types/flashcard';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { toast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 
 // Array of positive feedback messages
 const POSITIVE_FEEDBACK = [
@@ -154,14 +155,37 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     // DO NOT reset or move to next card
   };
 
-  const handleReportCard = () => {
-    toast({
-      title: "Kort rapporterat",
-      description: "Tack för din rapportering. Vi kommer att granska detta kort.",
-    });
+  const handleReportCard = async () => {
+    try {
+      // First check if the flashcard has a real ID (from database)
+      if (flashcard.id && flashcard.id.length > 0) {
+        // Get current report counts
+        const currentReportCount = flashcard.report_count || 0;
+        
+        // Update the flashcard in the database
+        await supabase
+          .from('flashcards')
+          .update({
+            report_count: currentReportCount + 1,
+            report_reason: [...(flashcard.report_reason || []), 'incorrect_information']
+          })
+          .eq('id', flashcard.id);
+      }
+      
+      toast({
+        title: "Kort rapporterat",
+        description: "Tack för din rapportering. Vi kommer att granska detta kort.",
+      });
+    } catch (error) {
+      console.error('Error reporting flashcard:', error);
+      toast({
+        title: "Fel vid rapportering",
+        description: "Ett fel uppstod när kortet skulle rapporteras. Försök igen senare.",
+        variant: "destructive"
+      });
+    }
   };
 
-  // Calculate the difficulty indicator
   const getDifficultyColor = () => {
     switch (flashcard.difficulty) {
       case 'beginner':

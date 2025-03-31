@@ -13,10 +13,13 @@ export type Flashcard = {
   learned?: boolean;
   reviewLater?: boolean;
   createdById?: string;
+  
+  // Reporting functionality fields (camelCase for frontend usage)
   reportCount?: number;
   reportReason?: string[];
   isApproved?: boolean;
-  // DB specific fields
+  
+  // DB specific fields (snake_case)
   correct_count?: number;
   incorrect_count?: number;
   last_reviewed?: string;
@@ -24,7 +27,8 @@ export type Flashcard = {
   module_id?: string;
   user_id?: string;
   next_review?: string;
-  // Additional DB fields for reporting functionality
+  
+  // Additional DB fields for reporting functionality (snake_case)
   report_count?: number;
   report_reason?: string[];
   is_approved?: boolean;

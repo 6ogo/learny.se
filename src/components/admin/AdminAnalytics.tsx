@@ -84,6 +84,7 @@ export const AdminAnalytics: React.FC = () => {
       
       if (flashcardsError) throw flashcardsError;
       
+      // Make sure to use the snake_case field names from the database
       const reportedCount = flashcardsData.filter(f => f.report_count && f.report_count > 0).length;
       
       // Calculate category distribution

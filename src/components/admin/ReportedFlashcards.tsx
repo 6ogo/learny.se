@@ -29,8 +29,6 @@ export const ReportedFlashcards: React.FC = () => {
   const fetchReportedCards = async () => {
     setLoading(true);
     try {
-      // Since we're using local storage for this demo, we'll mock the data
-      // In a real app, this would be a database query
       const { data: flashcardsData } = await supabase
         .from('flashcards')
         .select('*')
@@ -45,15 +43,11 @@ export const ReportedFlashcards: React.FC = () => {
           category: card.category,
           subcategory: card.subcategory || undefined,
           difficulty: card.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-          reportCount: card.report_count || 0,
-          reportReason: card.report_reason || [],
-          isApproved: card.is_approved || false,
           report_count: card.report_count || 0,
           report_reason: card.report_reason || [],
           is_approved: card.is_approved || false
         })));
         
-        // Extract unique categories
         const uniqueCategories = [...new Set(flashcardsData.map(card => card.category))];
         setCategories(uniqueCategories);
       }
@@ -89,7 +83,6 @@ export const ReportedFlashcards: React.FC = () => {
         description: 'Flashcard har godkänts och rapporter har rensats'
       });
       
-      // Update local state
       setReportedCards(prev => 
         prev.filter(c => c.id !== card.id)
       );
@@ -115,7 +108,6 @@ export const ReportedFlashcards: React.FC = () => {
         description: 'Flashcard har tagits bort'
       });
       
-      // Update local state
       setReportedCards(prev => 
         prev.filter(c => c.id !== card.id)
       );
@@ -156,7 +148,6 @@ export const ReportedFlashcards: React.FC = () => {
         description: 'Flashcard har uppdaterats och godkänts'
       });
       
-      // Update local state
       setReportedCards(prev => 
         prev.filter(c => c.id !== currentFlashcard.id)
       );
@@ -234,9 +225,9 @@ export const ReportedFlashcards: React.FC = () => {
                 <TableCell className="font-medium max-w-[200px] truncate">{card.question}</TableCell>
                 <TableCell className="max-w-[200px] truncate">{card.answer}</TableCell>
                 <TableCell>{card.category}</TableCell>
-                <TableCell><Badge variant="destructive">{card.reportCount}</Badge></TableCell>
+                <TableCell><Badge variant="destructive">{card.report_count}</Badge></TableCell>
                 <TableCell>
-                  {card.reportReason?.map((reason, i) => (
+                  {card.report_reason?.map((reason, i) => (
                     <Badge key={i} variant="outline" className="mr-1 mb-1">
                       {reason.replace(/_/g, ' ')}
                     </Badge>

@@ -24,7 +24,7 @@ const SharePage = () => {
       if (!shareCode) return;
       
       try {
-        // Get the shared flashcards information
+        // Get the shared flashcards information from the new flashcard_shares table
         const { data: shareData, error: shareError } = await supabase
           .from('flashcard_shares')
           .select('flashcard_ids')
@@ -59,7 +59,26 @@ const SharePage = () => {
           return;
         }
         
-        setFlashcards(flashcardsData);
+        // Convert the database flashcards to our Flashcard type
+        const typedFlashcards: Flashcard[] = flashcardsData.map(card => ({
+          id: card.id,
+          question: card.question,
+          answer: card.answer,
+          category: card.category,
+          subcategory: card.subcategory,
+          difficulty: card.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+          reportCount: card.report_count,
+          reportReason: card.report_reason,
+          isApproved: card.is_approved,
+          correct_count: card.correct_count,
+          incorrect_count: card.incorrect_count,
+          last_reviewed: card.last_reviewed,
+          created_at: card.created_at,
+          module_id: card.module_id,
+          user_id: card.user_id
+        }));
+        
+        setFlashcards(typedFlashcards);
       } catch (error) {
         console.error("Error:", error);
         toast({
@@ -89,7 +108,7 @@ const SharePage = () => {
             question: flashcard.question,
             answer: flashcard.answer,
             category: flashcard.category,
-            difficulty: flashcard.difficulty as any,
+            difficulty: flashcard.difficulty,
           });
         });
         

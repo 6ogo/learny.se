@@ -75,6 +75,30 @@ export type Database = {
         }
         Relationships: []
       }
+      flashcard_shares: {
+        Row: {
+          code: string
+          created_at: string
+          flashcard_ids: string[]
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          flashcard_ids: string[]
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          flashcard_ids?: string[]
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       flashcards: {
         Row: {
           answer: string
@@ -84,11 +108,14 @@ export type Database = {
           difficulty: string
           id: string
           incorrect_count: number
+          is_approved: boolean
           last_reviewed: string | null
           learned: boolean
           module_id: string
           next_review: string | null
           question: string
+          report_count: number
+          report_reason: string[] | null
           review_later: boolean
           subcategory: string | null
           updated_at: string
@@ -102,11 +129,14 @@ export type Database = {
           difficulty: string
           id?: string
           incorrect_count?: number
+          is_approved?: boolean
           last_reviewed?: string | null
           learned?: boolean
           module_id: string
           next_review?: string | null
           question: string
+          report_count?: number
+          report_reason?: string[] | null
           review_later?: boolean
           subcategory?: string | null
           updated_at?: string
@@ -120,11 +150,14 @@ export type Database = {
           difficulty?: string
           id?: string
           incorrect_count?: number
+          is_approved?: boolean
           last_reviewed?: string | null
           learned?: boolean
           module_id?: string
           next_review?: string | null
           question?: string
+          report_count?: number
+          report_reason?: string[] | null
           review_later?: boolean
           subcategory?: string | null
           updated_at?: string

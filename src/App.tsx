@@ -20,6 +20,7 @@ import AccountPage from '@/pages/AccountPage';
 import NotFound from '@/pages/NotFound';
 import PricingPage from '@/pages/PricingPage';
 import AdminPage from '@/pages/AdminPage';
+import SharePage from '@/pages/SharePage';
 
 const router = createBrowserRouter([
   {
@@ -73,6 +74,10 @@ const router = createBrowserRouter([
       {
         path: "/pricing",
         element: <PricingPage />,
+      },
+      {
+        path: "/share/:shareCode",
+        element: <SharePage />,
       },
     ],
   },

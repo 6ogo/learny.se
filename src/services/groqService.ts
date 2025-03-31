@@ -15,6 +15,8 @@ export interface AIFlashcardResponse {
     question: string;
     answer: string;
   }[];
+  module_id?: string;
+  saved?: boolean;
 }
 
 export const generateFlashcards = async (request: AIFlashcardRequest): Promise<AIFlashcardResponse> => {
@@ -42,6 +44,14 @@ export const generateFlashcards = async (request: AIFlashcardRequest): Promise<A
     }
 
     console.log('Generated flashcards:', data);
+    
+    if (data.saved) {
+      toast({
+        title: "Flashcards skapade",
+        description: `${data.flashcards.length} flashcards har genererats och sparats i din samling.`,
+      });
+    }
+    
     return data;
   } catch (error) {
     console.error('Failed to generate flashcards:', error);

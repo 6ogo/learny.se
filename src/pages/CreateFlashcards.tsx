@@ -30,6 +30,9 @@ import { generateFlashcards, generateShareableLink } from '@/services/groqServic
 import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { AIFlashcardGenerator } from '@/components/AIFlashcardGenerator';
+import { FlashcardSharingDialog } from '@/components/FlashcardSharingDialog';
+import { Share } from 'lucide-react';
 
 const CreateFlashcards = () => {
   const { categories, addFlashcard } = useLocalStorage();
@@ -48,6 +51,8 @@ const CreateFlashcards = () => {
   const [savedFlashcardIds, setSavedFlashcardIds] = useState<string[]>([]);
   const [shareUrl, setShareUrl] = useState('');
   const [shareMode, setShareMode] = useState(false);
+  const [aiGeneratedFlashcards, setAiGeneratedFlashcards] = useState<Flashcard[]>([]);
+  const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
   
   const previewFlashcard = {
     id: 'preview',
@@ -363,6 +368,22 @@ const CreateFlashcards = () => {
     }
   };
 
+  const handleAIFlashcardsGenerated = (flashcards: Flashcard[]) => {
+    setAiGeneratedFlashcards(flashcards);
+    
+    // Add the generated flashcards to the local flashcards state
+    if (flashcards.length > 0) {
+      for (const fc of flashcards) {
+        addFlashcard({
+          question: fc.question,
+          answer: fc.answer,
+          category: fc.category,
+          difficulty: fc.difficulty as any,
+        });
+      }
+    }
+  };
+
   return (
     <div className="container px-4 py-8 mx-auto">
       <Link to="/" className="inline-flex items-center text-gray-600 hover:text-learny-purple mb-6">
@@ -370,10 +391,23 @@ const CreateFlashcards = () => {
         Tillbaka till startsidan
       </Link>
 
-      <h1 className="text-3xl font-bold mb-6">Skapa flashcards</h1>
+      <h1 className="text-3xl font-bold mb-6">Skapa Flashcards</h1>
       <p className="text-lg text-gray-600 mb-8">
         Skapa dina egna flashcards för att förbättra din inlärning.
       </p>
+
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Lägg till nytt flashcard</h2>
+        
+        <Button
+          variant="outline"
+          onClick={() => setIsSharingDialogOpen(true)}
+          className="flex items-center"
+        >
+          <Share className="h-4 w-4 mr-2" />
+          Dela dina flashcards
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
@@ -661,6 +695,14 @@ const CreateFlashcards = () => {
           )}
         </div>
       </div>
+
+      <AIFlashcardGenerator onFlashcardsGenerated={handleAIFlashcardsGenerated} />
+
+      <FlashcardSharingDialog
+        open={isSharingDialogOpen}
+        onOpenChange={setIsSharingDialogOpen}
+        flashcards={userFlashcards}
+      />
     </div>
   );
 };

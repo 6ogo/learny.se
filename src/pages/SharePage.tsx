@@ -24,18 +24,33 @@ const SharePage = () => {
       if (!shareCode) return;
       
       try {
-        // Use type assertion to work around the type error
-        const { data: shareData, error: shareError } = await supabase
+        // First attempt a direct fetch as any to bypass TypeScript checks
+        const response = await supabase
           .from('flashcard_shares' as any)
           .select('flashcard_ids')
           .eq('code', shareCode)
           .single();
-        
-        if (shareError) {
-          console.error("Error fetching share:", shareError);
+          
+        // Handle errors and ensure data exists
+        if (response.error) {
+          console.error("Error fetching share:", response.error);
           toast({
             title: "Delningskod ogiltig",
             description: "Kunde inte hitta flashcards med denna delningskod.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        
+        // Safely access data.flashcard_ids with type assertion
+        const shareData = response.data as { flashcard_ids: string[] };
+        
+        if (!shareData || !shareData.flashcard_ids || !Array.isArray(shareData.flashcard_ids)) {
+          console.error("Invalid share data structure:", shareData);
+          toast({
+            title: "Ogiltig delningsdata",
+            description: "Kunde inte läsa delningsinformationen korrekt.",
             variant: "destructive",
           });
           setLoading(false);
@@ -70,13 +85,17 @@ const SharePage = () => {
           reportCount: card.report_count,
           reportReason: card.report_reason,
           isApproved: card.is_approved,
+          correctCount: card.correct_count,
+          incorrectCount: card.incorrect_count,
+          lastReviewed: card.last_reviewed,
+          createdById: card.user_id,
+          // Add snake_case versions for database compatibility
           correct_count: card.correct_count,
           incorrect_count: card.incorrect_count,
           last_reviewed: card.last_reviewed,
           created_at: card.created_at,
           module_id: card.module_id,
           user_id: card.user_id,
-          // Add snake_case versions for database compatibility
           report_count: card.report_count,
           report_reason: card.report_reason,
           is_approved: card.is_approved

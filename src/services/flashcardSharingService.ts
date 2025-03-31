@@ -89,15 +89,23 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
   try {
     if (!shareCode) return [];
 
-    // First, get the share information - use type assertion to handle the type
-    const { data: shareData, error: shareError } = await supabase
+    // First, properly fetch and handle the share information
+    const response = await supabase
       .from('flashcard_shares' as any)
       .select('flashcard_ids')
       .eq('code', shareCode)
       .single();
 
-    if (shareError || !shareData) {
-      console.error('Error fetching share information:', shareError);
+    if (response.error || !response.data) {
+      console.error('Error fetching share information:', response.error);
+      return [];
+    }
+
+    // Use type assertion to access the flashcard_ids safely
+    const shareData = response.data as { flashcard_ids: string[] };
+    
+    if (!shareData.flashcard_ids || !Array.isArray(shareData.flashcard_ids)) {
+      console.error('Invalid share data structure:', shareData);
       return [];
     }
 

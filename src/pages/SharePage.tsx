@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ const SharePage = () => {
       if (!shareCode) return;
       
       try {
-        // We need to use any here because the flashcard_shares table might not be in the TypeScript types yet
+        // Use type assertion to work around the type error
         const { data: shareData, error: shareError } = await supabase
           .from('flashcard_shares' as any)
           .select('flashcard_ids')
@@ -74,7 +75,11 @@ const SharePage = () => {
           last_reviewed: card.last_reviewed,
           created_at: card.created_at,
           module_id: card.module_id,
-          user_id: card.user_id
+          user_id: card.user_id,
+          // Add snake_case versions for database compatibility
+          report_count: card.report_count,
+          report_reason: card.report_reason,
+          is_approved: card.is_approved
         }));
         
         setFlashcards(typedFlashcards);

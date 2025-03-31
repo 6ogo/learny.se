@@ -89,7 +89,7 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
   try {
     if (!shareCode) return [];
 
-    // First, get the share information
+    // First, get the share information - use type assertion to handle the type
     const { data: shareData, error: shareError } = await supabase
       .from('flashcard_shares' as any)
       .select('flashcard_ids')

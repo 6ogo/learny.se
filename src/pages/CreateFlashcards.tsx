@@ -126,3 +126,15 @@ export const importSharedFlashcards = async (shareCode: string): Promise<boolean
     return false;
   }
 };
+
+// Add this default export component for the CreateFlashcards page
+const CreateFlashcardsPage = () => {
+  return (
+    <div>
+      <h1>Create Flashcards</h1>
+      {/* Add content for the CreateFlashcards page */}
+    </div>
+  );
+};
+
+export default CreateFlashcardsPage;

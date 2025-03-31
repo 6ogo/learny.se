@@ -1,9 +1,9 @@
-
 // src/pages/CategoryPage.tsx
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { ProgramsByCategory } from '@/components/ProgramsByCategory';
+import { FlashcardsBySubcategory } from '@/components/FlashcardsBySubcategory';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -54,7 +54,12 @@ const CategoryPage = () => {
       {/* Display Programs */}
       <ProgramsByCategory categoryId={category.id} />
 
-      {/* Removed the direct flashcard viewers by difficulty level */}
+      {/* Display Flashcards by Subcategory and Difficulty */}
+      {hasFlashcards && (
+        <FlashcardsBySubcategory categoryId={category.id} />
+      )}
+
+      {/* Show message if no flashcards */}
       {!hasFlashcards && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mt-8">
           <p className="mb-4">Det finns inga flashcards i denna kategori ännu.</p>

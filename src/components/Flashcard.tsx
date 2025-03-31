@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, RotateCcw, BookmarkPlus, BookmarkX, Flag } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronRight, BookmarkPlus, BookmarkX, Flag } from 'lucide-react';
 import { Flashcard as FlashcardType } from '@/types/flashcard';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { toast } from "@/hooks/use-toast";
@@ -89,44 +88,44 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   };
 
   const handleCorrect = () => {
-    // Make sure the card is flipped before allowing answers
-    if (!isFlipped) {
-      setIsFlipped(true);
-      return;
+    // Always make sure the card is flipped to show the answer
+    setIsFlipped(true);
+    
+    // Only proceed with answering if we haven't already answered
+    if (!answered) {
+      setAnswered(true);
+      // Always set feedback message for correct answers
+      const feedback = getRandomPositiveFeedback();
+      setFeedbackMessage(feedback);
+      
+      updateFlashcard(flashcard.id, {
+        correctCount: (flashcard.correctCount || 0) + 1,
+        lastReviewed: Date.now(),
+      });
+      
+      if (onCorrect) onCorrect();
     }
-    
-    setAnswered(true);
-    // Always set feedback message for correct answers
-    const feedback = getRandomPositiveFeedback();
-    setFeedbackMessage(feedback);
-    
-    updateFlashcard(flashcard.id, {
-      correctCount: (flashcard.correctCount || 0) + 1,
-      lastReviewed: Date.now(),
-    });
-    
-    if (onCorrect) onCorrect();
   };
 
   const handleIncorrect = () => {
-    // Make sure the card is flipped before allowing answers
-    if (!isFlipped) {
-      setIsFlipped(true);
-      return;
+    // Always make sure the card is flipped to show the answer
+    setIsFlipped(true);
+    
+    // Only proceed with answering if we haven't already answered
+    if (!answered) {
+      setAnswered(true);
+      // Always set feedback message for incorrect answers
+      const feedback = getRandomNegativeFeedback();
+      setFeedbackMessage(feedback);
+      
+      updateFlashcard(flashcard.id, {
+        incorrectCount: (flashcard.incorrectCount || 0) + 1,
+        lastReviewed: Date.now(),
+        reviewLater: true,
+      });
+      
+      if (onIncorrect) onIncorrect();
     }
-    
-    setAnswered(true);
-    // Always set feedback message for incorrect answers
-    const feedback = getRandomNegativeFeedback();
-    setFeedbackMessage(feedback);
-    
-    updateFlashcard(flashcard.id, {
-      incorrectCount: (flashcard.incorrectCount || 0) + 1,
-      lastReviewed: Date.now(),
-      reviewLater: true,
-    });
-    
-    if (onIncorrect) onIncorrect();
   };
 
   const handleReset = () => {
@@ -152,7 +151,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         : "Detta kort är inte längre markerat som inlärt.",
     });
     
-    // We explicitly do NOT call handleReset() or move to next card
+    // DO NOT reset or move to next card
   };
 
   const handleReportCard = () => {
@@ -317,7 +316,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               className="mt-2 dark:border-gray-600 dark:text-white"
               onClick={handleReset}
             >
-              <RotateCcw className="mr-2 h-5 w-5" />
+              <ChevronRight className="mr-2 h-5 w-5" />
               Nästa kort
             </Button>
           )}

@@ -32,6 +32,23 @@ const POSITIVE_FEEDBACK = [
   "Fortsätt så!"
 ];
 
+// Array of negative feedback messages
+const NEGATIVE_FEEDBACK = [
+  "Du behöver träna mer på det här. Fortsätt öva!",
+  "Inte riktigt. Kolla igenom materialet en gång till!",
+  "Det var inte rätt, men du kommer att lära dig med mer övning.",
+  "Svårt att komma ihåg? Försök skapa en minnesteknik för detta.",
+  "Försök igen efter att ha gått igenom materialet en gång till.",
+  "Det här verkar vara ett svårt område för dig. Fokusera extra på det!",
+  "Inte korrekt, men misstag är en del av lärprocessen.",
+  "Öva mer specifikt på detta område.",
+  "Detta är en vanlig fallgrop, studera det extra noga.",
+  "Ett misstag leder till bättre inlärning nästa gång!",
+  "Ta en paus och återkom till detta senare.",
+  "Upprepa detta kort flera gånger för att förstärka minnet.",
+  "Försök att formulera svaret med egna ord för bättre inlärning."
+];
+
 interface FlashcardProps {
   flashcard: FlashcardType;
   onCorrect?: () => void;
@@ -67,7 +84,17 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     return POSITIVE_FEEDBACK[Math.floor(Math.random() * POSITIVE_FEEDBACK.length)];
   };
 
+  const getRandomNegativeFeedback = () => {
+    return NEGATIVE_FEEDBACK[Math.floor(Math.random() * NEGATIVE_FEEDBACK.length)];
+  };
+
   const handleCorrect = () => {
+    // Make sure the card is flipped before allowing answers
+    if (!isFlipped) {
+      setIsFlipped(true);
+      return;
+    }
+    
     setAnswered(true);
     const feedback = getRandomPositiveFeedback();
     setFeedbackMessage(feedback);
@@ -81,8 +108,15 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   };
 
   const handleIncorrect = () => {
+    // Make sure the card is flipped before allowing answers
+    if (!isFlipped) {
+      setIsFlipped(true);
+      return;
+    }
+    
     setAnswered(true);
-    setFeedbackMessage("Du behöver träna mer på det här. Fortsätt öva!");
+    const feedback = getRandomNegativeFeedback();
+    setFeedbackMessage(feedback);
     
     updateFlashcard(flashcard.id, {
       incorrectCount: (flashcard.incorrectCount || 0) + 1,
@@ -112,6 +146,8 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         ? "Detta kort har markerats som inlärt i din profil."
         : "Detta kort är inte längre markerat som inlärt.",
     });
+    
+    // We don't move to the next card here anymore
   };
 
   const handleReportCard = () => {
@@ -200,7 +236,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             exit={{ opacity: 0 }}
             className={cn(
               "mt-4 p-3 rounded-lg text-center font-medium",
-              feedbackMessage.includes("träna") 
+              feedbackMessage.includes("träna") || feedbackMessage.includes("Inte") || feedbackMessage.includes("svårt") || feedbackMessage.includes("misstag")
                 ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
                 : "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
             )}
@@ -235,11 +271,10 @@ export const Flashcard: React.FC<FlashcardProps> = ({
                 </Button>
               </div>
               
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center">
                 <Button
                   variant="outline"
-                  size="lg"
-                  className="border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-full"
+                  className="border-learny-purple hover:bg-learny-purple/5 hover:text-learny-purple dark:border-learny-purple-dark dark:hover:bg-learny-purple/20 dark:text-white dark:hover:text-learny-purple-dark w-64"
                   onClick={toggleLearned}
                 >
                   {flashcard.learned ? (

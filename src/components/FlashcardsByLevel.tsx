@@ -76,7 +76,10 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
       </CardHeader>
       <CardContent>
         {flashcards.length > 0 && (
-          <Flashcard flashcard={flashcards[currentIndex]} />
+          <Flashcard 
+            flashcard={flashcards[currentIndex]} 
+            showControls={true}
+          />
         )}
       </CardContent>
     </Card>

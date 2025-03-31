@@ -43,8 +43,8 @@ const SharePage = () => {
           return;
         }
         
-        // Safely access data.flashcard_ids with type assertion
-        const shareData = response.data as { flashcard_ids: string[] };
+        // First convert to unknown, then to the expected type to avoid TypeScript errors
+        const shareData = (response.data as unknown) as { flashcard_ids: string[] };
         
         if (!shareData || !shareData.flashcard_ids || !Array.isArray(shareData.flashcard_ids)) {
           console.error("Invalid share data structure:", shareData);
@@ -85,9 +85,10 @@ const SharePage = () => {
           reportCount: card.report_count,
           reportReason: card.report_reason,
           isApproved: card.is_approved,
+          // Convert string timestamp to number if present, otherwise undefined
+          lastReviewed: card.last_reviewed ? new Date(card.last_reviewed).getTime() : undefined,
           correctCount: card.correct_count,
           incorrectCount: card.incorrect_count,
-          lastReviewed: card.last_reviewed,
           createdById: card.user_id,
           // Add snake_case versions for database compatibility
           correct_count: card.correct_count,

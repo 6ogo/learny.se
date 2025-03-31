@@ -101,8 +101,8 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
       return [];
     }
 
-    // Use type assertion to access the flashcard_ids safely
-    const shareData = response.data as { flashcard_ids: string[] };
+    // First convert to unknown, then to the expected type to avoid TypeScript errors
+    const shareData = (response.data as unknown) as { flashcard_ids: string[] };
     
     if (!shareData.flashcard_ids || !Array.isArray(shareData.flashcard_ids)) {
       console.error('Invalid share data structure:', shareData);
@@ -130,6 +130,8 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
       difficulty: card.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
       correctCount: card.correct_count,
       incorrectCount: card.incorrect_count,
+      // Convert string timestamp to number if present, otherwise undefined
+      lastReviewed: card.last_reviewed ? new Date(card.last_reviewed).getTime() : undefined,
       learned: card.learned,
       reviewLater: card.review_later,
       // Include reporting fields

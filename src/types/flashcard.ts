@@ -12,4 +12,8 @@ export type Flashcard = {
   incorrectCount?: number;
   learned?: boolean;
   reviewLater?: boolean;
+  createdById?: string;
+  reportCount?: number;
+  reportReason?: string[];
+  isApproved?: boolean;
 };

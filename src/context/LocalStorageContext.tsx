@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, FC } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Flashcard } from '@/types/flashcard';
@@ -7,7 +6,8 @@ import { Program } from '@/types/program';
 import { UserStats, UserAchievement } from '@/types/user';
 import { initialCategories } from '@/data/categories';
 import { initialPrograms } from '@/data/programs';
-import { initialFlashcards } from '@/data/flashcards';
+// Import the NEW aggregated flashcard array
+import { allFlashcards } from '@/data/flashcards/index';
 import { initialUserStats } from '@/data/user';
 
 type LocalStorageContextType = {
@@ -56,8 +56,9 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
     if (storedFlashcards) {
       setFlashcards(JSON.parse(storedFlashcards));
     } else {
-      setFlashcards(initialFlashcards);
-      localStorage.setItem('flashcards', JSON.stringify(initialFlashcards));
+      // Use the new aggregated list for initialization if local storage is empty
+      setFlashcards(allFlashcards);
+      localStorage.setItem('flashcards', JSON.stringify(allFlashcards));
     }
 
     if (storedPrograms) {
@@ -77,82 +78,111 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
     if (storedUserStats) {
       setUserStats(JSON.parse(storedUserStats));
     } else {
+      // Set initialUserStats state first
+      setUserStats(initialUserStats);
+      // Then save it to localStorage
       localStorage.setItem('userStats', JSON.stringify(initialUserStats));
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   // Save to local storage whenever data changes
   useEffect(() => {
-    localStorage.setItem('flashcards', JSON.stringify(flashcards));
+    // Avoid writing the initial default data back immediately if it was just loaded
+    if (flashcards.length > 0) {
+       localStorage.setItem('flashcards', JSON.stringify(flashcards));
+    }
   }, [flashcards]);
 
   useEffect(() => {
-    localStorage.setItem('programs', JSON.stringify(programs));
+    if (programs.length > 0) {
+      localStorage.setItem('programs', JSON.stringify(programs));
+    }
   }, [programs]);
 
   useEffect(() => {
-    localStorage.setItem('categories', JSON.stringify(categories));
+     if (categories.length > 0) {
+       localStorage.setItem('categories', JSON.stringify(categories));
+     }
   }, [categories]);
 
   useEffect(() => {
-    localStorage.setItem('userStats', JSON.stringify(userStats));
+    // Check if userStats is different from initial before saving, or just save
+     localStorage.setItem('userStats', JSON.stringify(userStats));
   }, [userStats]);
 
-  // Handle streak updates
+
+  // Handle streak updates - This logic seems fine as is.
   useEffect(() => {
     const checkAndUpdateStreak = () => {
-      const now = Date.now();
-      const lastActivity = userStats.lastActivity;
-      const oneDayMs = 24 * 60 * 60 * 1000;
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const lastActivityDate = new Date(userStats.lastActivity).getTime();
+        const oneDayMs = 24 * 60 * 60 * 1000;
 
-      if (lastActivity === 0) {
-        // First time user, set lastActivity to now
-        updateUserStats({ lastActivity: now });
-        return;
-      }
-
-      const daysSinceLastActivity = Math.floor((now - lastActivity) / oneDayMs);
-
-      if (daysSinceLastActivity === 0) {
-        // Already active today, no streak update needed
-        return;
-      } else if (daysSinceLastActivity === 1) {
-        // Active consecutive days, increment streak
-        updateUserStats({
-          streak: userStats.streak + 1,
-          lastActivity: now,
-        });
-
-        // Check if this is a streak milestone for achievement
-        if (userStats.streak + 1 === 7) {
-          addAchievement({
-            name: '7-dagars Streak',
-            description: 'Använt Learny 7 dagar i rad!',
-            icon: 'flame',
-          });
-        } else if (userStats.streak + 1 === 30) {
-          addAchievement({
-            name: '30-dagars Streak',
-            description: 'Använt Learny 30 dagar i rad!',
-            icon: 'flame',
-          });
+        // Ensure lastActivity is a valid timestamp before proceeding
+        if (userStats.lastActivity === 0 || isNaN(lastActivityDate)) {
+            // First activity or invalid stored date, set today as last activity, streak = 1
+            console.log("Initializing streak");
+            setUserStats(prev => ({ ...prev, streak: 1, lastActivity: today }));
+            return;
         }
-      } else {
-        // Streak broken, reset to 1
-        updateUserStats({
-          streak: 1,
-          lastActivity: now,
-        });
-      }
+
+        const lastActivityDay = new Date(new Date(lastActivityDate).getFullYear(), new Date(lastActivityDate).getMonth(), new Date(lastActivityDate).getDate()).getTime();
+        const daysSinceLastActivity = Math.floor((today - lastActivityDay) / oneDayMs);
+
+        console.log(`Today: ${today}, LastActivityDay: ${lastActivityDay}, Days Since: ${daysSinceLastActivity}`);
+
+
+        if (daysSinceLastActivity === 0) {
+            // Already active today, no streak update needed
+            console.log("Already active today");
+            return;
+        } else if (daysSinceLastActivity === 1) {
+            // Active consecutive days, increment streak
+            const newStreak = userStats.streak + 1;
+            console.log(`Incrementing streak to ${newStreak}`);
+            setUserStats(prev => ({ ...prev, streak: newStreak, lastActivity: today }));
+
+            // Check for streak achievements
+            if (newStreak === 7) {
+                 addAchievement({
+                     name: '7-dagars Streak',
+                     description: 'Använt Learny 7 dagar i rad!',
+                     icon: 'flame',
+                 });
+            } else if (newStreak === 30) {
+                 addAchievement({
+                     name: '30-dagars Streak',
+                     description: 'Använt Learny 30 dagar i rad!',
+                     icon: 'flame',
+                 });
+            }
+         } else if (daysSinceLastActivity > 1) {
+            // Streak broken, reset to 1
+            console.log("Streak broken, resetting to 1");
+            setUserStats(prev => ({ ...prev, streak: 1, lastActivity: today }));
+         }
     };
 
+    // We need a mechanism to trigger this check daily or on significant user action.
+    // Running it only on mount of LocalStorageProvider might not be sufficient
+    // if the app stays open across midnight.
+    // For simplicity now, it checks when the app loads/context initializes.
+    // A better approach might involve checking on specific user interactions (e.g., completing a card).
+    // Let's trigger it here for now, assuming app reload/visit triggers context init.
     checkAndUpdateStreak();
+
+  // Depend on userStats.lastActivity to re-run if it changes programmatically,
+  // though the core logic depends on the *current time* vs the stored time.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+
   const addFlashcard = (flashcard: Omit<Flashcard, 'id'>) => {
-    const newFlashcard = {
+    const newFlashcard: Flashcard = {
       ...flashcard,
-      id: `custom-${Date.now()}`,
+      id: `custom-${Date.now()}-${Math.random().toString(16).slice(2)}`, // More unique ID
       correctCount: 0,
       incorrectCount: 0,
       lastReviewed: Date.now(),
@@ -171,9 +201,23 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
   const updateFlashcard = (id: string, updates: Partial<Flashcard>) => {
     setFlashcards((prev) =>
       prev.map((flashcard) =>
-        flashcard.id === id ? { ...flashcard, ...updates } : flashcard
+        flashcard.id === id ? { ...flashcard, ...updates, lastReviewed: Date.now() } : flashcard // Ensure lastReviewed updates
       )
     );
+     // Optionally update user stats based on updates (e.g., if learned toggled)
+     if (updates.learned !== undefined) {
+         setUserStats(prev => ({
+             ...prev,
+             cardsLearned: prev.flashcards.filter(f => f.id === id ? updates.learned : f.learned).length
+         }));
+     }
+     if (updates.correctCount !== undefined || updates.incorrectCount !== undefined) {
+        setUserStats(prev => ({
+            ...prev,
+            totalCorrect: prev.flashcards.reduce((sum, f) => sum + (f.id === id ? (updates.correctCount ?? f.correctCount ?? 0) : (f.correctCount ?? 0)), 0),
+            totalIncorrect: prev.flashcards.reduce((sum, f) => sum + (f.id === id ? (updates.incorrectCount ?? f.incorrectCount ?? 0) : (f.incorrectCount ?? 0)), 0),
+        }));
+     }
   };
 
   const deleteFlashcard = (id: string) => {
@@ -195,54 +239,73 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
   const getFlashcardsByProgram = (programId: string) => {
     const program = programs.find((p) => p.id === programId);
     if (!program) return [];
-    
+
     return program.flashcards
       .map((id) => flashcards.find((f) => f.id === id))
       .filter((f): f is Flashcard => f !== undefined);
   };
 
-  const updateUserStats = (updates: Partial<UserStats>) => {
-    setUserStats((prev) => ({ ...prev, ...updates }));
+  const updateUserStatsInternal = (updates: Partial<UserStats>) => {
+    setUserStats((prev) => ({
+        ...prev,
+        ...updates,
+        // Always ensure lastActivity reflects the latest interaction time
+        lastActivity: Date.now()
+    }));
   };
 
-  const addAchievement = (achievement: Omit<UserAchievement, 'id' | 'dateEarned'>) => {
-    const newAchievement = {
+
+  const addAchievement = (achievement: Omit<UserAchievement, 'id' | 'dateEarned' | 'displayed'>) => {
+    const newAchievement: UserAchievement = {
       ...achievement,
-      id: `achievement-${Date.now()}`,
+      id: `achievement-${Date.now()}-${Math.random().toString(16).slice(2)}`, // More unique ID
       dateEarned: Date.now(),
-      displayed: false,
+      displayed: false, // New achievements are not displayed initially
     };
 
-    // Check if the achievement already exists
+    // Check if an achievement with the same name already exists
     const exists = userStats.achievements.some((a) => a.name === achievement.name);
-    if (exists) return;
+    if (exists) {
+        console.log(`Achievement "${achievement.name}" already earned.`);
+        return; // Don't add duplicates
+    }
 
-    updateUserStats({
-      achievements: [...userStats.achievements, newAchievement],
-    });
+     console.log(`Adding achievement: ${achievement.name}`);
+    setUserStats((prev) => ({
+      ...prev,
+      achievements: [...prev.achievements, newAchievement],
+    }));
 
+    // Show a toast immediately for the new achievement
     toast({
       title: 'Ny utmärkelse!',
       description: `Du har låst upp "${achievement.name}"!`,
     });
   };
 
-  const markProgramCompleted = (programId: string) => {
-    // First update the program to mark as completed
-    setPrograms((prev) =>
-      prev.map((program) =>
-        program.id === programId ? { ...program, completedByUser: true } : program
-      )
-    );
 
-    // Then add to user's completed programs if not already there
+  const markProgramCompleted = (programId: string) => {
+    // First update the program state (if needed, though maybe not necessary if only tracking in userStats)
+    // setPrograms((prev) =>
+    //   prev.map((program) =>
+    //     program.id === programId ? { ...program, completedByUser: true } : program
+    //   )
+    // );
+
+    const program = programs.find((p) => p.id === programId);
+
+    // Add to user's completed programs if not already there
     if (!userStats.completedPrograms.includes(programId)) {
-      updateUserStats({
-        completedPrograms: [...userStats.completedPrograms, programId],
-      });
+       console.log(`Marking program ${programId} (${program?.name}) as completed.`);
+       const updatedCompletedPrograms = [...userStats.completedPrograms, programId];
+
+       setUserStats((prev) => ({
+         ...prev,
+         completedPrograms: updatedCompletedPrograms,
+       }));
+
 
       // Add achievement for program completion
-      const program = programs.find((p) => p.id === programId);
       if (program) {
         addAchievement({
           name: `Avklarat: ${program.name}`,
@@ -252,37 +315,38 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
 
         // Check for category mastery (completing all programs in a category)
         const categoryPrograms = programs.filter((p) => p.category === program.category);
-        const completedInCategory = categoryPrograms.filter(
-          (p) => userStats.completedPrograms.includes(p.id) || p.id === programId
-        );
+        const allInCategoryCompleted = categoryPrograms.every(p => updatedCompletedPrograms.includes(p.id));
 
-        if (completedInCategory.length === categoryPrograms.length) {
+        if (allInCategoryCompleted && categoryPrograms.length > 0) {
           const category = categories.find((c) => c.id === program.category);
           if (category) {
             addAchievement({
               name: `${category.name} Mästare`,
               description: `Slutfört alla program i kategorin ${category.name}!`,
-              icon: 'award',
+              icon: 'award', // Changed to 'award' for distinction
             });
           }
         }
       }
+    } else {
+        console.log(`Program ${programId} (${program?.name}) was already completed.`);
     }
   };
 
-  const getProgram = (programId: string) => {
+
+  const getProgram = (programId: string): Program | undefined => {
     return programs.find((program) => program.id === programId);
   };
 
-  const getProgramsByCategory = (category: string) => {
+  const getProgramsByCategory = (category: string): Program[] => {
     return programs.filter((program) => program.category === category);
   };
 
-  const getCategory = (categoryId: string) => {
+  const getCategory = (categoryId: string): Category | undefined => {
     return categories.find((category) => category.id === categoryId);
   };
 
-  const contextValue = {
+  const contextValue: LocalStorageContextType = {
     flashcards,
     programs,
     categories,
@@ -293,7 +357,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
     getFlashcard,
     getFlashcardsByCategory,
     getFlashcardsByProgram,
-    updateUserStats,
+    updateUserStats: updateUserStatsInternal, // Use the internal wrapper
     addAchievement,
     markProgramCompleted,
     getProgram,

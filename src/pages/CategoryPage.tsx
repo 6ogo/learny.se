@@ -1,25 +1,24 @@
+
 // src/pages/CategoryPage.tsx
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { ProgramsByCategory } from '@/components/ProgramsByCategory';
-import { FlashcardsByLevel } from '@/components/FlashcardsByLevel'; // Import the component
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { Flashcard } from '@/types/flashcard'; // Import Flashcard type
 
 const CategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
-  const { getCategory, updateUserStats, getFlashcardsByCategory } = useLocalStorage(); // Add getFlashcardsByCategory
+  const { getCategory, updateUserStats, getFlashcardsByCategory } = useLocalStorage();
 
   const category = getCategory(categoryId || '');
-  const categoryFlashcards = getFlashcardsByCategory(categoryId || ''); // Get all flashcards for this category
+  const categoryFlashcards = getFlashcardsByCategory(categoryId || '');
 
   useEffect(() => {
     // Update streak on page visit
     updateUserStats({});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only depends on updateUserStats which is stable
+  }, []);
 
   if (!category) {
     return (
@@ -55,17 +54,9 @@ const CategoryPage = () => {
       {/* Display Programs */}
       <ProgramsByCategory categoryId={category.id} />
 
-      {/* Display Flashcards by Level */}
-      <h2 className="text-2xl font-bold mt-12 mb-6 dark:text-white">Flashcards i {category.name}</h2>
-      {hasFlashcards ? (
-        <>
-          <FlashcardsByLevel categoryId={category.id} difficulty="beginner" />
-          <FlashcardsByLevel categoryId={category.id} difficulty="intermediate" />
-          <FlashcardsByLevel categoryId={category.id} difficulty="advanced" />
-          <FlashcardsByLevel categoryId={category.id} difficulty="expert" />
-        </>
-      ) : (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+      {/* Removed the direct flashcard viewers by difficulty level */}
+      {!hasFlashcards && (
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mt-8">
           <p className="mb-4">Det finns inga flashcards i denna kategori ännu.</p>
           <Button asChild>
              <Link to="/create">Skapa nya flashcards</Link>

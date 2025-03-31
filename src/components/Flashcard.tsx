@@ -135,7 +135,10 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     setFeedbackMessage(null);
   };
 
-  const toggleLearned = () => {
+  const toggleLearned = (e: React.MouseEvent) => {
+    // Prevent the event from propagating to parent elements
+    e.stopPropagation();
+    
     const newLearnedState = !flashcard.learned;
     updateFlashcard(flashcard.id, {
       learned: newLearnedState,
@@ -149,7 +152,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         : "Detta kort är inte längre markerat som inlärt.",
     });
     
-    // We don't move to the next card here
+    // We explicitly do NOT call handleReset() or move to next card
   };
 
   const handleReportCard = () => {

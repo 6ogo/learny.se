@@ -28,7 +28,7 @@ export const tierDetails: TierDetails[] = [
     id: 'premium',
     name: 'Premium',
     description: 'För seriösa studenter',
-    price: '99 kr/månad',
+    price: '29 kr/månad',
     priceId: 'price_premium', // Replace with actual Stripe price ID
     features: [
       'Obegränsade flashcards',
@@ -48,7 +48,7 @@ export const tierDetails: TierDetails[] = [
     id: 'super',
     name: 'Super Learner',
     description: 'För professionellt lärande',
-    price: '199 kr/månad',
+    price: '99 kr/månad',
     priceId: 'price_super', // Replace with actual Stripe price ID
     features: [
       'Alla Premium-funktioner',

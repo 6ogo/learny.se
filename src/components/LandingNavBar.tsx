@@ -14,7 +14,7 @@ export const LandingNavBar: React.FC = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <img 
-                src="/lovable-uploads/3977d71f-39ec-4118-af1f-b71f31832d06.png" 
+                src="/logo.png" 
                 alt="Learny.se" 
                 className="h-10 w-auto mr-2" 
               />

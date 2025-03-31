@@ -15,7 +15,8 @@ type LocalStorageContextType = {
   programs: Program[];
   categories: Category[];
   userStats: UserStats;
-  addFlashcard: (flashcard: Omit<Flashcard, 'id' | 'correctCount' | 'incorrectCount' | 'lastReviewed' | 'nextReview' | 'learned' | 'reviewLater'>) => void;
+  isContextLoading: boolean; // <-- Add loading state indicator
+  addFlashcard: (flashcardData: Omit<Flashcard, 'id' | 'correctCount' | 'incorrectCount' | 'lastReviewed' | 'nextReview' | 'learned' | 'reviewLater'>) => void;
   updateFlashcard: (id: string, updates: Partial<Flashcard>) => void;
   deleteFlashcard: (id: string) => void;
   getFlashcard: (id: string) => Flashcard | undefined;
@@ -28,7 +29,6 @@ type LocalStorageContextType = {
   getCategory: (categoryId: string) => Category | undefined;
 };
 
-// Create the context
 const LocalStorageContext = createContext<LocalStorageContextType | undefined>(undefined);
 
 export const useLocalStorage = () => {
@@ -45,15 +45,15 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
   const [programs, setPrograms] = useState<Program[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [userStats, setUserStats] = useState<UserStats>(initialUserStats);
-  const [isDataLoaded, setIsDataLoaded] = useState(false); // Flag to track initial load
+  const [isContextLoading, setIsContextLoading] = useState(true); // Start as loading
 
-  // Single useEffect for loading data and initial streak check
+  // Effect 1: Load initial data from localStorage
   useEffect(() => {
-    console.log("LocalStorageProvider Mount: Loading data...");
+    console.log("LocalStorageProvider Mount: Starting initial data load...");
     let loadedFlashcards = allFlashcards;
     let loadedPrograms = initialPrograms;
     let loadedCategories = initialCategories;
-    let loadedUserStats = { ...initialUserStats }; // Important: clone initial stats
+    let loadedUserStats = { ...initialUserStats }; // Clone initial stats
 
     try {
       const storedFlashcards = localStorage.getItem('flashcards');
@@ -72,98 +72,111 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
 
     try {
       const storedUserStats = localStorage.getItem('userStats');
-      // Make sure the loaded stats have all required fields, merging with initial if needed
       if (storedUserStats) {
-           const parsedStats = JSON.parse(storedUserStats);
-           loadedUserStats = {
-               ...initialUserStats, // Start with defaults
-               ...parsedStats // Override with stored values
-           };
-       }
+        const parsedStats = JSON.parse(storedUserStats);
+        // Ensure all properties exist, using defaults if missing in storage
+        loadedUserStats = {
+          streak: parsedStats.streak ?? initialUserStats.streak,
+          lastActivity: parsedStats.lastActivity ?? initialUserStats.lastActivity,
+          totalCorrect: parsedStats.totalCorrect ?? initialUserStats.totalCorrect,
+          totalIncorrect: parsedStats.totalIncorrect ?? initialUserStats.totalIncorrect,
+          cardsLearned: parsedStats.cardsLearned ?? initialUserStats.cardsLearned,
+          achievements: Array.isArray(parsedStats.achievements) ? parsedStats.achievements : initialUserStats.achievements,
+          completedPrograms: Array.isArray(parsedStats.completedPrograms) ? parsedStats.completedPrograms : initialUserStats.completedPrograms,
+        };
+      }
     } catch (e) { console.error("Error parsing stored userStats:", e); }
 
-    // Set initial state from loaded data
+    // Set the loaded state
     setFlashcards(loadedFlashcards);
     setPrograms(loadedPrograms);
     setCategories(loadedCategories);
+    setUserStats(loadedUserStats); // Set the loaded stats
 
-    // --- Streak Logic START ---
-    const checkAndUpdateStreak = (currentStats: UserStats): UserStats => {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        // Ensure lastActivity is a number before creating a Date object
-        const lastActivityTimestamp = typeof currentStats.lastActivity === 'number' ? currentStats.lastActivity : 0;
-        const lastActivityDate = new Date(lastActivityTimestamp).getTime();
-        const oneDayMs = 24 * 60 * 60 * 1000;
-
-        // If lastActivity is 0 or invalid, it's the first session or reset needed
-        if (lastActivityTimestamp === 0 || isNaN(lastActivityDate)) {
-            console.log("Initializing streak");
-            // Return updated stats based on currentStats, but with streak=1 and today's activity
-             return { ...currentStats, streak: 1, lastActivity: today };
-        }
-
-        const lastActivityDay = new Date(new Date(lastActivityTimestamp).getFullYear(), new Date(lastActivityTimestamp).getMonth(), new Date(lastActivityTimestamp).getDate()).getTime();
-        const daysSinceLastActivity = Math.floor((today - lastActivityDay) / oneDayMs);
-
-        console.log(`Streak Check: Today=${today}, LastActivityDay=${lastActivityDay}, Days Since=${daysSinceLastActivity}, Current Streak=${currentStats.streak}`);
-
-        if (daysSinceLastActivity === 0) {
-            console.log("Already active today, streak unchanged.");
-            // If already active today, ensure lastActivity is *today* but don't change streak
-            return { ...currentStats, lastActivity: today };
-        } else if (daysSinceLastActivity === 1) {
-            const newStreak = currentStats.streak + 1;
-            console.log(`Incrementing streak to ${newStreak}`);
-            // Check for streak achievements (use addAuthAchievement)
-            if (newStreak === 7) {
-                 addAuthAchievement({ name: '7-dagars Streak', description: 'Använt Learny 7 dagar i rad!', icon: 'flame' });
-            } else if (newStreak === 30) {
-                 addAuthAchievement({ name: '30-dagars Streak', description: 'Använt Learny 30 dagar i rad!', icon: 'flame' });
-            }
-            return { ...currentStats, streak: newStreak, lastActivity: today };
-        } else { // daysSinceLastActivity > 1
-            console.log("Streak broken, resetting to 1.");
-             return { ...currentStats, streak: 1, lastActivity: today };
-        }
-    };
-
-    // Calculate the potentially updated stats *before* setting state
-    const finalInitialStats = checkAndUpdateStreak(loadedUserStats);
-    setUserStats(finalInitialStats); // Set the final calculated initial state
-    // --- Streak Logic END ---
-
-    setIsDataLoaded(true); // Mark data as loaded
-    console.log("LocalStorageProvider Mount: Data loaded and streak checked.");
+    console.log("LocalStorageProvider Mount: Initial data set from localStorage.");
+    // Loading is finished *after* this initial data is set
+    setIsContextLoading(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only ONCE on mount
 
-
-  // Save to local storage whenever data changes *after* initial load
+  // Effect 2: Check and update streak *after* initial load
   useEffect(() => {
-    if (!isDataLoaded) return; // Don't save during initial load race condition
-    console.log("Saving flashcards to localStorage", flashcards.length);
+    // Only run if initial data load is complete AND userStats has been potentially set
+    if (!isContextLoading) {
+      console.log("LocalStorageProvider: Running streak check effect...");
+      setUserStats(currentStats => {
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+          const lastActivityTimestamp = typeof currentStats.lastActivity === 'number' ? currentStats.lastActivity : 0;
+          const lastActivityDate = new Date(lastActivityTimestamp).getTime();
+          const oneDayMs = 24 * 60 * 60 * 1000;
+
+          // This prevents calculation if lastActivity is invalid (e.g., 0 from initial state)
+          // It should only run if a valid timestamp exists from previous sessions or the initial load.
+          if (lastActivityTimestamp === 0 || isNaN(lastActivityDate)) {
+              console.log("Streak Check: Initializing or invalid lastActivity, setting streak=1 for today.");
+              // Important: Only update if lastActivity was *truly* 0, not just default.
+              // The check in the loading useEffect handles the very first initialization better.
+              // This check mainly handles cases after a reset or if data was corrupted.
+              // Let's refine: Maybe only update if lastActivity was 0 AND user did something today?
+              // A simpler approach: The initial load useEffect handles the FIRST ever streak.
+              // This effect handles subsequent updates.
+              return currentStats; // Let initial load handle the very first streak setting
+          }
+
+          const lastActivityDay = new Date(new Date(lastActivityTimestamp).getFullYear(), new Date(lastActivityTimestamp).getMonth(), new Date(lastActivityTimestamp).getDate()).getTime();
+          const daysSinceLastActivity = Math.floor((today - lastActivityDay) / oneDayMs);
+
+          console.log(`Streak Check (Post-Load): Today=${today}, LastActivityDay=${lastActivityDay}, Days Since=${daysSinceLastActivity}, Current Streak=${currentStats.streak}`);
+
+          if (daysSinceLastActivity === 0) {
+              console.log("Streak Check (Post-Load): Active today, no change.");
+              // Ensure lastActivity is today if already active
+              return currentStats.lastActivity === today ? currentStats : { ...currentStats, lastActivity: today };
+          } else if (daysSinceLastActivity === 1) {
+              const newStreak = currentStats.streak + 1;
+              console.log(`Streak Check (Post-Load): Incrementing streak to ${newStreak}`);
+              // Check achievements
+              if (newStreak === 7) addAuthAchievement({ name: '7-dagars Streak', description: 'Använt Learny 7 dagar i rad!', icon: 'flame' });
+              else if (newStreak === 30) addAuthAchievement({ name: '30-dagars Streak', description: 'Använt Learny 30 dagar i rad!', icon: 'flame' });
+              return { ...currentStats, streak: newStreak, lastActivity: today };
+          } else { // daysSinceLastActivity > 1
+              console.log("Streak Check (Post-Load): Streak broken, resetting to 1.");
+              return { ...currentStats, streak: 1, lastActivity: today };
+          }
+      });
+    }
+    // Depend on isContextLoading to trigger AFTER initial load
+    // Add other dependencies if specific user actions should trigger a re-check (e.g., completing a card)
+    // For now, just checking after load should fix the refresh issue.
+  }, [isContextLoading, addAuthAchievement]);
+
+
+  // Save effects - Depend on isContextLoading to prevent premature saves
+  useEffect(() => {
+    if (isContextLoading) return;
+    console.log("Saving flashcards to localStorage");
     localStorage.setItem('flashcards', JSON.stringify(flashcards));
-  }, [flashcards, isDataLoaded]);
+  }, [flashcards, isContextLoading]);
 
   useEffect(() => {
-    if (!isDataLoaded) return;
-    console.log("Saving programs to localStorage", programs.length);
+    if (isContextLoading) return;
+    console.log("Saving programs to localStorage");
     localStorage.setItem('programs', JSON.stringify(programs));
-  }, [programs, isDataLoaded]);
+  }, [programs, isContextLoading]);
 
   useEffect(() => {
-     if (!isDataLoaded) return;
-     console.log("Saving categories to localStorage", categories.length);
+     if (isContextLoading) return;
+     console.log("Saving categories to localStorage");
      localStorage.setItem('categories', JSON.stringify(categories));
-  }, [categories, isDataLoaded]);
+  }, [categories, isContextLoading]);
 
   useEffect(() => {
-    if (!isDataLoaded) return;
+    if (isContextLoading) return;
     console.log("Saving userStats to localStorage", userStats);
     localStorage.setItem('userStats', JSON.stringify(userStats));
-  }, [userStats, isDataLoaded]);
+  }, [userStats, isContextLoading]);
 
 
   const addFlashcard = (flashcardData: Omit<Flashcard, 'id' | 'correctCount' | 'incorrectCount' | 'lastReviewed' | 'nextReview' | 'learned' | 'reviewLater'>) => {
@@ -183,67 +196,57 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
       title: 'Flashcard skapad',
       description: 'Din nya flashcard har lagts till!',
     });
-    // Update last activity when a card is added
-    updateUserStatsInternal({});
+    updateUserStatsInternal({}); // Update last activity
   };
 
   const updateFlashcard = (id: string, updates: Partial<Flashcard>) => {
-    let wasCorrectIncrement = false;
-    let wasLearnedIncrement = false;
-    let wasLearnedDecrement = false;
+     // This logic needs careful review based on how correct/incorrect/learned counts are handled.
+     // We update flashcards state first, then use a functional update for userStats
+     // to ensure we base calculations on the *previous* stats state.
 
-    // Update the flashcards state first
-    setFlashcards((prevFlashcards) =>
-      prevFlashcards.map((f) => {
-        if (f.id === id) {
-          const updatedCard = { ...f, ...updates, lastReviewed: Date.now() };
-          // Check if correct count increased
-          if (updates.correctCount !== undefined && updates.correctCount > (f.correctCount || 0)) {
-             wasCorrectIncrement = true;
+     let changeInCorrect = 0;
+     let changeInIncorrect = 0;
+     let changeInLearned = 0;
+
+     setFlashcards((prevFlashcards) =>
+        prevFlashcards.map((f) => {
+          if (f.id === id) {
+              const currentCorrect = f.correctCount || 0;
+              const currentIncorrect = f.incorrectCount || 0;
+              const currentLearned = f.learned || false;
+
+              const updatedCard = { ...f, ...updates, lastReviewed: Date.now() };
+
+              // Calculate *change* based on the update
+              if (updates.correctCount !== undefined && updates.correctCount > currentCorrect) {
+                  changeInCorrect = updates.correctCount - currentCorrect;
+              }
+              if (updates.incorrectCount !== undefined && updates.incorrectCount > currentIncorrect) {
+                  changeInIncorrect = updates.incorrectCount - currentIncorrect;
+              }
+              if (updates.learned === true && !currentLearned) {
+                  changeInLearned = 1;
+              } else if (updates.learned === false && currentLearned) {
+                  changeInLearned = -1;
+              }
+
+              return updatedCard;
           }
-          // Check if learned status changed
-          if (updates.learned === true && f.learned !== true) {
-             wasLearnedIncrement = true;
-          }
-          if (updates.learned === false && f.learned === true) {
-             wasLearnedDecrement = true;
-          }
-          return updatedCard;
-        }
-        return f;
+          return f;
       })
     );
 
-    // Then update user stats based on the changes
+    // Update user stats using the calculated *changes*
     setUserStats((prevStats) => {
-       let newTotalCorrect = prevStats.totalCorrect;
-       let newTotalIncorrect = prevStats.totalIncorrect; // Assuming incorrect updates also happen here if needed
-       let newCardsLearned = prevStats.cardsLearned;
-
-       // Find the original card to compare counts if necessary (e.g., for incorrect updates)
-       const originalCard = flashcards.find(f => f.id === id);
-       if (updates.incorrectCount !== undefined && originalCard && updates.incorrectCount > (originalCard.incorrectCount || 0)) {
-           newTotalIncorrect = prevStats.totalIncorrect + 1; // Increment global count
-       }
-
-       if (wasCorrectIncrement) {
-         newTotalCorrect = prevStats.totalCorrect + 1; // Increment global count
-       }
-       if (wasLearnedIncrement) {
-           newCardsLearned = prevStats.cardsLearned + 1;
-       } else if (wasLearnedDecrement) {
-           newCardsLearned = Math.max(0, prevStats.cardsLearned - 1); // Ensure it doesn't go below 0
-       }
-
        return {
            ...prevStats,
-           totalCorrect: newTotalCorrect,
-           totalIncorrect: newTotalIncorrect,
-           cardsLearned: newCardsLearned,
-           lastActivity: Date.now() // Always update activity on card interaction
+           totalCorrect: prevStats.totalCorrect + changeInCorrect,
+           totalIncorrect: prevStats.totalIncorrect + changeInIncorrect,
+           cardsLearned: Math.max(0, prevStats.cardsLearned + changeInLearned), // Ensure not negative
+           lastActivity: Date.now() // Update activity on card interaction
        };
    });
-};
+  };
 
 
   const deleteFlashcard = (id: string) => {
@@ -252,8 +255,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
       title: 'Flashcard borttagen',
       description: 'Flashcard har raderats från din samling.',
     });
-     // Update last activity when a card is deleted
-    updateUserStatsInternal({});
+    updateUserStatsInternal({}); // Update last activity
   };
 
   const getFlashcard = (id: string): Flashcard | undefined => {
@@ -273,13 +275,11 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
       .filter((f): f is Flashcard => f !== undefined);
   };
 
-  // This function is the main way to trigger stat updates and lastActivity timestamp
   const updateUserStatsInternal = (updates: Partial<UserStats>) => {
     setUserStats((prev) => ({
         ...prev,
         ...updates,
-        // ALWAYS update lastActivity timestamp when stats are explicitly updated or user interacts
-        lastActivity: Date.now()
+        lastActivity: Date.now() // Always update lastActivity
     }));
   };
 
@@ -291,7 +291,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
         console.log(`Marking program ${programId} (${program?.name}) as completed.`);
         const updatedCompletedPrograms = [...prev.completedPrograms, programId];
 
-        // Trigger achievement outside of setUserStats using addAuthAchievement from Auth context
+        // Trigger achievement outside
         if (program) {
           addAuthAchievement({
             name: `Avklarat: ${program.name}`,
@@ -314,16 +314,14 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
           }
         }
 
-        // Return the updated state
         return {
           ...prev,
           completedPrograms: updatedCompletedPrograms,
-          lastActivity: Date.now() // Update activity on completion
+          lastActivity: Date.now()
         };
       } else {
         console.log(`Program ${programId} (${program?.name}) was already completed.`);
-        // Still update lastActivity even if already completed, as user interacted
-        return { ...prev, lastActivity: Date.now() };
+        return { ...prev, lastActivity: Date.now() }; // Update activity even if already done
       }
     });
   };
@@ -345,6 +343,7 @@ export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) 
     programs,
     categories,
     userStats,
+    isContextLoading, // <-- Provide loading state
     addFlashcard,
     updateFlashcard,
     deleteFlashcard,

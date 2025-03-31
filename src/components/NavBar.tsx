@@ -20,8 +20,6 @@ import {
   ListChecks,
   User,
   LogOut,
-  Sun,
-  Moon,
   ShieldCheck
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
@@ -30,8 +28,7 @@ export const NavBar: React.FC = () => {
   const { user, signOut, tier } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast()
-  const { toggleTheme } = useTheme()
+  const { toast } = useToast();
 
   const isAuthPage = location.pathname === '/auth';
 
@@ -47,7 +44,14 @@ export const NavBar: React.FC = () => {
   return (
     <nav className="bg-background border-b sticky top-0 z-50">
       <div className="container flex items-center justify-between py-4">
-        <Link to="/home" className="font-bold text-2xl">Learny</Link>
+        <Link to="/home" className="font-bold text-2xl flex items-center">
+          <img 
+            src="/logo.png" 
+            alt="Learny.se" 
+            className="h-10 w-auto mr-2" 
+          />
+          <span>Learny</span>
+        </Link>
 
         <div className="flex items-center gap-4">
           {user ? (
@@ -105,15 +109,6 @@ export const NavBar: React.FC = () => {
           ) : (
             !isAuthPage && <Link to="/auth">Logga in</Link>
           )}
-           <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-            >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
         </div>
       </div>
     </nav>

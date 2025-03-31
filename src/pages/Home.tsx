@@ -1,3 +1,4 @@
+
 // src/pages/Home.tsx
 import React, { useEffect, useState } from 'react';
 import { CategoryCard } from '@/components/CategoryCard';
@@ -105,31 +106,31 @@ const Home = () => {
       {/* Stats Section */}
       <section className="mb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center mb-2">
-              <BookOpen className="h-5 w-5 text-learny-purple dark:text-learny-purple-dark mr-2" />
-              <h3 className="text-lg font-medium dark:text-white">Streak</h3>
+              <BookOpen className="h-5 w-5 text-learny-purple mr-2" />
+              <h3 className="text-lg font-medium">Streak</h3>
             </div>
-            <p className="text-3xl font-bold dark:text-white">{userStats.streak} dagar</p>
-            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Fortsätt din inlärningsresa</p>
+            <p className="text-3xl font-bold">{userStats.streak} dagar</p>
+            <p className="text-sm text-gray-500 mt-1">Fortsätt din inlärningsresa</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center mb-2">
-              <Award className="h-5 w-5 text-learny-yellow dark:text-learny-yellow-dark mr-2" />
-              <h3 className="text-lg font-medium dark:text-white">Prestationer</h3>
+              <Award className="h-5 w-5 text-learny-yellow mr-2" />
+              <h3 className="text-lg font-medium">Prestationer</h3>
             </div>
-            <p className="text-3xl font-bold dark:text-white">{userStats.achievements.length}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Upplåsta utmärkelser</p>
+            <p className="text-3xl font-bold">{userStats.achievements.length}</p>
+            <p className="text-sm text-gray-500 mt-1">Upplåsta utmärkelser</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center mb-2">
-              <TrendingUp className="h-5 w-5 text-learny-green dark:text-learny-green-dark mr-2" />
-              <h3 className="text-lg font-medium dark:text-white">Flashcards</h3>
+              <TrendingUp className="h-5 w-5 text-learny-green mr-2" />
+              <h3 className="text-lg font-medium">Flashcards</h3>
             </div>
-            <p className="text-3xl font-bold dark:text-white">{userStats.cardsLearned} / {flashcards.length}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Inlärda kort</p>
+            <p className="text-3xl font-bold">{userStats.cardsLearned} / {flashcards.length}</p>
+            <p className="text-sm text-gray-500 mt-1">Inlärda kort</p>
           </div>
         </div>
       </section>
@@ -138,33 +139,32 @@ const Home = () => {
       {categoryFlashcard && selectedCategory && (
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold dark:text-white">
+            <h2 className="text-2xl font-bold">
               Kategoriutmaning: {selectedCategoryName}
             </h2>
             <Button
               variant="outline"
               size="sm"
               onClick={handleNewCategoryChallenge}
-              className="text-learny-purple dark:text-learny-purple-dark border-learny-purple hover:bg-learny-purple/10 dark:border-learny-purple-dark dark:text-learny-purple-dark dark:hover:bg-learny-purple-dark/10"
+              className="text-learny-purple border-learny-purple hover:bg-learny-purple/10"
             >
               Byt kategori
             </Button>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <Flashcard flashcard={categoryFlashcard} />
           </div>
         </section>
       )}
        {!categoryFlashcard && selectedCategory && (
-         <section className="mb-12 text-center text-gray-500 dark:text-gray-400">
+         <section className="mb-12 text-center text-gray-500">
              Inga flashcards hittades för kategorin "{selectedCategoryName}". Skapa några!
          </section>
        )}
 
-
       {/* Categories Section - REMOVED GROUPING */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 dark:text-white">Välj ett ämne</h2>
+        <h2 className="text-2xl font-bold mb-6">Välj ett ämne</h2>
         {categories.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {categories.map((category) => (
@@ -172,7 +172,7 @@ const Home = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-8 text-gray-500">
             Inga kategorier hittades. Du kan skapa flashcards och kategorier via 'Skapa'-sidan.
           </div>
         )}
@@ -180,7 +180,7 @@ const Home = () => {
 
       {/* Programs Section */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 dark:text-white">Träningsprogram</h2>
+        <h2 className="text-2xl font-bold mb-6">Träningsprogram</h2>
         <Tabs defaultValue="popular">
           <TabsList className="mb-6">
             <TabsTrigger value="popular">Populära</TabsTrigger>
@@ -195,12 +195,12 @@ const Home = () => {
             </div>
 
             {popularPrograms.length === 0 && programs.length > 0 && (
-               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+               <div className="text-center py-8 text-gray-500">
                  Inga program markerade som 'Nybörjare' hittades.
                </div>
             )}
             {programs.length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-8 text-gray-500">
                 Inga träningsprogram tillgängliga ännu.
               </div>
             )}
@@ -215,7 +215,7 @@ const Home = () => {
 
             {recentlyCompletedPrograms.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-500 dark:text-gray-400 mb-4">Du har inte slutfört några program ännu.</p>
+                <p className="text-gray-500 mb-4">Du har inte slutfört några program ännu.</p>
                 {categories.length > 0 && (
                    <Button asChild className="mt-4">
                      {/* Link to the first category available */}

@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Flashcard } from '@/types/flashcard';
 
 // Get a shareable link for selected flashcards
@@ -101,7 +101,7 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
       return [];
     }
 
-    // Check if shareData exists and has flashcard_ids
+    // Make sure shareData exists and has flashcard_ids property
     if (!shareData || !Array.isArray(shareData.flashcard_ids)) {
       console.error('Invalid share data structure:', shareData);
       return [];
@@ -126,17 +126,20 @@ export const getSharedFlashcards = async (shareCode: string): Promise<Flashcard[
       category: card.category,
       subcategory: card.subcategory || undefined,
       difficulty: card.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+      // Convert number values
       correctCount: card.correct_count,
       incorrectCount: card.incorrect_count,
-      // Convert string timestamp to number if present, otherwise undefined
+      // Convert string timestamp to number timestamp for frontend usage
       lastReviewed: card.last_reviewed ? new Date(card.last_reviewed).getTime() : undefined,
+      nextReview: card.next_review ? new Date(card.next_review).getTime() : undefined,
+      // Convert boolean values
       learned: Boolean(card.learned),
       reviewLater: Boolean(card.review_later),
       // Include reporting fields
       reportCount: card.report_count,
       reportReason: card.report_reason,
       isApproved: Boolean(card.is_approved),
-      // Add snake_case versions as well
+      // Add snake_case versions as well for database operations
       report_count: card.report_count,
       report_reason: card.report_reason,
       is_approved: Boolean(card.is_approved)

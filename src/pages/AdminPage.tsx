@@ -35,7 +35,7 @@ const AdminPage = () => {
         // As a backup, check directly from database
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('subscription_tier, is_admin')
+          .select('subscription_tier')
           .eq('id', user.id)
           .single();
           
@@ -44,7 +44,8 @@ const AdminPage = () => {
           throw error;
         }
         
-        if (data && (data.subscription_tier === 'super' || data.is_admin)) {
+        // Since 'is_admin' doesn't exist, we're only checking the subscription tier
+        if (data && data.subscription_tier === 'super') {
           setIsAdmin(true);
         } else {
           toast({

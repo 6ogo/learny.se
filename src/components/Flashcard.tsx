@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,7 @@ interface FlashcardProps {
   onCorrect?: () => void;
   onIncorrect?: () => void;
   showControls?: boolean;
+  onNext?: () => void; // Added this prop to the interface
 }
 
 export const Flashcard: React.FC<FlashcardProps> = ({
@@ -59,6 +61,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   onCorrect,
   onIncorrect,
   showControls = true,
+  onNext, // Make it available in the component
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [answered, setAnswered] = useState(false);
@@ -122,6 +125,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     setIsFlipped(false);
     setAnswered(false);
     setFeedbackMessage(null);
+    
+    // Call onNext if provided
+    if (onNext) onNext();
   };
 
   const toggleLearned = (e: React.MouseEvent) => {

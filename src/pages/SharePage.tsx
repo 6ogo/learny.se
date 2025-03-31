@@ -50,9 +50,12 @@ const SharePage = () => {
           return;
         }
 
+        // The title and description may not exist in the table yet, so we check conditionally
         if (shareData) {
-          if (shareData.title) setShareTitle(shareData.title);
-          if (shareData.description) setShareDescription(shareData.description);
+          // Optional properties - need to check if they exist
+          const metadata = shareData as any; // Use type assertion for dynamic properties
+          if (metadata.title) setShareTitle(metadata.title);
+          if (metadata.description) setShareDescription(metadata.description);
         }
         
         // Fetch the actual flashcards
@@ -118,6 +121,12 @@ const SharePage = () => {
     }
   };
   
+  // Custom function to handle when a flashcard is answered correctly or incorrectly
+  const handleFlashcardAction = () => {
+    // This function can be empty since we just need to satisfy the props interface
+    // and we're not tracking card performance on the share page
+  };
+  
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -152,9 +161,9 @@ const SharePage = () => {
               <Card className="h-[400px] overflow-hidden relative">
                 <FlashcardComponent 
                   flashcard={flashcards[currentIndex]} 
-                  onCorrect={() => {}} 
-                  onIncorrect={() => {}}
-                  onNext={handleNext}
+                  onCorrect={handleFlashcardAction} 
+                  onIncorrect={handleFlashcardAction}
+                  // Remove the onNext prop since it's not in the component interface
                 />
               </Card>
               

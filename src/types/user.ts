@@ -28,5 +28,5 @@ export type UserProfile = {
   current_streak?: number;
   longest_streak?: number;
   last_active_date?: string;
-  email?: string; // Add email field to support UserManagement component
+  email: string; // Define email as required
 };

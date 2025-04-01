@@ -82,77 +82,25 @@ export const UserManagement: React.FC = () => {
       } catch (authError) {
         console.log('Using mock user data since auth.admin.listUsers requires admin privileges');
         
-        const mockUsers: UserData[] = profilesData.map((profile: any) => ({
-          id: profile.id,
-          email: profile.email || `user_${profile.id.substring(0, 6)}@example.com`,
-          created_at: profile.created_at,
-          subscription_tier: profile.subscription_tier as 'free' | 'premium' | 'super',
-          daily_usage: profile.daily_usage,
-          last_sign_in: profile.updated_at,
-        }));
+        // Generate mock emails for user profiles that don't have one
+        const mockUsers: UserData[] = profilesData.map((profile: any) => {
+          // Handle case where email might not exist on profile
+          const generatedEmail = `user_${profile.id.substring(0, 6)}@example.com`;
+          
+          return {
+            id: profile.id,
+            // Use profile.email if it exists, otherwise use generated email
+            email: profile.email || generatedEmail,
+            created_at: profile.created_at,
+            subscription_tier: profile.subscription_tier as 'free' | 'premium' | 'super',
+            daily_usage: profile.daily_usage,
+            last_sign_in: profile.updated_at,
+          };
+        });
         
         setUsers(mockUsers);
         setTotalPages(Math.ceil(mockUsers.length / USERS_PER_PAGE));
       }
-
-      if (profilesError) {
-        console.error('Error fetching user profiles:', profilesError);
-        throw profilesError;
-      }
-
-      console.log(`Retrieved ${profilesData?.length || 0} user profiles`);
-
-      // Try to get additional data if we have auth access
-      try {
-        // First check if we have access to the auth.admin functionality
-        const testAdminAccess = await supabase.auth.admin.listUsers({ perPage: 1 });
-
-        if (!testAdminAccess.error) {
-          // We have admin access, fetch all users
-          const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-
-          if (authError) throw authError;
-
-          const combinedUsers = authData.users.map((authUser) => {
-            const profile = profilesData.find((p) => p.id === authUser.id);
-            return {
-              id: authUser.id,
-              email: authUser.email || 'No email',
-              created_at: authUser.created_at,
-              last_sign_in: authUser.last_sign_in_at,
-              subscription_tier: (profile?.subscription_tier || 'free') as 'free' | 'premium' | 'super',
-              daily_usage: profile?.daily_usage || 0,
-            };
-          });
-
-          setUsers(combinedUsers);
-          setTotalPages(Math.ceil(combinedUsers.length / USERS_PER_PAGE));
-          return;
-        }
-      } catch (authError) {
-        console.log('Admin API access denied, using profile data only');
-      }
-
-      // If admin API isn't available, create users directly from profile data
-      // This time with realistic emails based on user IDs and proper timestamps
-      const userProfilesOnly: UserData[] = profilesData.map((profile) => {
-        // Generate a more realistic email from the user ID
-        const userIdPart = profile.id.substring(0, 6);
-        const domainOptions = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com', 'example.com'];
-        const randomDomain = domainOptions[Math.floor(Math.random() * domainOptions.length)];
-
-        return {
-          id: profile.id,
-          email: profile.email || `user_${userIdPart}@${randomDomain}`,
-          created_at: profile.created_at,
-          subscription_tier: profile.subscription_tier as 'free' | 'premium' | 'super',
-          daily_usage: profile.daily_usage || 0,
-          last_sign_in: profile.updated_at || profile.created_at
-        };
-      });
-
-      setUsers(userProfilesOnly);
-      setTotalPages(Math.ceil(userProfilesOnly.length / USERS_PER_PAGE));
 
     } catch (error) {
       console.error('Error fetching users:', error);

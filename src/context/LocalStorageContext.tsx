@@ -100,151 +100,104 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [initAttempt, setInitAttempt] = useState(0);
 
-  // Initialize context with improved error handling
-  // Initialize context with improved error handling
-  const initializeContext = useCallback(async (userId: string) => {
-    // If context is already fully initialized for this user, just exit
-    if (userId === currentUserId && flashcards.length > 0) {
-      console.log("LocalStorageContext: Context already initialized for", userId);
-      setIsContextLoading(false); // Ensure loading state is reset
-      return;
+// Initialize context with improved error handling
+const initializeContext = useCallback(async (userId: string) => {
+  // Simple check to prevent duplicated initialization
+  if (userId === currentUserId && flashcards.length > 0) {
+    console.log("LocalStorageContext: Already initialized for", userId);
+    return;
+  }
+
+  console.log("LocalStorageContext: Starting initialization for user", userId);
+  setIsContextLoading(true);
+  setCurrentUserId(userId);
+
+  try {
+    // Fetch user's flashcards
+    const { data: userFlashcards, error: flashcardsError } = await supabase
+      .from('flashcards')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (flashcardsError) {
+      console.error("Error fetching flashcards:", flashcardsError);
+      throw flashcardsError;
     }
 
-    // Prevent concurrent initialization attempts
-    if (isContextLoading) {
-      console.log("LocalStorageContext: Already loading, skipping duplicate initialization");
-      return;
+    if (userFlashcards && userFlashcards.length > 0) {
+      // Format for frontend
+      const formattedFlashcards: Flashcard[] = userFlashcards.map(f => ({
+        id: f.id,
+        question: f.question,
+        answer: f.answer,
+        category: f.category,
+        subcategory: f.subcategory || undefined,
+        difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+        correctCount: f.correct_count || 0,
+        incorrectCount: f.incorrect_count || 0,
+        lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+        learned: Boolean(f.learned),
+        reviewLater: Boolean(f.review_later),
+        reportCount: f.report_count || 0,
+        reportReason: f.report_reason,
+        isApproved: Boolean(f.is_approved),
+        module_id: f.module_id,
+      }));
+
+      setFlashcards(formattedFlashcards);
+    } else {
+      setFlashcards([]);
     }
 
-    console.log("LocalStorageContext: Initializing context for user", userId);
-    setIsContextLoading(true);
-    setCurrentUserId(userId);
-    setInitAttempt(prev => prev + 1);
+    // Fetch flashcard modules
+    const { data: modules, error: modulesError } = await supabase
+      .from('flashcard_modules')
+      .select('*')
+      .eq('user_id', userId);
 
+    if (modulesError) {
+      console.error("Error fetching flashcard modules:", modulesError);
+    } else if (modules && modules.length > 0) {
+      // Create programs based on modules
+      const modulePrograms: Program[] = modules.map(module => ({
+        id: module.id,
+        name: module.name,
+        description: module.description || `${module.name} flashcards`,
+        category: module.category,
+        difficulty: 'beginner', // Default difficulty
+        flashcards: [], // Will be populated later
+        progress: 0,
+        hasExam: false,
+      }));
+      
+      setPrograms(modulePrograms);
+    } else {
+      // Generate placeholder programs if no modules exist
+      const placeholderPrograms = generatePlaceholderPrograms(categories);
+      setPrograms(placeholderPrograms);
+    }
+
+    // Load user stats
     try {
-      // Setup timeout to prevent hanging
-      const initTimeout = setTimeout(() => {
-        console.log("LocalStorageContext: Init timed out");
-        setIsContextLoading(false);
-      }, 5000); // 5s timeout
-
-      // Fetch user's flashcards with improved error handling and debugging
-      try {
-        console.log(`Attempting to fetch flashcards for user ${userId}...`);
-
-        // Fetch user's flashcards
-        const { data: userFlashcards, error: flashcardsError } = await supabase
-          .from('flashcards')
-          .select('*')
-          .eq('user_id', userId);
-
-        if (flashcardsError) {
-          console.error("Error fetching flashcards:", flashcardsError);
-          throw flashcardsError;
-        }
-
-        console.log(`Successfully fetched ${userFlashcards?.length || 0} flashcards`);
-
-        if (userFlashcards && userFlashcards.length > 0) {
-          // Output debug info for the first card
-          console.log("Sample flashcard data:", userFlashcards[0]);
-
-          // Format for frontend
-          const formattedFlashcards: Flashcard[] = userFlashcards.map(f => ({
-            id: f.id,
-            question: f.question,
-            answer: f.answer,
-            category: f.category,
-            subcategory: f.subcategory || undefined,
-            difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-            correctCount: f.correct_count || 0,
-            incorrectCount: f.incorrect_count || 0,
-            lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
-            learned: Boolean(f.learned),
-            reviewLater: Boolean(f.review_later),
-            reportCount: f.report_count || 0,
-            reportReason: f.report_reason,
-            isApproved: Boolean(f.is_approved),
-            module_id: f.module_id,
-          }));
-
-          console.log(`Successfully formatted ${formattedFlashcards.length} flashcards`);
-          setFlashcards(formattedFlashcards);
-        } else {
-          console.log("No flashcards found for user, using empty array");
-          setFlashcards([]);
-        }
-      } catch (flashcardsError) {
-        console.error("Flashcards fetch failed:", flashcardsError);
-        // Continue with empty flashcards rather than failing the whole initialization
-        setFlashcards([]);
-      }
-
-      // Fetch flashcard modules from Supabase
-      try {
-        const { data: modules, error: modulesError } = await supabase
-          .from('flashcard_modules')
-          .select('*')
-          .eq('user_id', userId);
-
-        if (modulesError) {
-          console.error("Error fetching flashcard modules:", modulesError);
-        } else if (modules && modules.length > 0) {
-          console.log(`Successfully fetched ${modules.length} flashcard modules`);
-
-          // Create programs based on modules
-          const modulePrograms: Program[] = modules.map(module => ({
-            id: module.id,
-            name: module.name,
-            description: module.description || `${module.name} flashcards`,
-            category: module.category,
-            difficulty: 'beginner', // Default difficulty
-            flashcards: [], // Will be populated later
-            progress: 0,
-            hasExam: false,
-          }));
-
-          setPrograms(modulePrograms);
-        } else {
-          // Generate placeholder programs if no modules exist
-          const placeholderPrograms = generatePlaceholderPrograms(categories);
-          setPrograms(placeholderPrograms);
-        }
-      } catch (modulesError) {
-        console.error("Flashcard modules fetch failed:", modulesError);
-        // Generate placeholder programs if modules fetch fails
-        const placeholderPrograms = generatePlaceholderPrograms(categories);
-        setPrograms(placeholderPrograms);
-      }
-
-      // Load user stats from localStorage for now
-      // Will be migrated to DB later
-      try {
-        const savedUserStats = localStorage.getItem(`user_stats_${userId}`);
-        if (savedUserStats) {
-          setUserStats(JSON.parse(savedUserStats));
-        } else {
-          // If no saved stats, use defaults and store them
-          localStorage.setItem(`user_stats_${userId}`, JSON.stringify(defaultUserStats));
-          setUserStats(defaultUserStats);
-        }
-      } catch (storageError) {
-        console.error("Error accessing localStorage:", storageError);
+      const savedUserStats = localStorage.getItem(`user_stats_${userId}`);
+      if (savedUserStats) {
+        setUserStats(JSON.parse(savedUserStats));
+      } else {
+        localStorage.setItem(`user_stats_${userId}`, JSON.stringify(defaultUserStats));
         setUserStats(defaultUserStats);
       }
-
-      clearTimeout(initTimeout);
-      console.log("LocalStorageContext: Context initialized for user", userId);
-    } catch (error) {
-      console.error("Error initializing LocalStorageContext:", error);
-    } finally {
-      // Always reset loading state, with a small delay to prevent React batching issues
-      setTimeout(() => {
-        setIsContextLoading(false);
-        console.log("LocalStorageContext: Initialization complete, loading state reset");
-      }, 50);
+    } catch (storageError) {
+      console.error("Error accessing localStorage:", storageError);
+      setUserStats(defaultUserStats);
     }
-  }, [currentUserId, flashcards.length]);
+
+    console.log("LocalStorageContext: Initialization completed successfully");
+  } catch (error) {
+    console.error("Error in LocalStorageContext initialization:", error);
+  } finally {
+    setIsContextLoading(false);
+  }
+}, [categories, currentUserId]);
 
   // Reset context (used on logout)
   const resetContext = useCallback(() => {
@@ -480,79 +433,63 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Fetch flashcards for a program
   const fetchFlashcardsByProgramId = useCallback(async (programId: string): Promise<Flashcard[]> => {
-    // If we're still loading, return empty array after a delay
-    if (isContextLoading) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+    console.log(`Attempting to fetch flashcards for program: ${programId}`);
+    
+    // Return empty immediately if no programId
+    if (!programId) {
+      console.warn("No program ID provided to fetchFlashcardsByProgramId");
       return [];
     }
-
+  
+    // If we're still loading, return empty array but don't add delay
+    if (isContextLoading) {
+      console.log("Context still loading, returning empty flashcard array");
+      return [];
+    }
+  
     try {
-      const program = programs.find(p => p.id === programId);
-
-      // Check if it's a real module ID (not containing a dash)
-      if (program && !programId.includes('-')) {
-        // For real module IDs, fetch from Supabase directly
-        const { data, error } = await supabase
-          .from('flashcards')
-          .select('*')
-          .eq('module_id', programId);
-
-        if (error) {
-          console.error("Error fetching flashcards for module:", error);
-          throw error;
-        }
-
-        console.log(`Fetched ${data?.length || 0} flashcards for module ${programId}`);
-
-        // Format for frontend
-        const formattedCards = data.map(f => ({
-          id: f.id,
-          question: f.question,
-          answer: f.answer,
-          category: f.category,
-          subcategory: f.subcategory || undefined,
-          difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-          correctCount: f.correct_count,
-          incorrectCount: f.incorrect_count,
-          lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
-          learned: f.learned,
-          reviewLater: f.review_later,
-          reportCount: f.report_count,
-          reportReason: f.report_reason,
-          isApproved: f.is_approved,
-          module_id: f.module_id,
-        }));
-
-        // Update local cache
-        setFlashcards(prev => {
-          // Keep cards that aren't from this module
-          const filtered = prev.filter(card => card.module_id !== programId);
-          return [...filtered, ...formattedCards];
-        });
-
-        return formattedCards;
-      }
-
-      // For placeholder programs (containing a dash), filter by category and difficulty
-      if (program && programId.includes('-')) {
+      // For placeholder programs with category-difficulty format (e.g. 'math-beginner')
+      if (programId.includes('-')) {
         const [category, difficulty] = programId.split('-');
-
-        // Fetch all flashcards for this category and difficulty
+        console.log(`Fetching flashcards for category: ${category}, difficulty: ${difficulty}`);
+        
+        // First try cached data
+        const cachedCards = flashcards.filter(
+          card => card.category === category && card.difficulty === difficulty
+        );
+        
+        if (cachedCards.length > 0) {
+          console.log(`Found ${cachedCards.length} cached cards for ${category}/${difficulty}`);
+          return cachedCards;
+        }
+        
+        // Otherwise fetch from DB
+        if (!currentUserId) {
+          console.warn("No user ID available for DB fetch");
+          return [];
+        }
+        
         const { data, error } = await supabase
           .from('flashcards')
           .select('*')
           .eq('category', category)
-          .eq('difficulty', difficulty);
-
+          .eq('difficulty', difficulty)
+          .eq('user_id', currentUserId);
+          
         if (error) {
-          console.error("Error fetching flashcards by category and difficulty:", error);
-          throw error;
+          console.error("Error fetching flashcards by category/difficulty:", error);
+          return [];
         }
-
-        console.log(`Fetched ${data?.length || 0} flashcards for ${category}/${difficulty}`);
-
-        // Format for frontend
-        const formattedCards = data.map(f => ({
+        
+        if (!data || data.length === 0) {
+          console.log(`No flashcards found for ${category}/${difficulty}`);
+          return [];
+        }
+        
+        console.log(`Fetched ${data.length} flashcards for ${category}/${difficulty}`);
+        
+        // Format and return
+        return data.map(f => ({
           id: f.id,
           question: f.question,
           answer: f.answer,
@@ -569,19 +506,62 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           isApproved: f.is_approved,
           module_id: f.module_id,
         }));
-
-        return formattedCards;
       }
-
-      // If program not found, return empty array
-      return [];
-
+      
+      // For real module IDs (without dashes)
+      console.log(`Fetching flashcards for module: ${programId}`);
+      
+      // First try cached data
+      const cachedCards = flashcards.filter(card => card.module_id === programId);
+      if (cachedCards.length > 0) {
+        console.log(`Found ${cachedCards.length} cached cards for module ${programId}`);
+        return cachedCards;
+      }
+      
+      // Otherwise fetch from DB
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('module_id', programId);
+        
+      if (error) {
+        console.error("Error fetching flashcards for module:", error);
+        return [];
+      }
+      
+      if (!data || data.length === 0) {
+        console.log(`No flashcards found for module ${programId}`);
+        return [];
+      }
+      
+      console.log(`Fetched ${data.length} flashcards for module ${programId}`);
+      
+      // Format and return
+      const formattedCards = data.map(f => ({
+        id: f.id,
+        question: f.question,
+        answer: f.answer,
+        category: f.category,
+        subcategory: f.subcategory || undefined,
+        difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+        correctCount: f.correct_count,
+        incorrectCount: f.incorrect_count,
+        lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+        learned: f.learned,
+        reviewLater: f.review_later,
+        reportCount: f.report_count,
+        reportReason: f.report_reason,
+        isApproved: f.is_approved,
+        module_id: f.module_id,
+      }));
+      
+      return formattedCards;
     } catch (error) {
-      console.error("Error fetching flashcards for program:", error);
+      console.error("Error in fetchFlashcardsByProgramId:", error);
       return [];
     }
-  }, [flashcards, isContextLoading, programs]);
-
+  }, [flashcards, isContextLoading, currentUserId]);
+  
   // Fetch a single program
   const fetchProgram = useCallback(async (programId: string): Promise<Program | null> => {
     // If we're still loading, return null after a delay

@@ -296,63 +296,6 @@ const Home = () => {
           ))}
         </div>
       </section>
-
-      {/* Programs Section */}
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">Träningsprogram</h2>
-        <Tabs defaultValue="popular">
-          <TabsList className="mb-6">
-            <TabsTrigger value="popular">Populära</TabsTrigger>
-            <TabsTrigger value="completed">Nyligen slutförda</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="popular">
-            {isLoadingPrograms ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Laddar program...</span>
-              </div>
-            ) : popularPrograms.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {popularPrograms.map((program) => (
-                  <ProgramCard key={program.id} program={program} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p className="mb-4">Inga populära program hittades.</p>
-                <Button asChild>
-                  <Link to="/create">Skapa ditt första program</Link>
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="completed">
-            {isLoadingPrograms ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Laddar program...</span>
-              </div>
-            ) : recentlyCompletedPrograms.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recentlyCompletedPrograms.map((program) => (
-                  <ProgramCard key={program.id} program={program} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">Du har inte slutfört några program ännu.</p>
-                {categories.length > 0 && (
-                  <Button asChild className="mt-4">
-                    <Link to={`/category/${categories[0].id}`}>Hitta program att slutföra</Link>
-                  </Button>
-                )}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </section>
     </div>
   );
 };

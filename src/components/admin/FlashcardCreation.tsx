@@ -16,6 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Upload, Eye, Save, X, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { medicineFlashcards } from '@/data/flashcards/medicine';
 import { Flashcard } from '@/types/flashcard';
 import { useAuth } from '@/context/AuthContext';
 import { useLocalStorage } from '@/context/LocalStorageContext';
@@ -35,13 +36,64 @@ export const FlashcardCreation: React.FC = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [csvContent, setCsvContent] = useState('');
   const [subcategories, setSubcategories] = useState<string[]>([]);
+  const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
+  
+  // Function to fetch subcategories from either database or fallback to local data
+  const fetchSubcategories = async (categoryId: string) => {
+    setIsLoadingSubcategories(true);
+    
+    try {
+      // First try to fetch from the database
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('subcategory')
+        .eq('category', categoryId)
+        .not('subcategory', 'is', null);
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Extract unique subcategories
+        const uniqueSubcategories = [...new Set(data.map(item => item.subcategory))].filter(Boolean);
+        setSubcategories(uniqueSubcategories);
+      } else {
+        // Fallback to local data if no database results
+        fallbackToLocalSubcategories(categoryId);
+      }
+    } catch (error) {
+      console.error('Error fetching subcategories from database:', error);
+      // Fallback to local data if database query fails
+      fallbackToLocalSubcategories(categoryId);
+    } finally {
+      setIsLoadingSubcategories(false);
+    }
+  };
+  
+  // Fallback function to extract subcategories from local data
+  const fallbackToLocalSubcategories = (categoryId: string) => {
+    console.log('Falling back to local subcategories data for category:', categoryId);
+    
+    // Only use medicine.ts for the 'medicine' category
+    if (categoryId === 'medicine') {
+      const categoryFlashcards = medicineFlashcards.filter(f => f.category === categoryId);
+      const uniqueSubcategories = [...new Set(categoryFlashcards.map(f => f.subcategory))].filter(Boolean) as string[];
+      
+      if (uniqueSubcategories.length > 0) {
+        setSubcategories(uniqueSubcategories);
+        return;
+      }
+    }
+    
+    // If no matching local data or not medicine category, use default subcategories
+    setSubcategories(['Grundläggande', 'Avancerad', 'Specialiserad']);
+  };
   
   useEffect(() => {
     if (selectedCategory) {
-      const mockSubcategories = ['Grundläggande', 'Avancerad', 'Specialiserad'];
-      setSubcategories(mockSubcategories);
+      fetchSubcategories(selectedCategory);
     } else {
       setSubcategories([]);
+      setSelectedSubcategory('');
     }
   }, [selectedCategory]);
   
@@ -155,8 +207,8 @@ export const FlashcardCreation: React.FC = () => {
         incorrect_count: 0,
         learned: false,
         review_later: false,
-        reportCount: 0,
-        isApproved: true
+        report_count: 0,  // Changed from reportCount to report_count to match database column
+        is_approved: true // Changed from isApproved to is_approved to match database column
       }));
       
       const { data, error } = await supabase
@@ -171,6 +223,7 @@ export const FlashcardCreation: React.FC = () => {
       });
       
       setBatchFlashcards([{ question: '', answer: '', difficulty: 'beginner' }]);
+      setSelectedSubcategory('');
     } catch (error) {
       console.error('Error saving flashcards:', error);
       toast({
@@ -179,6 +232,12 @@ export const FlashcardCreation: React.FC = () => {
         variant: 'destructive'
       });
     }
+  };
+  
+  // Helper function to get category name by ID
+  const getCategoryNameById = (id: string) => {
+    const category = categories.find(c => c.id === id);
+    return category ? category.name : id;
   };
   
   return (
@@ -227,10 +286,17 @@ export const FlashcardCreation: React.FC = () => {
           <Select 
             value={selectedSubcategory} 
             onValueChange={setSelectedSubcategory}
-            disabled={!selectedCategory || subcategories.length === 0}
+            disabled={!selectedCategory || subcategories.length === 0 || isLoadingSubcategories}
           >
             <SelectTrigger className="bg-background text-foreground">
-              <SelectValue placeholder="Välj underkategori" />
+              {isLoadingSubcategories ? (
+                <div className="flex items-center">
+                  <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent rounded-full"></div>
+                  <span>Laddar underkategorier...</span>
+                </div>
+              ) : (
+                <SelectValue placeholder="Välj underkategori" />
+              )}
             </SelectTrigger>
             <SelectContent>
               {subcategories.map((subcat) => (
@@ -321,7 +387,7 @@ export const FlashcardCreation: React.FC = () => {
           
           <div className="py-4">
             <div className="flex gap-2 mb-4">
-              <Badge>Kategori: {categories.find(c => c.id === selectedCategory)?.name}</Badge>
+              <Badge>Kategori: {getCategoryNameById(selectedCategory)}</Badge>
               {selectedSubcategory && <Badge variant="outline">Underkategori: {selectedSubcategory}</Badge>}
             </div>
             

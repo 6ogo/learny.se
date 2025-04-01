@@ -25,7 +25,7 @@ export const LandingNavBar: React.FC = () => {
           <div className="flex items-center gap-4">
             {user ? (
               <Button size="sm" className="bg-learny-purple hover:bg-learny-purple-dark text-white">
-                <Link to="/home">Till Dashbord</Link>
+                <Link to="/home">Till Dashboard</Link>
               </Button>
             ) : (
               <>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { CategoryCard } from '@/components/CategoryCard';
 import { ProgramCard } from '@/components/ProgramCard';
 // Removed Flashcard import as it's no longer used here

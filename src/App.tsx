@@ -1,4 +1,3 @@
-
 import {
   createBrowserRouter,
   RouterProvider,
@@ -9,7 +8,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { ProtectedRoute, PublicRoute } from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/toaster";
-import LandingPage from '@/pages/LandingPage';
+import Index from '@/pages/Index';
 import AuthPage from '@/pages/AuthPage';
 import Home from '@/pages/Home';
 import StudyPage from '@/pages/StudyPage';
@@ -66,7 +65,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <LandingPage />,
+        element: <Index />,
       },
       {
         path: "/auth",

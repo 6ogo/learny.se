@@ -1,3 +1,4 @@
+
 // src/components/Flashcard.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -63,7 +64,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     // Move to next card after a short delay for visual feedback
     const nextTimeout = setTimeout(() => {
         onNext();
-    }, 1000); // Adjust delay if needed
+    }, 1500); // Slightly longer delay for better feedback visibility
 
     // Cleanup timeout if component unmounts
     return () => clearTimeout(nextTimeout);

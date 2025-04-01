@@ -161,21 +161,50 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
           console.log(`Successfully formatted ${formattedFlashcards.length} flashcards`);
           setFlashcards(formattedFlashcards);
-
-          // Generate programs based on flashcards
-          const placeholderPrograms = generatePlaceholderPrograms(categories, userFlashcards);
-          setPrograms(placeholderPrograms);
         } else {
           console.log("No flashcards found for user, using empty array");
           setFlashcards([]);
-          const placeholderPrograms = generatePlaceholderPrograms(categories, []);
-          setPrograms(placeholderPrograms);
         }
       } catch (flashcardsError) {
         console.error("Flashcards fetch failed:", flashcardsError);
         // Continue with empty flashcards rather than failing the whole initialization
         setFlashcards([]);
-        const placeholderPrograms = generatePlaceholderPrograms(categories, []);
+      }
+
+      // Fetch flashcard modules from Supabase
+      try {
+        const { data: modules, error: modulesError } = await supabase
+          .from('flashcard_modules')
+          .select('*')
+          .eq('user_id', userId);
+
+        if (modulesError) {
+          console.error("Error fetching flashcard modules:", modulesError);
+        } else if (modules && modules.length > 0) {
+          console.log(`Successfully fetched ${modules.length} flashcard modules`);
+          
+          // Create programs based on modules
+          const modulePrograms: Program[] = modules.map(module => ({
+            id: module.id,
+            name: module.name,
+            description: module.description || `${module.name} flashcards`,
+            category: module.category,
+            difficulty: 'beginner', // Default difficulty
+            flashcards: [], // Will be populated later
+            progress: 0,
+            hasExam: false,
+          }));
+          
+          setPrograms(modulePrograms);
+        } else {
+          // Generate placeholder programs if no modules exist
+          const placeholderPrograms = generatePlaceholderPrograms(categories);
+          setPrograms(placeholderPrograms);
+        }
+      } catch (modulesError) {
+        console.error("Flashcard modules fetch failed:", modulesError);
+        // Generate placeholder programs if modules fetch fails
+        const placeholderPrograms = generatePlaceholderPrograms(categories);
         setPrograms(placeholderPrograms);
       }
 
@@ -193,24 +222,6 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       } catch (storageError) {
         console.error("Error accessing localStorage:", storageError);
         setUserStats(defaultUserStats);
-      }
-
-      // Fetch flashcard modules from Supabase
-      try {
-        const { data: modules, error: modulesError } = await supabase
-          .from('flashcard_modules')
-          .select('*')
-          .eq('user_id', userId);
-
-        if (modulesError) {
-          console.error("Error fetching flashcard modules:", modulesError);
-        } else if (modules && modules.length > 0) {
-          console.log(`Successfully fetched ${modules.length} flashcard modules`);
-          
-          // We'll use these modules in the future, for now we're using placeholder programs
-        }
-      } catch (modulesError) {
-        console.error("Flashcard modules fetch failed:", modulesError);
       }
 
       clearTimeout(initTimeout);
@@ -234,7 +245,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Helper function to generate placeholder programs
   // This will be replaced with real DB data in the future
-  const generatePlaceholderPrograms = (cats: Category[], cards: any[]): Program[] => {
+  const generatePlaceholderPrograms = (cats: Category[]): Program[] => {
     const programs: Program[] = [];
 
     cats.forEach(category => {
@@ -245,7 +256,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         description: `Grundläggande ${category.name.toLowerCase()}.`,
         category: category.id,
         difficulty: 'beginner',
-        flashcards: filterCardsByCategory(cards, category.id, 'beginner'),
+        flashcards: [],
         progress: Math.floor(Math.random() * 101),
         hasExam: Math.random() > 0.5,
       });
@@ -257,7 +268,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         description: `Fortsättningskurs i ${category.name.toLowerCase()}.`,
         category: category.id,
         difficulty: 'intermediate',
-        flashcards: filterCardsByCategory(cards, category.id, 'intermediate'),
+        flashcards: [],
         progress: Math.floor(Math.random() * 101),
         hasExam: Math.random() > 0.5,
       });
@@ -270,7 +281,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           description: `För dig som behärskar ${category.name.toLowerCase()} väl.`,
           category: category.id,
           difficulty: 'advanced',
-          flashcards: filterCardsByCategory(cards, category.id, 'advanced'),
+          flashcards: [],
           progress: Math.floor(Math.random() * 101),
           hasExam: Math.random() > 0.5,
         });
@@ -283,7 +294,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           description: `Expertmaterial inom ${category.name.toLowerCase()}.`,
           category: category.id,
           difficulty: 'expert',
-          flashcards: filterCardsByCategory(cards, category.id, 'expert'),
+          flashcards: [],
           progress: Math.floor(Math.random() * 101),
           hasExam: Math.random() > 0.5,
         });
@@ -293,12 +304,32 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return programs;
   };
 
-  // Helper to filter cards by category and difficulty
-  const filterCardsByCategory = (cards: any[], categoryId: string, difficulty?: string): string[] => {
-    return cards
-      .filter(card => card.category === categoryId && (!difficulty || card.difficulty === difficulty))
-      .map(card => card.id);
-  };
+  // Populate program flashcards based on fetched data
+  useEffect(() => {
+    if (programs.length > 0 && flashcards.length > 0) {
+      // Update programs with their associated flashcards
+      const updatedPrograms = programs.map(program => {
+        const programFlashcards = flashcards
+          .filter(card => {
+            // If it's a placeholder program (has a dash in the ID), filter by category and difficulty
+            if (program.id.includes('-')) {
+              const [category, difficulty] = program.id.split('-');
+              return card.category === category && card.difficulty === difficulty;
+            }
+            // If it's a real module, filter by module_id
+            return card.module_id === program.id;
+          })
+          .map(card => card.id);
+        
+        return {
+          ...program,
+          flashcards: programFlashcards
+        };
+      });
+      
+      setPrograms(updatedPrograms);
+    }
+  }, [flashcards, programs]);
 
   // Get a specific category by ID
   const getCategory = useCallback((id: string): Category | undefined => {
@@ -354,7 +385,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         incorrectCount: f.incorrect_count,
         lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
         learned: f.learned,
-        reviewLater: f.review_later, // Fixed: use review_later from the database
+        reviewLater: f.review_later, 
         reportCount: f.report_count,
         reportReason: f.report_reason,
         isApproved: f.is_approved,
@@ -381,9 +412,58 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return [];
     }
 
-    // For now, just filter local programs state
-    return programs.filter(program => program.category === categoryId);
-  }, [isContextLoading, programs]);
+    try {
+      // First, try filtering local programs
+      const localCategoryPrograms = programs.filter(p => p.category === categoryId);
+      if (localCategoryPrograms.length > 0) {
+        return localCategoryPrograms;
+      }
+      
+      // If no local programs for this category, try to fetch modules from Supabase
+      const { data: modules, error } = await supabase
+        .from('flashcard_modules')
+        .select('*')
+        .eq('category', categoryId)
+        .eq('user_id', currentUserId);
+        
+      if (error) {
+        console.error("Error fetching modules by category:", error);
+        throw error;
+      }
+      
+      if (modules && modules.length > 0) {
+        console.log(`Fetched ${modules.length} modules for category ${categoryId}`);
+        
+        // Convert modules to programs
+        const modulePrograms: Program[] = modules.map(module => ({
+          id: module.id,
+          name: module.name,
+          description: module.description || `${module.name} flashcards`,
+          category: module.category,
+          difficulty: 'beginner', // Default difficulty
+          flashcards: [], // Will be populated separately
+          progress: 0,
+          hasExam: false,
+        }));
+        
+        // Update programs state with these new programs
+        setPrograms(prev => {
+          const filtered = prev.filter(p => p.category !== categoryId);
+          return [...filtered, ...modulePrograms];
+        });
+        
+        return modulePrograms;
+      }
+      
+      // If no real modules found, return placeholder programs
+      return generatePlaceholderPrograms([getCategory(categoryId)].filter(Boolean) as Category[]);
+      
+    } catch (error) {
+      console.error("Error fetching programs by category:", error);
+      // For now, just filter local programs state as fallback
+      return programs.filter(program => program.category === categoryId);
+    }
+  }, [isContextLoading, programs, currentUserId, getCategory]);
 
   // Fetch flashcards for a program
   const fetchFlashcardsByProgramId = useCallback(async (programId: string): Promise<Flashcard[]> => {
@@ -393,11 +473,100 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return [];
     }
 
-    const program = programs.find(p => p.id === programId);
-    if (!program) return [];
-
-    // Get flashcards that are part of this program
-    return flashcards.filter(card => program.flashcards.includes(card.id));
+    try {
+      const program = programs.find(p => p.id === programId);
+      
+      // Check if it's a real module ID (not containing a dash)
+      if (program && !programId.includes('-')) {
+        // For real module IDs, fetch from Supabase directly
+        const { data, error } = await supabase
+          .from('flashcards')
+          .select('*')
+          .eq('module_id', programId);
+          
+        if (error) {
+          console.error("Error fetching flashcards for module:", error);
+          throw error;
+        }
+        
+        console.log(`Fetched ${data?.length || 0} flashcards for module ${programId}`);
+        
+        // Format for frontend
+        const formattedCards = data.map(f => ({
+          id: f.id,
+          question: f.question,
+          answer: f.answer,
+          category: f.category,
+          subcategory: f.subcategory || undefined,
+          difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+          correctCount: f.correct_count,
+          incorrectCount: f.incorrect_count,
+          lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+          learned: f.learned,
+          reviewLater: f.review_later,
+          reportCount: f.report_count,
+          reportReason: f.report_reason,
+          isApproved: f.is_approved,
+          module_id: f.module_id,
+        }));
+        
+        // Update local cache
+        setFlashcards(prev => {
+          // Keep cards that aren't from this module
+          const filtered = prev.filter(card => card.module_id !== programId);
+          return [...filtered, ...formattedCards];
+        });
+        
+        return formattedCards;
+      }
+      
+      // For placeholder programs (containing a dash), filter by category and difficulty
+      if (program && programId.includes('-')) {
+        const [category, difficulty] = programId.split('-');
+        
+        // Fetch all flashcards for this category and difficulty
+        const { data, error } = await supabase
+          .from('flashcards')
+          .select('*')
+          .eq('category', category)
+          .eq('difficulty', difficulty);
+          
+        if (error) {
+          console.error("Error fetching flashcards by category and difficulty:", error);
+          throw error;
+        }
+        
+        console.log(`Fetched ${data?.length || 0} flashcards for ${category}/${difficulty}`);
+        
+        // Format for frontend
+        const formattedCards = data.map(f => ({
+          id: f.id,
+          question: f.question,
+          answer: f.answer,
+          category: f.category,
+          subcategory: f.subcategory || undefined,
+          difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+          correctCount: f.correct_count,
+          incorrectCount: f.incorrect_count,
+          lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+          learned: f.learned,
+          reviewLater: f.review_later,
+          reportCount: f.report_count,
+          reportReason: f.report_reason,
+          isApproved: f.is_approved,
+          module_id: f.module_id,
+        }));
+        
+        return formattedCards;
+      }
+      
+      // If program not found, return empty array
+      return [];
+      
+    } catch (error) {
+      console.error("Error fetching flashcards for program:", error);
+      return [];
+    }
   }, [flashcards, isContextLoading, programs]);
 
   // Fetch a single program
@@ -408,8 +577,50 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return null;
     }
 
+    // First, check local programs
     const program = programs.find(p => p.id === programId);
-    return program || null;
+    if (program) {
+      return program;
+    }
+    
+    // If it's not a placeholder program (no dash), try to fetch it from Supabase
+    if (!programId.includes('-')) {
+      try {
+        const { data, error } = await supabase
+          .from('flashcard_modules')
+          .select('*')
+          .eq('id', programId)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching module:", error);
+          throw error;
+        }
+        
+        if (data) {
+          // Convert to program format
+          const newProgram: Program = {
+            id: data.id,
+            name: data.name,
+            description: data.description || `${data.name} flashcards`,
+            category: data.category,
+            difficulty: 'beginner', // Default difficulty
+            flashcards: [], // Will be populated separately
+            progress: 0,
+            hasExam: false,
+          };
+          
+          // Add to local state
+          setPrograms(prev => [...prev, newProgram]);
+          
+          return newProgram;
+        }
+      } catch (error) {
+        console.error("Error fetching program:", error);
+      }
+    }
+    
+    return null;
   }, [isContextLoading, programs]);
 
   // Mark a program as completed

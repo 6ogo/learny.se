@@ -536,9 +536,9 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         incorrect_count: flashcard.incorrectCount || 0,
         last_reviewed: flashcard.lastReviewed ? new Date(flashcard.lastReviewed).toISOString() : null,
         learned: flashcard.learned || false,
-        reviewLater: flashcard.reviewLater || false,
+        review_later: flashcard.reviewLater || false,
         report_count: flashcard.reportCount || 0,
-        reportReason: flashcard.reportReason || [],
+        report_reason: flashcard.reportReason || [],
         is_approved: flashcard.isApproved || false
       };
       
@@ -590,7 +590,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       // Convert to database format (only the fields being updated)
       const dbUpdate: any = {};
-      
+
       if (updatedFlashcard.question !== undefined) dbUpdate.question = updatedFlashcard.question;
       if (updatedFlashcard.answer !== undefined) dbUpdate.answer = updatedFlashcard.answer;
       if (updatedFlashcard.category !== undefined) dbUpdate.category = updatedFlashcard.category;
@@ -607,7 +607,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (updatedFlashcard.reportCount !== undefined) dbUpdate.report_count = updatedFlashcard.reportCount;
       if (updatedFlashcard.reportReason !== undefined) dbUpdate.report_reason = updatedFlashcard.reportReason;
       if (updatedFlashcard.isApproved !== undefined) dbUpdate.is_approved = updatedFlashcard.isApproved;
-      
+
       // Always update the updated_at timestamp
       dbUpdate.updated_at = new Date().toISOString();
       

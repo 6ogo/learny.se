@@ -1,4 +1,3 @@
-
 export type Flashcard = {
   id: string;
   question: string;
@@ -32,6 +31,7 @@ export type Flashcard = {
   report_count?: number;
   report_reason?: string[];
   is_approved?: boolean;
+  review_later?: boolean; // Added this field to match database schema
 };
 
 export type ReportReason = 

@@ -200,17 +200,27 @@ export const trackFlashcardInteraction = async (
       });
       
     // Update the flashcard's correct/incorrect counts
-    await supabase
+    const columnToUpdate = isCorrect ? 'correct_count' : 'incorrect_count';
+    
+    // First get the current count
+    const { data: currentFlashcard } = await supabase
       .from('flashcards')
-      .update({
-        correct_count: supabase.rpc('increment', { 
-          table_name: 'flashcards', 
-          column_name: isCorrect ? 'correct_count' : 'incorrect_count',
-          row_id: flashcardId
-        }),
-        last_reviewed: new Date().toISOString()
-      })
-      .eq('id', flashcardId);
+      .select(columnToUpdate)
+      .eq('id', flashcardId)
+      .single();
+    
+    if (currentFlashcard) {
+      // Then update with the incremented value
+      const newCount = (currentFlashcard[columnToUpdate] || 0) + 1;
+      
+      await supabase
+        .from('flashcards')
+        .update({
+          [columnToUpdate]: newCount,
+          last_reviewed: new Date().toISOString()
+        })
+        .eq('id', flashcardId);
+    }
       
   } catch (error) {
     console.error('Error tracking flashcard interaction:', error);
@@ -283,6 +293,7 @@ export const getUserActivityStats = async (userId: string, days: number = 30) =>
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     
+    // Fix the type error by using the .then() to extract data
     const { data, error } = await supabase.rpc('get_user_activity', {
       start_date: startDate.toISOString().split('T')[0],
       time_range: days

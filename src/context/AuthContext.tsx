@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -123,7 +124,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --- Wrap functions with useCallback ---
   const fetchUserDetails = useCallback(async (userId: string) => {
-    // Don't set isLoading true here, let useEffect handle it
     try {
       console.log("AuthContext: Fetching user details for", userId);
       const { data, error } = await supabase
@@ -137,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
+      // Cast the data to UserProfile type
       let userProfile = data as UserProfile | null;
 
       // If profile doesn't exist, create it
@@ -166,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Now we are sure userProfile exists
       setTier((userProfile.subscription_tier || 'free') as SubscriptionTier);
-      setIsAdmin(userProfile.is_admin === true || userProfile.is_super_admin === 'yes');
+      setIsAdmin(userProfile.is_admin === true);
       setDailyUsage(userProfile.daily_usage || 0);
       setCurrentStreak(userProfile.current_streak || 0);
       setLongestStreak(userProfile.longest_streak || 0);
@@ -209,7 +210,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [trackUserActivity]); // Add trackUserActivity to the dependency list
 
-
+  // Enhanced streak checking logic
   useEffect(() => {
     console.log("AuthContext: Initializing...");
 
@@ -330,24 +331,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const today = new Date().toISOString().split('T')[0];
       const storedData = localStorage.getItem('learny_usage');
+      
       if (storedData) {
         const parsedData = JSON.parse(storedData);
+        console.log('Streak check: Stored date:', parsedData.date, 'Today:', today);
+        
         if (parsedData.date === today) {
           // Only set if it's different from current state to avoid potential loops
           setDailyUsage(current => current === parsedData.count ? current : parsedData.count);
         }
-        else localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
+        else {
+          // Reset for a new day
+          console.log('Streak check: New day detected, resetting daily usage');
+          localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
+          if (user) updateUserUsage(0); // Reset in database too if user is logged in
+        }
       } else {
+        console.log('Streak check: No stored data, initializing');
         localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
       }
-    } catch (e) { console.error("Error handling daily usage in localStorage:", e); }
-
-
-    return () => {
-      console.log("AuthContext: Unsubscribing auth listener.");
-      subscription.unsubscribe();
-    };
-  }, [fetchUserDetails]); // Include fetchUserDetails in dependency array
+    } catch (e) { 
+      console.error("Error handling daily usage in localStorage:", e); 
+    }
+  }, [user]); // Depend on user to ensure this runs when login state changes
 
   const updateUserUsage = useCallback(async (count: number) => {
     if (!user) return;

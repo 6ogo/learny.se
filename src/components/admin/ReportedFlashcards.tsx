@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -29,13 +30,19 @@ export const ReportedFlashcards: React.FC = () => {
   const fetchReportedCards = async () => {
     setLoading(true);
     try {
-      const { data: flashcardsData } = await supabase
+      console.log('Fetching reported flashcards from Supabase...');
+      const { data: flashcardsData, error } = await supabase
         .from('flashcards')
         .select('*')
         .gt('report_count', 0)
         .order('report_count', { ascending: false });
 
+      if (error) {
+        throw error;
+      }
+
       if (flashcardsData) {
+        console.log(`Retrieved ${flashcardsData.length} reported flashcards`);
         setReportedCards(flashcardsData.map(card => ({
           id: card.id,
           question: card.question,

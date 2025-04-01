@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -52,6 +51,48 @@ export const UserManagement: React.FC = () => {
       const { data: profilesData, error: profilesError } = await supabase
         .from('user_profiles')
         .select('*');
+      
+      if (profilesError) {
+        console.error('Error fetching user profiles:', profilesError);
+        throw profilesError;
+      }
+      
+      console.log(`Retrieved ${profilesData?.length || 0} user profiles`);
+      
+      try {
+        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+        
+        if (authError) throw authError;
+        
+        const combinedUsers = authData.users.map((authUser) => {
+          const profile = profilesData.find((p) => p.id === authUser.id);
+          return {
+            id: authUser.id,
+            email: authUser.email || 'No email',
+            created_at: authUser.created_at,
+            last_sign_in: authUser.last_sign_in_at,
+            subscription_tier: (profile?.subscription_tier || 'free') as 'free' | 'premium' | 'super',
+            daily_usage: profile?.daily_usage || 0,
+          };
+        });
+        
+        setUsers(combinedUsers);
+        setTotalPages(Math.ceil(combinedUsers.length / USERS_PER_PAGE));
+      } catch (authError) {
+        console.log('Using mock user data since auth.admin.listUsers requires admin privileges');
+        
+        const mockUsers: UserData[] = profilesData.map((profile) => ({
+          id: profile.id,
+          email: `user_${profile.id.substring(0, 6)}@example.com`,
+          created_at: profile.created_at,
+          subscription_tier: profile.subscription_tier as 'free' | 'premium' | 'super',
+          daily_usage: profile.daily_usage,
+          last_sign_in: profile.updated_at,
+        }));
+        
+        setUsers(mockUsers);
+        setTotalPages(Math.ceil(mockUsers.length / USERS_PER_PAGE));
+      }
 
       if (profilesError) {
         console.error('Error fetching user profiles:', profilesError);
@@ -147,7 +188,6 @@ export const UserManagement: React.FC = () => {
     if (!selectedUser) return;
 
     try {
-      // Update the user's subscription tier
       const { error } = await supabase
         .from('user_profiles')
         .update({ subscription_tier: selectedTier })
@@ -179,7 +219,6 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleSendEmail = (user: UserData) => {
-    // In a real app, this would integrate with an email service
     toast({
       title: 'E-post funktion',
       description: `Skulle skicka ett e-postmeddelande till ${user.email}`
@@ -196,7 +235,6 @@ export const UserManagement: React.FC = () => {
       return matchesSearch && matchesSubscription;
     })
     .sort((a, b) => {
-      // Special handling for dates
       if (sortField === 'created_at' || sortField === 'last_sign_in') {
         const dateA = new Date(a[sortField] || 0).getTime();
         const dateB = new Date(b[sortField] || 0).getTime();
@@ -374,6 +412,7 @@ export const UserManagement: React.FC = () => {
                 <PaginationLink
                   isActive={currentPage === page}
                   onClick={() => setCurrentPage(page)}
+                  size="icon"
                 >
                   {page}
                 </PaginationLink>

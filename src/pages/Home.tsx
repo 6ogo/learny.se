@@ -1,32 +1,19 @@
-
-// src/pages/Home.tsx
+// src/pages/Home.tsx - replace with this clean version
 import React, { useEffect, useState, useCallback } from 'react';
 import { CategoryCard } from '@/components/CategoryCard';
-import { ProgramCard } from '@/components/ProgramCard';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { useAuth } from '@/context/AuthContext';
-import { BookOpen, Award, TrendingUp, Loader2, Home as HomeIcon } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { Program } from '@/types/program';
+import { BookOpen, Award, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 const Home = () => {
   const {
     categories,
     userStats,
-    updateUserStats,
-    fetchProgramsByCategory,
-    programs: localProgramsState
+    updateUserStats
   } = useLocalStorage();
-  const { user, achievements } = useAuth();
-  const { toast } = useToast();
+  const { user } = useAuth();
 
-  const [popularPrograms, setPopularPrograms] = useState<Program[]>([]);
-  const [recentlyCompletedPrograms, setRecentlyCompletedPrograms] = useState<Program[]>([]);
-  const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
   const [totalCardCount, setTotalCardCount] = useState<number | null>(null);
   const [moduleCount, setModuleCount] = useState<number | null>(null);
 
@@ -53,194 +40,19 @@ const Home = () => {
     }
   }, []);
 
-  // Fetch popular programs
-  const loadPopularPrograms = useCallback(async () => {
-    setIsLoadingPrograms(true);
-    try {
-      if (!user?.id) return;
-      
-      // First, try to fetch real modules from Supabase
-      const { data: modules, error } = await supabase
-        .from('flashcard_modules')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(6);
-        
-      if (error) {
-        console.error("Error fetching modules:", error);
-        throw error;
-      }
-      
-      if (modules && modules.length > 0) {
-        // Convert modules to programs format
-        const modulePrograms: Program[] = await Promise.all(
-          modules.map(async module => {
-            // Count flashcards for this module
-            const { count, error: countError } = await supabase
-              .from('flashcards')
-              .select('*', { count: 'exact', head: true })
-              .eq('module_id', module.id);
-              
-            if (countError) {
-              console.error("Error counting flashcards:", countError);
-            }
-            
-            return {
-              id: module.id,
-              name: module.name,
-              description: module.description || `${module.name} flashcards`,
-              category: module.category,
-              difficulty: 'beginner', // Default difficulty
-              flashcards: [], // IDs will be fetched when needed
-              progress: 0,
-              hasExam: false,
-              flashcardCount: count || 0
-            };
-          })
-        );
-        
-        setPopularPrograms(modulePrograms);
-      } else {
-        // Fallback to sample programs if no real modules exist
-        console.warn("No modules found, using local program state.");
-        setPopularPrograms(localProgramsState.slice(0, 6));
-      }
-    } catch (error) {
-      console.error("Error fetching popular programs:", error);
-      toast({
-        title: "Kunde inte ladda program",
-        description: "Ett fel uppstod när program skulle hämtas.",
-        variant: "destructive"
-      });
-      // Fallback to local state
-      setPopularPrograms(localProgramsState.slice(0, 6));
-    } finally {
-      setIsLoadingPrograms(false);
-    }
-  }, [user?.id, localProgramsState, toast]);
-
-  // Fetch recently completed programs
-  const loadCompletedPrograms = useCallback(async () => {
-    if (!user?.id) return;
-    
-    try {
-      // First check if we have completed programs in user stats
-      if (userStats.completedPrograms && userStats.completedPrograms.length > 0) {
-        // Try to match completed program IDs with real modules
-        const { data: modules, error } = await supabase
-          .from('flashcard_modules')
-          .select('*')
-          .in('id', userStats.completedPrograms)
-          .limit(3);
-          
-        if (error) {
-          console.error("Error fetching completed modules:", error);
-          throw error;
-        }
-        
-        if (modules && modules.length > 0) {
-          // Convert modules to programs format
-          const modulePrograms: Program[] = modules.map(module => ({
-            id: module.id,
-            name: module.name,
-            description: module.description || `${module.name} flashcards`,
-            category: module.category,
-            difficulty: 'beginner', // Default difficulty
-            flashcards: [], // IDs will be fetched when needed
-            progress: 100, // Completed
-            hasExam: false
-          }));
-          
-          setRecentlyCompletedPrograms(modulePrograms);
-          return;
-        }
-      }
-      
-      // If no completed programs in user stats or no matching modules, 
-      // try to fetch recent completed sessions
-      const { data: sessions, error: sessionsError } = await supabase
-        .from('flashcard_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('completed', true)
-        .order('end_time', { ascending: false })
-        .limit(3);
-        
-      if (sessionsError) {
-        console.error("Error fetching completed sessions:", sessionsError);
-        throw sessionsError;
-      }
-      
-      if (sessions && sessions.length > 0) {
-        // For each session, try to find or create a corresponding program
-        const sessionPrograms: Program[] = [];
-        
-        for (const session of sessions) {
-          if (session.category) {
-            // This was a category-based session
-            const categoryName = categories.find(c => c.id === session.category)?.name || session.category;
-            
-            sessionPrograms.push({
-              id: `${session.category}-recent-${session.id}`,
-              name: `${categoryName} session`,
-              description: `Completed on ${new Date(session.end_time).toLocaleDateString()}`,
-              category: session.category,
-              difficulty: 'beginner',
-              flashcards: [],
-              progress: 100,
-              hasExam: false,
-              flashcardCount: session.cards_studied
-            });
-          }
-        }
-        
-        if (sessionPrograms.length > 0) {
-          setRecentlyCompletedPrograms(sessionPrograms);
-          return;
-        }
-      }
-      
-      // Final fallback: use local state
-      console.warn("No completed programs found, using local state.");
-      const completedIds = userStats.completedPrograms || [];
-      const completed = localProgramsState
-        .filter(program => completedIds.includes(program.id))
-        .slice(0, 3);
-      setRecentlyCompletedPrograms(completed);
-      
-    } catch (error) {
-      console.error("Error loading completed programs:", error);
-      // Fallback to local state
-      const completedIds = userStats.completedPrograms || [];
-      const completed = localProgramsState
-        .filter(program => completedIds.includes(program.id))
-        .slice(0, 3);
-      setRecentlyCompletedPrograms(completed);
-    }
-  }, [user?.id, userStats.completedPrograms, localProgramsState, categories]);
-
   // Initial data loading effect
   useEffect(() => {
     updateUserStats({}); // Update activity/streak
-
+  
     const loadData = async () => {
-      setIsLoadingPrograms(true);
-      await Promise.all([
-        loadPopularPrograms(),
-        fetchTotalCardCount()
-      ]);
-      
-      await loadCompletedPrograms();
-      setIsLoadingPrograms(false);
+      await fetchTotalCardCount();
     };
     
     if (user?.id) {
       loadData();
-    } else {
-      setIsLoadingPrograms(false);
     }
-  }, [updateUserStats, loadPopularPrograms, loadCompletedPrograms, fetchTotalCardCount, user?.id]);
-
+  }, [updateUserStats, fetchTotalCardCount, user?.id]);
+  
   return (
     <div>
       {/* Welcome Section */}

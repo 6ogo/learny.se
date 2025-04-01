@@ -13,6 +13,7 @@ import { Flashcard as FlashcardType } from '@/types/flashcard';
 import { Program } from '@/types/program';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { initialCategories as categories } from '@/data/categories';
 
 // Define a type for the answers being tracked
 type AnswerRecord = {
@@ -53,57 +54,196 @@ const StudyPage = () => {
     setError(null);
     setProgram(null);
     setProgramFlashcards([]);
-
+  
     if (!programId) {
       setError("Program ID saknas.");
       setIsLoading(false);
       return;
     }
-
+  
     try {
+      console.log(`StudyPage: Loading program data for ID: ${programId}`);
+      
       // Create a new study session
+      let sessionId = null;
       if (user) {
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('flashcard_sessions')
-          .insert({
-            user_id: user.id,
-            // If it's a placeholder program with format "category-difficulty"
-            category: programId.includes('-') ? programId.split('-')[0] : null,
-            start_time: new Date().toISOString(),
-            completed: false
-          })
-          .select()
-          .single();
-          
-        if (sessionError) {
-          console.error("Error creating session:", sessionError);
-        } else if (sessionData) {
-          setSessionId(sessionData.id);
-          console.log("Created study session:", sessionData.id);
+        try {
+          const { data: sessionData, error: sessionError } = await supabase
+            .from('flashcard_sessions')
+            .insert({
+              user_id: user.id,
+              category: programId.includes('-') ? programId.split('-')[0] : null,
+              start_time: new Date().toISOString(),
+              completed: false
+            })
+            .select()
+            .single();
+            
+          if (sessionError) {
+            console.error("Error creating session:", sessionError);
+          } else if (sessionData) {
+            sessionId = sessionData.id;
+            setSessionId(sessionData.id);
+            console.log("Created study session:", sessionData.id);
+          }
+        } catch (sessionErr) {
+          console.error("Failed to create session:", sessionErr);
+          // Continue anyway - session is not critical
         }
       }
-
-      // Fetch program details
-      const fetchedProgram = await fetchProgram(programId);
-      if (!fetchedProgram) throw new Error("Programmet kunde inte hittas.");
+  
+      // Special handling for different program ID formats
+      let fetchedProgram = null;
+      
+      // Handle IDs with category-difficulty format
+      if (programId.includes('-')) {
+        const [category, difficulty] = programId.split('-');
+        console.log(`StudyPage: Detected category-difficulty format: ${category}-${difficulty}`);
+        
+        // Create a synthetic program
+        fetchedProgram = {
+          id: programId,
+          name: `${categories.find(c => c.id === category)?.name || category} (${difficulty})`,
+          description: `Flashcards för ${categories.find(c => c.id === category)?.name || category} på ${difficulty} nivå`,
+          category,
+          difficulty: difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+          flashcards: [],
+          hasExam: false
+        };
+      } else {
+        // Regular module ID format - try to fetch from context first
+        const program = await fetchProgram(programId);
+        
+        if (!program) {
+          // If fetchProgram returns null, try direct DB fetch as fallback
+          try {
+            console.log("StudyPage: fetchProgram returned null, trying direct DB fetch");
+            const { data: moduleData, error: moduleError } = await supabase
+              .from('flashcard_modules')
+              .select('*')
+              .eq('id', programId)
+              .single();
+              
+            if (moduleError) {
+              throw new Error(`Kunde inte hitta modulen: ${moduleError.message}`);
+            }
+            
+            if (!moduleData) {
+              throw new Error("Modulen hittades inte i databasen");
+            }
+            
+            fetchedProgram = {
+              id: moduleData.id,
+              name: moduleData.name,
+              description: moduleData.description || moduleData.name,
+              category: moduleData.category,
+              difficulty: 'beginner', // Default value
+              flashcards: [],
+              hasExam: false
+            };
+            
+            console.log("StudyPage: Successfully fetched module directly:", fetchedProgram.name);
+          } catch (directFetchError) {
+            console.error("StudyPage: Direct module fetch failed:", directFetchError);
+            throw new Error("Programmet kunde inte hittas.");
+          }
+        } else {
+          fetchedProgram = program;
+        }
+      }
+  
+      if (!fetchedProgram) {
+        throw new Error("Programmet kunde inte hittas.");
+      }
+      
       setProgram(fetchedProgram);
-
+      console.log("StudyPage: Program set:", fetchedProgram.name);
+  
       // Fetch flashcards for the program
-      const fetchedFlashcards = await fetchFlashcardsByProgramId(programId);
-      if (fetchedFlashcards.length === 0) throw new Error("Inga flashcards hittades för detta program.");
+      console.log(`StudyPage: Fetching flashcards for program: ${programId}`);
+      let fetchedFlashcards: FlashcardType[] = [];
+      
+      try {
+        fetchedFlashcards = await fetchFlashcardsByProgramId(programId);
+        console.log(`StudyPage: Fetched ${fetchedFlashcards.length} flashcards`);
+        
+        if (fetchedFlashcards.length === 0) {
+          // If no flashcards from context, try direct DB query as fallback
+          if (programId.includes('-')) {
+            // For category-difficulty format
+            const [category, difficulty] = programId.split('-');
+            console.log(`StudyPage: Direct DB fetch for ${category}-${difficulty}`);
+            
+            const { data, error } = await supabase
+              .from('flashcards')
+              .select('*')
+              .eq('category', category)
+              .eq('difficulty', difficulty);
+              
+            if (error) {
+              console.error("StudyPage: Direct flashcard fetch error:", error);
+            } else if (data && data.length > 0) {
+              console.log(`StudyPage: Direct fetch found ${data.length} flashcards`);
+              fetchedFlashcards = data.map(f => ({
+                id: f.id,
+                question: f.question,
+                answer: f.answer,
+                category: f.category,
+                difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+                subcategory: f.subcategory || undefined,
+                correctCount: f.correct_count || 0,
+                incorrectCount: f.incorrect_count || 0
+              }));
+            }
+          } else {
+            // For regular module ID
+            console.log(`StudyPage: Direct DB fetch for module ${programId}`);
+            
+            const { data, error } = await supabase
+              .from('flashcards')
+              .select('*')
+              .eq('module_id', programId);
+              
+            if (error) {
+              console.error("StudyPage: Direct flashcard fetch error:", error);
+            } else if (data && data.length > 0) {
+              console.log(`StudyPage: Direct fetch found ${data.length} flashcards`);
+              fetchedFlashcards = data.map(f => ({
+                id: f.id,
+                question: f.question,
+                answer: f.answer,
+                category: f.category,
+                difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+                subcategory: f.subcategory || undefined,
+                correctCount: f.correct_count || 0,
+                incorrectCount: f.incorrect_count || 0
+              }));
+            }
+          }
+        }
+      } catch (flashcardsError) {
+        console.error("StudyPage: Error fetching flashcards:", flashcardsError);
+        // Continue with empty array instead of failing completely
+        fetchedFlashcards = [];
+      }
+  
+      if (fetchedFlashcards.length === 0) {
+        throw new Error("Inga flashcards hittades för detta program.");
+      }
       
       // Shuffle the flashcards for better learning experience
       const shuffledFlashcards = [...fetchedFlashcards].sort(() => 0.5 - Math.random());
       setProgramFlashcards(shuffledFlashcards);
-
+  
     } catch (err: any) {
+      console.error("StudyPage: Error in loadStudyData:", err);
       setError(err.message || "Kunde inte ladda studieuppgifter.");
       toast({ title: 'Fel', description: err.message || 'Kunde inte ladda programmet.', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
-  }, [programId, fetchProgram, fetchFlashcardsByProgramId, toast, user]);
-
+  }, [programId, fetchProgram, fetchFlashcardsByProgramId, toast, user, categories]);
+  
   useEffect(() => {
     loadStudyData();
     updateUserStats({}); // Update activity/streak on visit

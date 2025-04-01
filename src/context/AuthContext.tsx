@@ -122,32 +122,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log("AuthContext: Initializing...");
+
     const getInitialSession = async () => {
       console.log("AuthContext: Getting initial session...");
       setIsLoading(true); // Start loading
 
-      // Add timeout to prevent hanging
-      let timeoutId: number | null = null;
-
       try {
-        // Set a timeout to prevent the auth check from hanging forever
-        const timeoutPromise = new Promise<{ data: { session: Session | null }, error: Error | null }>(
-          (_, reject) => {
-            timeoutId = window.setTimeout(() => {
-              console.error("AuthContext: Session fetch timeout - forcing completion");
-              reject(new Error('Session fetch timeout'));
-            }, 5000); // 5 second timeout
-          }
-        );
-
-        // Race between the actual auth check and the timeout
-        const sessionPromise = supabase.auth.getSession();
-        const result = await Promise.race([sessionPromise, timeoutPromise]);
-
-        // Clear timeout if we got a response
-        if (timeoutId) clearTimeout(timeoutId);
-
-        const { data: { session }, error } = result;
+        // Try to get session without timeout first, to avoid accidentally interrupting valid auth
+        const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
           console.error("AuthContext: Error getting initial session:", error);
@@ -160,38 +142,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          await fetchUserDetails(session.user.id); // This will set isLoading false eventually
+          // Add a safety timeout just for the user details fetch
+          let detailsTimeoutId: any = null;
+          try {
+            const timeoutPromise = new Promise<void>((_, reject) => {
+              detailsTimeoutId = setTimeout(() => {
+                console.error("AuthContext: User details fetch timeout - continuing with basic session");
+                reject(new Error('User details fetch timeout'));
+              }, 10000); // Longer 10 second timeout
+            });
+
+            // Race between fetching details and timeout
+            await Promise.race([
+              fetchUserDetails(session.user.id),
+              timeoutPromise
+            ]);
+
+            if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
+
+          } catch (detailsError) {
+            // If details fetch times out, still keep the user session and set default values
+            if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
+            console.error("AuthContext: Error fetching user details, but continuing with session:", detailsError);
+            setTier('free');
+            setIsAdmin(false);
+            setDailyUsage(0);
+            setAchievements([]);
+            setIsLoading(false);
+          }
         } else {
           console.log("AuthContext: No initial user, setting isLoading to false.");
           setIsLoading(false); // No user, stop loading
         }
       } catch (error) {
-        // If there's an error or timeout, make sure we clear the timeout and set loading to false
-        if (timeoutId) clearTimeout(timeoutId);
-        console.error("AuthContext: Session fetch error or timeout:", error);
-        setTier('free');
-        setIsAdmin(false);
-        setDailyUsage(0);
-        setAchievements([]);
-        setUser(null);
-        setSession(null);
+        console.error("AuthContext: Session fetch exception:", error);
         setIsLoading(false);
       }
     };
 
     getInitialSession();
 
-    // Rest of the useEffect remains the same...
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        // Add similar timeout logic here if needed
         console.log("AuthContext: onAuthStateChange triggered. Event:", _event);
         setIsLoading(true); // Start loading on auth change
         setSession(session);
         setUser(session?.user ?? null);
+
         if (session?.user) {
           console.log("AuthContext: User found in onAuthStateChange, fetching details...");
-          await fetchUserDetails(session.user.id); // This will set isLoading false eventually
+
+          // Add a safety timeout for user details
+          let detailsTimeoutId: any = null;
+          try {
+            const timeoutPromise = new Promise<void>((_, reject) => {
+              detailsTimeoutId = setTimeout(() => {
+                console.error("AuthContext: User details fetch timeout in onAuthStateChange - continuing with basic session");
+                reject(new Error('User details fetch timeout'));
+              }, 10000); // 10 second timeout
+            });
+
+            await Promise.race([
+              fetchUserDetails(session.user.id),
+              timeoutPromise
+            ]);
+
+            if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
+
+          } catch (detailsError) {
+            // If details fetch times out, still keep the user session
+            if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
+            console.error("AuthContext: Error fetching user details in onAuthStateChange, but continuing with session:", detailsError);
+            setTier('free');
+            setIsAdmin(false);
+            setDailyUsage(0);
+            setAchievements([]);
+            setIsLoading(false);
+          }
         } else {
           console.log("AuthContext: No user in onAuthStateChange, resetting state and setting isLoading false.");
           setTier('free');
@@ -203,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // --- Daily usage logic ---
+    // Daily usage logic remains the same...
     try {
       const today = new Date().toISOString().split('T')[0];
       const storedData = localStorage.getItem('learny_usage');
@@ -225,7 +252,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, [fetchUserDetails]); // Include fetchUserDetails in dependency array
-
 
   const updateUserUsage = useCallback(async (count: number) => {
     if (!user) return;

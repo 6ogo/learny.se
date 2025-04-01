@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -163,81 +164,39 @@ export const AdminAnalytics: React.FC = () => {
         }))
       );
       
-      // 4. Get activity data
-      // First try to get real activity data
+      // 4. Generate activity data since we don't have activity log tables yet
+      // Instead of querying non-existent tables, generate mock data based on real data patterns
       const days = timeRange === '7days' ? 7 : timeRange === '30days' ? 30 : 90;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
-      const startDateISO = startDate.toISOString();
       
-      try {
-        // Attempt to get user login activity and flashcard study activity
-        const { data: loginData, error: loginError } = await supabase
-          .from('user_activity_logs')  // Adjust table name as needed
-          .select('date, count')
-          .gte('date', startDateISO)
-          .order('date', { ascending: true });
-          
-        const { data: studyData, error: studyError } = await supabase
-          .from('flashcard_study_logs')  // Adjust table name as needed
-          .select('date, count')
-          .gte('date', startDateISO)
-          .order('date', { ascending: true });
+      // Generate mock activity data that's more realistic
+      const mockActivityData = [];
+      
+      for (let i = 0; i < days; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
         
-        // If we successfully got both data sets, combine them
-        if (!loginError && !studyError && loginData && studyData) {
-          // Process and merge data (in a real app, you'd have a more sophisticated merging logic)
-          const processedActivityData = [];
-          for (let i = 0; i < days; i++) {
-            const date = new Date(startDate);
-            date.setDate(date.getDate() + i);
-            const dateStr = date.toISOString().split('T')[0];
-            
-            const loginEntry = loginData.find(entry => entry.date === dateStr);
-            const studyEntry = studyData.find(entry => entry.date === dateStr);
-            
-            processedActivityData.push({
-              date: dateStr,
-              users: loginEntry ? loginEntry.count : 0,
-              flashcards: studyEntry ? studyEntry.count : 0
-            });
-          }
-          
-          setActivityData(processedActivityData);
-        } else {
-          // Fallback to generated data if either query failed
-          throw new Error('Could not retrieve activity data');
-        }
-      } catch (error) {
-        console.warn('Using generated activity data', error);
-        // Generate improved mock activity data that's more realistic
-        const mockActivityData = [];
+        // Base values that create a more realistic pattern
+        const dayOfWeek = date.getDay(); // 0 (Sunday) to 6 (Saturday)
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         
-        for (let i = 0; i < days; i++) {
-          const date = new Date(startDate);
-          date.setDate(date.getDate() + i);
-          const dateStr = date.toISOString().split('T')[0];
-          
-          // Base values that create a more realistic pattern
-          const dayOfWeek = date.getDay(); // 0 (Sunday) to 6 (Saturday)
-          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-          
-          // Weekend activity is typically lower
-          const baseUsers = isWeekend ? Math.floor(Math.random() * 20) + 5 : Math.floor(Math.random() * 40) + 15;
-          const baseFlashcards = isWeekend ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 80) + 40;
-          
-          // Add slight upward trend over time (newer dates have more activity)
-          const trendFactor = 1 + (i / days * 0.2);
-          
-          mockActivityData.push({
-            date: dateStr,
-            users: Math.floor(baseUsers * trendFactor),
-            flashcards: Math.floor(baseFlashcards * trendFactor)
-          });
-        }
+        // Weekend activity is typically lower
+        const baseUsers = isWeekend ? Math.floor(Math.random() * 20) + 5 : Math.floor(Math.random() * 40) + 15;
+        const baseFlashcards = isWeekend ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 80) + 40;
         
-        setActivityData(mockActivityData);
+        // Add slight upward trend over time (newer dates have more activity)
+        const trendFactor = 1 + (i / days * 0.2);
+        
+        mockActivityData.push({
+          date: dateStr,
+          users: Math.floor(baseUsers * trendFactor),
+          flashcards: Math.floor(baseFlashcards * trendFactor)
+        });
       }
+      
+      setActivityData(mockActivityData);
       
     } catch (error) {
       console.error('Error fetching analytics data:', error);

@@ -368,9 +368,9 @@ export type Database = {
       }
       increment: {
         Args: {
-          row_id: string
-          table_name: string
+          row_id: number
           column_name: string
+          table_name: string
         }
         Returns: number
       }
@@ -383,9 +383,7 @@ export type Database = {
         Returns: undefined
       }
       is_admin: {
-        Args: {
-          user_id: string
-        }
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       reset_daily_usage: {

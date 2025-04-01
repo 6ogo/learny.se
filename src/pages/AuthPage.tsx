@@ -1,7 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Card, 
@@ -27,12 +27,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { LogIn, UserPlus, Apple, Mail, Home } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
+import { Turnstile } from '@marsidev/react-turnstile';
+
+const TURNSTILE_SITE_KEY = "0x4AAAAAAAQnUdR15g5GRSio"; // Replace with your actual site key if different
 
 const loginSchema = z.object({
   email: z.string().email('Ogiltig e-postadress').min(1, 'E-post måste anges'),
@@ -56,9 +58,11 @@ const AuthPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn, signUp, resetPassword, signInWithProvider } = useAuth();
+  const turnstileRef = useRef(null);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -83,6 +87,19 @@ const AuthPage: React.FC = () => {
       email: '',
     },
   });
+
+  const handleCaptchaVerification = (token: string) => {
+    console.log("Captcha verified:", token);
+    setCaptchaToken(token);
+  };
+
+  const handleCaptchaError = () => {
+    toast({
+      variant: "destructive",
+      title: "Captcha verifiering misslyckades",
+      description: "Vänligen försök igen.",
+    });
+  };
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
@@ -120,8 +137,22 @@ const AuthPage: React.FC = () => {
   const handleSignUp = async (values: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
 
+    if (!captchaToken) {
+      toast({
+        variant: "destructive",
+        title: "Captcha verifiering krävs",
+        description: "Vänligen slutför captcha-verifieringen innan du registrerar dig.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const { error, data } = await signUp(values.email, values.password);
+      const { error, data } = await signUp(
+        values.email, 
+        values.password, 
+        { captchaToken }
+      );
       
       if (error) {
         if (error.message.includes('already registered')) {
@@ -130,6 +161,18 @@ const AuthPage: React.FC = () => {
             title: "Registrering misslyckades",
             description: "En användare med denna e-post finns redan. Försök logga in istället.",
           });
+        } else if (error.message.includes('captcha')) {
+          toast({
+            variant: "destructive",
+            title: "Registrering misslyckades",
+            description: "Captcha verifiering misslyckades. Vänligen försök igen.",
+          });
+          // Reset the captcha
+          if (turnstileRef.current) {
+            // @ts-ignore
+            turnstileRef.current.reset();
+          }
+          setCaptchaToken(null);
         } else {
           toast({
             variant: "destructive",
@@ -206,12 +249,18 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  // Reset captcha token when switching tabs
+  const handleTabChange = (value: string) => {
+    setCaptchaToken(null);
+    setActiveTab(value as 'login' | 'signup');
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <img
-            src="logo.png" 
+            src="/logo.png" 
             alt="Learny.se" 
             className="h-20 w-auto mx-auto"
           />
@@ -285,7 +334,7 @@ const AuthPage: React.FC = () => {
           </Card>
         ) : (
           <Card className="bg-gray-800 border-gray-700 text-white">
-            <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'signup')}>
+            <Tabs defaultValue="login" value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid w-full grid-cols-2 bg-gray-700">
                 <TabsTrigger value="login" className="data-[state=active]:bg-learny-purple data-[state=active]:text-white">
                   Logga in
@@ -484,6 +533,17 @@ const AuthPage: React.FC = () => {
                             </FormItem>
                           )}
                         />
+                        
+                        <div className="flex justify-center py-2">
+                          <Turnstile
+                            ref={turnstileRef}
+                            siteKey={TURNSTILE_SITE_KEY}
+                            onSuccess={handleCaptchaVerification}
+                            onError={handleCaptchaError}
+                            theme="dark"
+                          />
+                        </div>
+                        
                         <div className="text-xs text-gray-400">
                           Genom att registrera dig accepterar du våra användarvillkor och integritetspolicy.
                         </div>

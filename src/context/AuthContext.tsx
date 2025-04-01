@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,9 +47,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [dailyUsage, setDailyUsage] = useState(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
-  // --- Wrap functions with useCallback ---
+  // Initialize auth state
+  useEffect(() => {
+    // Set loading to true during initialization
+    setIsLoading(true);
+    
+    console.log("AuthContext: Setting up auth state listener");
+    
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        console.log("AuthContext: Auth state changed:", event);
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        if (newSession?.user) {
+          console.log("AuthContext: User logged in, fetching profile");
+          setTimeout(() => {
+            fetchUserDetails(newSession.user.id);
+          }, 0);
+        } else {
+          console.log("AuthContext: No user, setting isLoading to false");
+          setIsLoading(false);
+        }
+      }
+    );
+    
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      console.log("AuthContext: Initial session check:", existingSession ? "Found session" : "No session");
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      
+      if (existingSession?.user) {
+        console.log("AuthContext: Found existing user, fetching profile");
+        fetchUserDetails(existingSession.user.id);
+      } else {
+        console.log("AuthContext: No existing user, setting isLoading to false");
+        setIsLoading(false);
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Wrap functions with useCallback
   const fetchUserDetails = useCallback(async (userId: string) => {
-    // Don't set isLoading true here, let useEffect handle it
     try {
       console.log("AuthContext: Fetching user details for", userId);
       const { data, error } = await supabase
@@ -62,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
-      // Cast the data to UserProfile type to ensure TypeScript properly recognizes is_super_admin
+      // Cast the data to UserProfile type
       let userProfile = data as UserProfile | null;
 
       // If profile doesn't exist, create it
@@ -70,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("AuthContext: No profile found, creating one...");
         const { data: insertedData, error: insertError } = await supabase
           .from('user_profiles')
-          .insert([{ id: userId, subscription_tier: 'free', daily_usage: 0, is_admin: false, is_super_admin: null }])
+          .insert([{ id: userId, subscription_tier: 'free', daily_usage: 0, is_admin: false }])
           .select()
           .single();
         if (insertError) {
@@ -83,13 +129,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Now we are sure userProfile exists
       setTier((userProfile.subscription_tier || 'free') as SubscriptionTier);
-      
-      // Check both is_admin and is_super_admin fields
-      const userIsAdmin = userProfile.is_admin === true || userProfile.is_super_admin === 'yes';
-      setIsAdmin(userIsAdmin);
-      
+      setIsAdmin(userProfile.is_admin === true);
       setDailyUsage(userProfile.daily_usage || 0);
-      console.log("AuthContext: Profile details set - Tier:", userProfile.subscription_tier, "Is Admin:", userIsAdmin);
+      console.log("AuthContext: Profile details set - Tier:", userProfile.subscription_tier, "Is Admin:", userProfile.is_admin);
 
       // Fetch achievements
       const { data: achievementsData, error: achievementsError } = await supabase

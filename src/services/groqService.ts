@@ -1,6 +1,5 @@
-
-// GROQ API service for generating flashcards
-import { toast } from '@/components/ui/use-toast';
+// src/services/groqService.ts
+import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AIFlashcardRequest {
@@ -11,20 +10,18 @@ export interface AIFlashcardRequest {
 }
 
 export interface AIFlashcardResponse {
-  flashcards: {
-    question: string;
-    answer: string;
-  }[];
-  module_id?: string;
-  saved?: boolean;
+  flashcards: { question: string; answer: string }[];
+  module_id?: string; // ID of the module if saved
+  saved?: boolean; // Flag indicating if cards were saved to DB
+  error?: string; // Optional error message from function
+  message?: string; // Optional info message from function
 }
 
 export const generateFlashcards = async (request: AIFlashcardRequest): Promise<AIFlashcardResponse> => {
   try {
-    console.log('Generating flashcards with GROQ API...', request);
-    
-    // Call our Supabase Edge Function to securely use the GROQ API
-    const { data, error } = await supabase.functions.invoke('generate-flashcards', {
+    console.log('Invoking Supabase function generate-flashcards...', request);
+
+    const { data, error: functionError } = await supabase.functions.invoke('generate-flashcards', {
       body: {
         topic: request.topic,
         category: request.category,
@@ -33,34 +30,67 @@ export const generateFlashcards = async (request: AIFlashcardRequest): Promise<A
       }
     });
 
-    if (error) {
-      console.error('Error calling GROQ API:', error);
+    // Handle errors during function invocation itself
+    if (functionError) {
+      console.error('Error invoking Supabase function:', functionError);
       toast({
-        title: "Kunde inte generera flashcards",
-        description: "Ett fel uppstod när vi försökte generera flashcards med AI. Försök igen senare.",
+        title: "Kommunikationsfel",
+        description: "Kunde inte kontakta AI-tjänsten. Kontrollera din anslutning.",
         variant: "destructive",
       });
-      return { flashcards: [] };
+      // Return an empty response matching the interface
+      return { flashcards: [], saved: false, error: functionError.message };
     }
 
-    console.log('Generated flashcards:', data);
-    
+    // Handle errors returned *from* the function execution
+    if (data.error) {
+         console.error('Error from generate-flashcards function:', data.error, data.details);
+         toast({
+           title: "Kunde inte generera flashcards",
+           description: data.error || "Ett fel uppstod hos AI-tjänsten.",
+           variant: "destructive",
+         });
+         // Return the data which includes the error message
+         return { flashcards: data.flashcards || [], saved: false, error: data.error };
+    }
+
+     // Handle informational messages from function (e.g., no cards generated)
+     if (data.message){
+         toast({
+            title: "Info",
+            description: data.message,
+            variant: "default"
+         });
+     }
+
+
+    // Handle success (saved or not saved)
     if (data.saved) {
       toast({
-        title: "Flashcards skapade",
+        title: "Flashcards skapade!",
         description: `${data.flashcards.length} flashcards har genererats och sparats i din samling.`,
       });
+    } else if (data.flashcards?.length > 0 && !data.saved && !data.error && !data.message) {
+        // Only show this if no specific message/error was returned
+      toast({
+        title: "Flashcards genererade (ej sparade)",
+        description: "Logga in för att spara flashcards till din samling.",
+        variant: "default" // Use default variant for informational message
+      });
     }
-    
-    return data;
-  } catch (error) {
-    console.error('Failed to generate flashcards:', error);
+
+    console.log('generate-flashcards function response:', data);
+    return data as AIFlashcardResponse; // Cast the response
+
+  } catch (error: any) {
+    // Catch unexpected frontend errors during the process
+    console.error('Failed to generate flashcards (service catch):', error);
     toast({
-      title: "Kunde inte generera flashcards",
-      description: "Ett fel uppstod när vi försökte generera flashcards med AI. Försök igen senare.",
+      title: "Oväntat fel",
+      description: "Ett oväntat fel uppstod. Försök igen senare.",
       variant: "destructive",
     });
-    return { flashcards: [] };
+    return { flashcards: [], saved: false, error: error.message };
   }
 };
 

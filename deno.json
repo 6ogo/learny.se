@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "lib": ["deno.ns", "deno.window", "dom"]
+    },
+    "importMap": "./import_map.json",
+    "tasks": {
+      "start": "deno run --allow-net --allow-env ./supabase/functions/generate-flashcards/index.ts"
+    },
+    "lint": {
+      "rules": {
+        "tags": ["recommended"]
+      }
+    }
+  }
+  

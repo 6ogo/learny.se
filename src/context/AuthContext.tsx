@@ -1,5 +1,5 @@
 // src/context/AuthContext.tsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserAchievement } from '@/types/user';
@@ -20,7 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   tier: string;
-  daily_usage: number; // Add this property to fix the error
+  daily_usage: number; 
   achievements: UserAchievement[];
   addAchievement: (achievement: Omit<UserAchievement, 'id' | 'dateEarned'>) => Promise<void>;
   markAchievementDisplayed: (id: string) => Promise<void>;
@@ -37,9 +37,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [tier, setTier] = useState<string>('free');
   const [dailyUsage, setDailyUsage] = useState<number>(0);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
+  const [initDone, setInitDone] = useState(false);
+
+  // Fetch user details (profile, admin status, achievements)
+  const fetchUserDetails = useCallback(async (userId: string) => {
+    console.log("AuthContext: Fetching user details for", userId);
+    
+    try {
+      // Throttle and debounce - avoid making too many requests at once
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Get user profile (includes subscription tier and admin status)
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) {
+        console.error("AuthContext: Error fetching user profile (select):", profileError);
+        // Don't throw, just continue with default values
+        setIsAdmin(false);
+        setTier('free');
+        setDailyUsage(0);
+      } else {
+        setIsAdmin(profile?.is_admin || false);
+        setTier(profile?.subscription_tier || 'free');
+        setDailyUsage(profile?.daily_usage || 0);
+        
+        // Extend user object with profile data
+        setUser(prev => prev ? { ...prev, daily_usage: profile?.daily_usage || 0 } : null);
+      }
+      
+      // Get achievements - don't block on this
+      try {
+        const { data: achievementsData, error: achievementsError } = await supabase
+          .from('user_achievements')
+          .select('*')
+          .eq('user_id', userId);
+        
+        if (achievementsError) {
+          console.error("Error fetching achievements:", achievementsError);
+        } else if (achievementsData) {
+          // Convert to frontend format
+          const formattedAchievements: UserAchievement[] = achievementsData.map(a => ({
+            id: a.id,
+            name: a.name,
+            description: a.description,
+            icon: a.icon,
+            dateEarned: new Date(a.date_earned).getTime(),
+            displayed: a.displayed
+          }));
+          
+          setAchievements(formattedAchievements);
+        }
+      } catch (achieveError) {
+        console.error("Error in achievements fetch:", achieveError);
+      }
+      
+      // Check subscription status - don't block on this
+      try {
+        await refreshSubscription();
+      } catch (subError) {
+        console.log("Error refreshing subscription:", subError);
+      }
+    } catch (error) {
+      console.error("AuthContext: General error fetching user details:", error);
+    } finally {
+      console.log("AuthContext: fetchUserDetails finished, setting isLoading to false.");
+      setIsLoading(false);
+    }
+  }, []);
 
   // Initialize Supabase auth
   useEffect(() => {
+    if (initDone) return; // Prevent multiple initializations
+    
     console.log("AuthContext: Initializing...");
     
     const initializeAuth = async () => {
@@ -47,8 +120,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("AuthContext: Getting initial session...");
         setIsLoading(true);
         
+        // Set up a timeout to prevent hanging
+        const timeoutId = setTimeout(() => {
+          console.log("AuthContext: Session fetch timed out, continuing with no session");
+          setIsLoading(false);
+          setUser(null);
+          setSession(null);
+        }, 10000); // 10 second timeout
+        
         // Check the initial session
-        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData, error } = await supabase.auth.getSession();
+        
+        // Clear the timeout as we got a response
+        clearTimeout(timeoutId);
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          setIsLoading(false);
+          return;
+        }
         
         if (sessionData?.session) {
           console.log("AuthContext: Initial session data received:", sessionData.session.user ? `User ${sessionData.session.user.id}` : "No user");
@@ -58,15 +148,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Fetch user details if there's a session with a user
           if (sessionData.session.user) {
             await fetchUserDetails(sessionData.session.user.id);
+          } else {
+            setIsLoading(false);
           }
         } else {
           console.log("AuthContext: No initial session");
           setSession(null);
           setUser(null);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("AuthContext: Error initializing auth:", error);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -87,80 +179,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAdmin(false);
         setTier('free');
         setDailyUsage(0);
+        setIsLoading(false);
       }
     });
     
     // Run initial auth check
     initializeAuth();
+    setInitDone(true);
     
     // Clean up listener
     return () => {
       authListener?.subscription.unsubscribe();
     };
-  }, []);
-
-  // Fetch user details (profile, admin status, achievements)
-  const fetchUserDetails = async (userId: string) => {
-    console.log("AuthContext: Fetching user details for", userId);
-    
-    try {
-      // Throttle and debounce - avoid making too many requests at once
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Get user profile (includes subscription tier and admin status)
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (profileError) {
-        console.error("AuthContext: Error fetching user profile (select):", profileError);
-        throw profileError;
-      }
-      
-      setIsAdmin(profile?.is_admin || false);
-      setTier(profile?.subscription_tier || 'free');
-      setDailyUsage(profile?.daily_usage || 0);
-      
-      // Extend user object with profile data
-      setUser(prev => prev ? { ...prev, daily_usage: profile?.daily_usage || 0 } : null);
-      
-      // Get achievements
-      const { data: achievementsData, error: achievementsError } = await supabase
-        .from('user_achievements')
-        .select('*')
-        .eq('user_id', userId);
-      
-      if (achievementsError) {
-        console.error("Error fetching achievements:", achievementsError);
-      } else {
-        // Convert to frontend format
-        const formattedAchievements: UserAchievement[] = achievementsData.map(a => ({
-          id: a.id,
-          name: a.name,
-          description: a.description,
-          icon: a.icon,
-          dateEarned: new Date(a.date_earned).getTime(),
-          displayed: a.displayed
-        }));
-        
-        setAchievements(formattedAchievements);
-      }
-      
-      // Check and refresh subscription status
-      try {
-        await refreshSubscription();
-      } catch (subError) {
-        console.log("Error refreshing subscription:", subError);
-      }
-    } catch (error) {
-      console.error("AuthContext: General error fetching user details:", error);
-    } finally {
-      console.log("AuthContext: fetchUserDetails finished, setting isLoading to false.");
-      setIsLoading(false);
-    }
-  };
+  }, [fetchUserDetails, initDone]);
 
   // Refresh subscription from Stripe
   const refreshSubscription = async () => {
@@ -170,7 +201,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.functions.invoke('check-subscription', {});
       
       if (error) {
-        throw error;
+        console.error("Subscription check error:", error);
+        return;
       }
       
       if (data) {
@@ -335,7 +367,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     isAdmin,
     tier,
-    daily_usage: dailyUsage, // Expose the dailyUsage state
+    daily_usage: dailyUsage,
     achievements,
     addAchievement,
     markAchievementDisplayed,

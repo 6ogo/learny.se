@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useLocalStorage } from '@/context/LocalStorageContext';
@@ -8,20 +8,37 @@ export const ProtectedRoute: React.FC = () => {
   const { user, isLoading: authIsLoading } = useAuth();
   const { isContextLoading: isLocalStorageLoading, initializeContext } = useLocalStorage();
   const location = useLocation();
+  const [initStarted, setInitStarted] = useState(false);
+  const [timeoutExpired, setTimeoutExpired] = useState(false);
 
-  // Only initialize storage context once when we have a user
+  // Set up timeout to prevent infinite loading state
   useEffect(() => {
-    if (user && !isLocalStorageLoading) {
-      // Initialize context with userId
-      initializeContext(user.id);
-    }
-  }, [user, isLocalStorageLoading, initializeContext]);
+    const timeoutId = setTimeout(() => {
+      console.log("ProtectedRoute: Loading timeout reached");
+      setTimeoutExpired(true);
+    }, 10000); // 10 seconds timeout
 
-  // Check combined loading state - only show loading while auth is verifying
-  const isLoading = authIsLoading;
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Only initialize storage context once when we have a user and haven't started init
+  useEffect(() => {
+    if (user && !initStarted) {
+      console.log("ProtectedRoute: Initializing LocalStorage context for user", user.id);
+      setInitStarted(true);
+      initializeContext(user.id).catch(err => {
+        console.error("Error initializing context:", err);
+      });
+    }
+  }, [user, initStarted, initializeContext]);
+
+  // Show loading only for a reasonable amount of time
+  const isLoading = (authIsLoading || (initStarted && isLocalStorageLoading)) && !timeoutExpired;
 
   console.log("ProtectedRoute: AuthLoading:", authIsLoading, 
-              "LocalStorageLoading:", isLocalStorageLoading, 
+              "LocalStorageLoading:", isLocalStorageLoading,
+              "InitStarted:", initStarted,
+              "TimeoutExpired:", timeoutExpired,
               "User:", user ? user.id : null);
 
   if (isLoading) {
@@ -33,8 +50,8 @@ export const ProtectedRoute: React.FC = () => {
     );
   }
 
+  // Force redirect if no user (after loading is finished or timeout expired)
   if (!user) {
-    // User is not logged in (and loading is finished)
     console.log("ProtectedRoute: No user, redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
@@ -58,10 +75,23 @@ export const PublicRoute: React.FC = () => {
     const { user, isLoading: authIsLoading } = useAuth();
     const location = useLocation();
     const from = location.state?.from?.pathname || '/home';
+    const [timeoutExpired, setTimeoutExpired] = useState(false);
 
-    console.log("PublicRoute: AuthLoading:", authIsLoading, "User:", user ? user.id : null);
+    // Setup timeout to prevent infinite loading
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+        setTimeoutExpired(true);
+      }, 10000); // 10s timeout
+      
+      return () => clearTimeout(timeout);
+    }, []);
 
-    if (authIsLoading) {
+    // Only show loading for a reasonable time
+    const isLoading = authIsLoading && !timeoutExpired;
+
+    console.log("PublicRoute: AuthLoading:", authIsLoading, "TimeoutExpired:", timeoutExpired, "User:", user ? user.id : null);
+
+    if (isLoading) {
         console.log("PublicRoute: Rendering Loading Spinner");
         return <div className="flex items-center justify-center min-h-screen bg-gray-900">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-learny-purple"></div>

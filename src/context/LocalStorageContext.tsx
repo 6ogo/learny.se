@@ -39,7 +39,7 @@ interface LocalStorageContextType extends LocalStorageState {
   updateUserStats: (partialStats: Partial<UserStats>) => void;
   
   // Context management
-  initializeContext: (userId: string) => void;
+  initializeContext: (userId: string) => Promise<void>;
   resetContext: () => void;
 }
 
@@ -96,54 +96,64 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [userStats, setUserStats] = useState<UserStats>(defaultUserStats);
-  const [isContextLoading, setIsContextLoading] = useState<boolean>(true);
+  const [isContextLoading, setIsContextLoading] = useState<boolean>(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
   // Initialize context
   const initializeContext = useCallback(async (userId: string) => {
-    if (userId === currentUserId) return; // Skip if already initialized for this user
+    if (userId === currentUserId && !isContextLoading) {
+      console.log("LocalStorageContext: Context already initialized for", userId);
+      return; // Skip if already initialized for this user and not currently loading
+    }
     
+    console.log("LocalStorageContext: Initializing context for user", userId);
     setIsContextLoading(true);
     setCurrentUserId(userId);
     
     try {
-      console.log("LocalStorageContext: Initializing context for user", userId);
+      // Setup timeout to prevent hanging
+      const initTimeout = setTimeout(() => {
+        console.log("LocalStorageContext: Init timed out");
+        setIsContextLoading(false);
+      }, 10000); // 10s timeout
       
       // Fetch user's flashcards
-      const { data: userFlashcards, error: flashcardsError } = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('user_id', userId);
-      
-      if (flashcardsError) {
-        console.error("Error fetching flashcards:", flashcardsError);
-      } else {
-        // Format for frontend
-        const formattedFlashcards: Flashcard[] = userFlashcards.map(f => ({
-          id: f.id,
-          question: f.question,
-          answer: f.answer,
-          category: f.category,
-          subcategory: f.subcategory || undefined,
-          difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-          correctCount: f.correct_count,
-          incorrectCount: f.incorrect_count,
-          lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
-          learned: f.learned,
-          reviewLater: f.review_later,
-          reportCount: f.report_count,
-          reportReason: f.report_reason,
-          isApproved: f.is_approved,
-        }));
+      try {
+        const { data: userFlashcards, error: flashcardsError } = await supabase
+          .from('flashcards')
+          .select('*')
+          .eq('user_id', userId);
         
-        setFlashcards(formattedFlashcards);
+        if (flashcardsError) {
+          console.error("Error fetching flashcards:", flashcardsError);
+        } else if (userFlashcards) {
+          // Format for frontend
+          const formattedFlashcards: Flashcard[] = userFlashcards.map(f => ({
+            id: f.id,
+            question: f.question,
+            answer: f.answer,
+            category: f.category,
+            subcategory: f.subcategory || undefined,
+            difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+            correctCount: f.correct_count,
+            incorrectCount: f.incorrect_count,
+            lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+            learned: f.learned,
+            reviewLater: f.review_later,
+            reportCount: f.report_count,
+            reportReason: f.report_reason,
+            isApproved: f.is_approved,
+          }));
+          
+          setFlashcards(formattedFlashcards);
+          
+          // Generate programs based on flashcards
+          const placeholderPrograms = generatePlaceholderPrograms(categories, userFlashcards);
+          setPrograms(placeholderPrograms);
+        }
+      } catch (flashcardsError) {
+        console.error("Flashcards fetch failed:", flashcardsError);
       }
-      
-      // Fetch programs (placeholder)
-      // In a real implementation, this would fetch from the database
-      // For now, generate some placeholder programs
-      const placeholderPrograms: Program[] = generatePlaceholderPrograms(categories, userFlashcards);
-      setPrograms(placeholderPrograms);
       
       // Load user stats from localStorage for now
       // Will be migrated to DB later
@@ -161,13 +171,14 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setUserStats(defaultUserStats);
       }
       
+      clearTimeout(initTimeout);
       console.log("LocalStorageContext: Context initialized for user", userId);
     } catch (error) {
       console.error("Error initializing LocalStorageContext:", error);
     } finally {
       setIsContextLoading(false);
     }
-  }, [currentUserId, categories]);
+  }, [categories, currentUserId, isContextLoading]);
   
   // Reset context (used on logout)
   const resetContext = useCallback(() => {
@@ -176,6 +187,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setPrograms([]);
     setUserStats(defaultUserStats);
     setCurrentUserId(null);
+    setIsContextLoading(false);
   }, []);
   
   // Helper function to generate placeholder programs
@@ -258,12 +270,20 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   
   // Mock fetch method - will be replaced with real API calls later
   const fetchFlashcardsByCategory = useCallback(async (categoryId: string): Promise<Flashcard[]> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    if (!currentUserId) return [];
+    // If we're still loading or no user, return empty array after a delay
+    if (isContextLoading || !currentUserId) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return [];
+    }
     
     try {
+      // First try to use cached data if available
+      const cachedCards = flashcards.filter(card => card.category === categoryId);
+      if (cachedCards.length > 0) {
+        return cachedCards;
+      }
+      
+      // If no cached data, fetch from DB
       const { data, error } = await supabase
         .from('flashcards')
         .select('*')
@@ -293,38 +313,46 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.error("Error fetching flashcards by category:", error);
       return [];
     }
-  }, [currentUserId]);
+  }, [currentUserId, flashcards, isContextLoading]);
   
   // Fetch programs for a category
   const fetchProgramsByCategory = useCallback(async (categoryId: string): Promise<Program[]> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // If we're still loading, return empty array after a delay
+    if (isContextLoading) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return [];
+    }
     
     // For now, just filter local programs state
-    // Will be replaced with a real API call
     return programs.filter(program => program.category === categoryId);
-  }, [programs]);
+  }, [isContextLoading, programs]);
   
   // Fetch flashcards for a program
   const fetchFlashcardsByProgramId = useCallback(async (programId: string): Promise<Flashcard[]> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // If we're still loading, return empty array after a delay
+    if (isContextLoading) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return [];
+    }
     
     const program = programs.find(p => p.id === programId);
     if (!program) return [];
     
     // Get flashcards that are part of this program
     return flashcards.filter(card => program.flashcards.includes(card.id));
-  }, [flashcards, programs]);
+  }, [flashcards, isContextLoading, programs]);
   
   // Fetch a single program
   const fetchProgram = useCallback(async (programId: string): Promise<Program | null> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // If we're still loading, return null after a delay
+    if (isContextLoading) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return null;
+    }
     
     const program = programs.find(p => p.id === programId);
     return program || null;
-  }, [programs]);
+  }, [isContextLoading, programs]);
   
   // Mark a program as completed
   const markProgramCompleted = useCallback((programId: string) => {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -234,10 +233,10 @@ export const ReportedFlashcards: React.FC = () => {
                 <TableCell className="font-medium max-w-[200px] truncate">{card.question}</TableCell>
                 <TableCell className="max-w-[200px] truncate">{card.answer}</TableCell>
                 <TableCell>{card.category}</TableCell>
-                <TableCell><Badge variant="destructive">{card.report_count}</Badge></TableCell>
+                <TableCell><Badge className="bg-destructive text-destructive-foreground">{card.report_count}</Badge></TableCell>
                 <TableCell>
                   {card.report_reason?.map((reason, i) => (
-                    <Badge key={i} variant="outline" className="mr-1 mb-1">
+                    <Badge key={i} className="bg-transparent border border-input text-foreground mr-1 mb-1">
                       {reason.replace(/_/g, ' ')}
                     </Badge>
                   ))}

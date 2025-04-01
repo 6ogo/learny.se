@@ -25,4 +25,8 @@ export type UserProfile = {
   daily_usage: number;
   created_at: string;
   updated_at: string;
+  current_streak?: number;
+  longest_streak?: number;
+  last_active_date?: string;
+  email?: string; // Add email field to support UserManagement component
 };

@@ -16,6 +16,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
+import { UserProfile } from '@/types/user';
 
 type UserData = {
   id: string;
@@ -81,9 +82,9 @@ export const UserManagement: React.FC = () => {
       } catch (authError) {
         console.log('Using mock user data since auth.admin.listUsers requires admin privileges');
         
-        const mockUsers: UserData[] = profilesData.map((profile) => ({
+        const mockUsers: UserData[] = profilesData.map((profile: any) => ({
           id: profile.id,
-          email: `user_${profile.id.substring(0, 6)}@example.com`,
+          email: profile.email || `user_${profile.id.substring(0, 6)}@example.com`,
           created_at: profile.created_at,
           subscription_tier: profile.subscription_tier as 'free' | 'premium' | 'super',
           daily_usage: profile.daily_usage,
@@ -353,9 +354,12 @@ export const UserManagement: React.FC = () => {
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.email}</TableCell>
                     <TableCell>
-                      <Badge variant={
-                        user.subscription_tier === 'super' ? 'default' :
-                          user.subscription_tier === 'premium' ? 'secondary' : 'outline'
+                      <Badge className={
+                        user.subscription_tier === 'super' 
+                          ? "bg-primary text-primary-foreground" 
+                          : user.subscription_tier === 'premium' 
+                            ? "bg-secondary text-secondary-foreground" 
+                            : "bg-transparent border border-input text-foreground"
                       }>
                         {user.subscription_tier === 'free' && 'Gratis'}
                         {user.subscription_tier === 'premium' && 'Premium'}

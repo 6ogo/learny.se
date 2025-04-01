@@ -132,12 +132,10 @@ export const FlashcardCreation: React.FC = () => {
     ]
   };
 
-  // Function to fetch subcategories from either database or fallback to local data
   const fetchSubcategories = async (categoryId: string) => {
     setIsLoadingSubcategories(true);
 
     try {
-      // First try to fetch from the database
       const { data, error } = await supabase
         .from('flashcards')
         .select('subcategory')
@@ -147,27 +145,22 @@ export const FlashcardCreation: React.FC = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Extract unique subcategories
         const uniqueSubcategories = [...new Set(data.map(item => item.subcategory))].filter(Boolean);
         setSubcategories(uniqueSubcategories);
       } else {
-        // Fallback to local data if no database results
         fallbackToLocalSubcategories(categoryId);
       }
     } catch (error) {
       console.error('Error fetching subcategories from database:', error);
-      // Fallback to local data if database query fails
       fallbackToLocalSubcategories(categoryId);
     } finally {
       setIsLoadingSubcategories(false);
     }
   };
 
-  // Fallback function to extract subcategories from local data
   const fallbackToLocalSubcategories = (categoryId: string) => {
     console.log('Falling back to local subcategories data for category:', categoryId);
 
-    // First try using medicine flashcards for backward compatibility
     if (categoryId === 'medicine') {
       const categoryFlashcards = medicineFlashcards.filter(f => f.category === categoryId);
       const uniqueSubcategories = [...new Set(categoryFlashcards.map(f => f.subcategory))].filter(Boolean) as string[];
@@ -178,16 +171,13 @@ export const FlashcardCreation: React.FC = () => {
       }
     }
 
-    // Then try using our comprehensive map
     if (categorySubcategoriesMap[categoryId]) {
       setSubcategories(categorySubcategoriesMap[categoryId]);
       return;
     }
 
-    // If no matching data found, use default subcategories
     setSubcategories(['Grundläggande', 'Avancerad', 'Specialiserad']);
   };
-
 
   useEffect(() => {
     if (selectedCategory) {
@@ -308,8 +298,8 @@ export const FlashcardCreation: React.FC = () => {
         incorrect_count: 0,
         learned: false,
         review_later: false,
-        report_count: 0,  // Changed from reportCount to report_count to match database column
-        is_approved: true // Changed from isApproved to is_approved to match database column
+        report_count: 0,
+        is_approved: true
       }));
 
       const { data, error } = await supabase
@@ -335,7 +325,6 @@ export const FlashcardCreation: React.FC = () => {
     }
   };
 
-  // Helper function to get category name by ID
   const getCategoryNameById = (id: string) => {
     const category = categories.find(c => c.id === id);
     return category ? category.name : id;
@@ -488,8 +477,8 @@ export const FlashcardCreation: React.FC = () => {
 
           <div className="py-4">
             <div className="flex gap-2 mb-4">
-              <Badge>Kategori: {getCategoryNameById(selectedCategory)}</Badge>
-              {selectedSubcategory && <Badge variant="outline">Underkategori: {selectedSubcategory}</Badge>}
+              <Badge className="bg-secondary text-secondary-foreground">{getCategoryNameById(selectedCategory)}</Badge>
+              {selectedSubcategory && <Badge variant="outline">{selectedSubcategory}</Badge>}
             </div>
 
             <Table>
@@ -506,12 +495,7 @@ export const FlashcardCreation: React.FC = () => {
                     <TableCell>{flashcard.question}</TableCell>
                     <TableCell>{flashcard.answer}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {flashcard.difficulty === 'beginner' && 'Nybörjare'}
-                        {flashcard.difficulty === 'intermediate' && 'Mellan'}
-                        {flashcard.difficulty === 'advanced' && 'Avancerad'}
-                        {flashcard.difficulty === 'expert' && 'Expert'}
-                      </Badge>
+                      <Badge className="bg-transparent border border-input text-foreground">{flashcard.difficulty}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}

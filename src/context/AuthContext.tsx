@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,10 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
 
-  // Track user activity and streak
   const trackUserActivity = useCallback(async (userId: string) => {
     try {
-      // First check if the current streak and last active date are valid
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('current_streak, longest_streak, last_active_date')
@@ -67,19 +64,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-      let newCurrentStreak = profileData.current_streak || 0;
-      let newLongestStreak = profileData.longest_streak || 0;
+      let newCurrentStreak = profileData?.current_streak || 0;
+      let newLongestStreak = profileData?.longest_streak || 0;
 
-      // Create/update an entry for today in user_activity
-      await supabase
-        .from('user_activity')
-        .upsert({ 
-          user_id: userId,
-          login_date: today
-        }, { onConflict: ['user_id', 'login_date'] });
+      try {
+        await supabase
+          .from('user_activity')
+          .upsert({ 
+            user_id: userId,
+            login_date: today
+          }, { 
+            onConflict: 'user_id,login_date' 
+          });
+      } catch (error) {
+        console.error('Error updating user activity:', error);
+      }
       
-      // Update streak logic
-      const lastActiveDate = profileData.last_active_date ? new Date(profileData.last_active_date) : null;
+      const lastActiveDate = profileData?.last_active_date ? new Date(profileData.last_active_date) : null;
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -87,23 +88,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (lastActiveDate) {
         const lastActiveDateStr = lastActiveDate.toISOString().split('T')[0];
         
-        // If user was last active yesterday, increment streak
         if (lastActiveDateStr === yesterdayStr) {
           newCurrentStreak += 1;
           newLongestStreak = Math.max(newLongestStreak, newCurrentStreak);
         }
-        // If user hasn't been active since before yesterday, reset streak to 1
         else if (lastActiveDateStr !== today) {
           newCurrentStreak = 1;
         }
-        // If already active today, do nothing to streak
       } else {
-        // First time tracking activity
         newCurrentStreak = 1;
         newLongestStreak = 1;
       }
 
-      // Update user_profiles with new streak and last active date
       await supabase
         .from('user_profiles')
         .update({ 
@@ -113,7 +109,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
         .eq('id', userId);
 
-      // Update local state
       setCurrentStreak(newCurrentStreak);
       setLongestStreak(newLongestStreak);
 
@@ -122,7 +117,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // --- Wrap functions with useCallback ---
   const fetchUserDetails = useCallback(async (userId: string) => {
     try {
       console.log("AuthContext: Fetching user details for", userId);
@@ -137,10 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
-      // Cast the data to UserProfile type
       let userProfile = data as UserProfile | null;
 
-      // If profile doesn't exist, create it
       if (!userProfile) {
         console.log("AuthContext: No profile found, creating one...");
         const { data: insertedData, error: insertError } = await supabase
@@ -165,7 +157,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("AuthContext: Profile created.");
       }
 
-      // Now we are sure userProfile exists
       setTier((userProfile.subscription_tier || 'free') as SubscriptionTier);
       setIsAdmin(userProfile.is_admin === true);
       setDailyUsage(userProfile.daily_usage || 0);
@@ -173,10 +164,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLongestStreak(userProfile.longest_streak || 0);
       console.log("AuthContext: Profile details set - Tier:", userProfile.subscription_tier);
 
-      // Track user activity
       trackUserActivity(userId);
 
-      // Fetch achievements
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('user_achievements')
         .select('*')
@@ -206,20 +195,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAchievements([]);
     } finally {
       console.log("AuthContext: fetchUserDetails finished, setting isLoading to false.");
-      setIsLoading(false); // Set loading false ONLY after fetching details or error
+      setIsLoading(false);
     }
-  }, [trackUserActivity]); // Add trackUserActivity to the dependency list
+  }, [trackUserActivity]);
 
-  // Enhanced streak checking logic
   useEffect(() => {
     console.log("AuthContext: Initializing...");
 
     const getInitialSession = async () => {
       console.log("AuthContext: Getting initial session...");
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
 
       try {
-        // Try to get session without timeout first, to avoid accidentally interrupting valid auth
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -233,17 +220,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Add a safety timeout just for the user details fetch
           let detailsTimeoutId: any = null;
           try {
             const timeoutPromise = new Promise<void>((_, reject) => {
               detailsTimeoutId = setTimeout(() => {
                 console.error("AuthContext: User details fetch timeout - continuing with basic session");
                 reject(new Error('User details fetch timeout'));
-              }, 10000); // Longer 10 second timeout
+              }, 10000);
             });
 
-            // Race between fetching details and timeout
             await Promise.race([
               fetchUserDetails(session.user.id),
               timeoutPromise
@@ -252,7 +237,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
 
           } catch (detailsError) {
-            // If details fetch times out, still keep the user session and set default values
             if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
             console.error("AuthContext: Error fetching user details, but continuing with session:", detailsError);
             setTier('free');
@@ -265,7 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } else {
           console.log("AuthContext: No initial user, setting isLoading to false.");
-          setIsLoading(false); // No user, stop loading
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("AuthContext: Session fetch exception:", error);
@@ -278,21 +262,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         console.log("AuthContext: onAuthStateChange triggered. Event:", _event);
-        setIsLoading(true); // Start loading on auth change
+        setIsLoading(true);
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
           console.log("AuthContext: User found in onAuthStateChange, fetching details...");
 
-          // Add a safety timeout for user details
           let detailsTimeoutId: any = null;
           try {
             const timeoutPromise = new Promise<void>((_, reject) => {
               detailsTimeoutId = setTimeout(() => {
                 console.error("AuthContext: User details fetch timeout in onAuthStateChange - continuing with basic session");
                 reject(new Error('User details fetch timeout'));
-              }, 10000); // 10 second timeout
+              }, 10000);
             });
 
             await Promise.race([
@@ -303,7 +286,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
 
           } catch (detailsError) {
-            // If details fetch times out, still keep the user session
             if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
             console.error("AuthContext: Error fetching user details in onAuthStateChange, but continuing with session:", detailsError);
             setTier('free');
@@ -322,12 +304,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setCurrentStreak(0);
           setLongestStreak(0);
           setAchievements([]);
-          setIsLoading(false); // No user, stop loading
+          setIsLoading(false);
         }
       }
     );
 
-    // Daily usage logic remains the same...
     try {
       const today = new Date().toISOString().split('T')[0];
       const storedData = localStorage.getItem('learny_usage');
@@ -337,23 +318,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Streak check: Stored date:', parsedData.date, 'Today:', today);
         
         if (parsedData.date === today) {
-          // Only set if it's different from current state to avoid potential loops
           setDailyUsage(current => current === parsedData.count ? current : parsedData.count);
         }
         else {
-          // Reset for a new day
-          console.log('Streak check: New day detected, resetting daily usage');
           localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
-          if (user) updateUserUsage(0); // Reset in database too if user is logged in
+          if (user) updateUserUsage(0);
         }
       } else {
-        console.log('Streak check: No stored data, initializing');
         localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
       }
     } catch (e) { 
       console.error("Error handling daily usage in localStorage:", e); 
     }
-  }, [user]); // Depend on user to ensure this runs when login state changes
+  }, [user]);
 
   const updateUserUsage = useCallback(async (count: number) => {
     if (!user) return;
@@ -405,7 +382,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast({ title: 'Ny utmärkelse!', description: `Du har låst upp "${achievement.name}"!`, duration: 10000 });
       }
     } catch (error) { console.error('AuthContext: Error adding achievement:', error); }
-  }, [user]); // Depend on user
+  }, [user]);
 
   const markAchievementDisplayed = useCallback(async (id: string) => {
     if (!user) return;
@@ -433,9 +410,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = useCallback(async () => {
     console.log("AuthContext: Signing out...");
-    setIsLoading(true); // Indicate loading during sign out
+    setIsLoading(true);
     await supabase.auth.signOut();
-    // Reset state immediately
     setTier('free');
     setIsAdmin(false);
     setDailyUsage(0);
@@ -444,13 +420,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAchievements([]);
     setUser(null);
     setSession(null);
-    setIsLoading(false); // Stop loading after state reset
+    setIsLoading(false);
     console.log("AuthContext: Sign out complete.");
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`, // Adjust if needed
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     });
     return { error };
   }, []);
@@ -464,7 +440,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signInWithOAuth({ provider });
   }, []);
 
-  // Memoize the context value
   const value = useMemo(() => ({
     session,
     user,

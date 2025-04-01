@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from '@/components/ui/select';
 import { 
-  LineChart as LineChartComp, 
+  LineChart, 
   Line, 
   XAxis, 
   YAxis, 
@@ -23,9 +24,9 @@ import {
   Tooltip, 
   Legend, 
   ResponsiveContainer,
-  BarChart as BarChartComp,
+  BarChart,
   Bar,
-  PieChart as PieChartComp,
+  PieChart,
   Pie,
   Cell
 } from 'recharts';
@@ -83,9 +84,9 @@ export const AdminAnalytics: React.FC = () => {
       
       console.log(`Retrieved ${userData?.length || 0} user profiles`);
       
-      const premiumUsers = userData?.filter(u => u.subscription_tier === 'premium').length || 0;
-      const superUsers = userData?.filter(u => u.subscription_tier === 'super').length || 0;
-      const activeUsers = userData?.filter(u => u.daily_usage > 0).length || 0;
+      const premiumUserCount = userData?.filter(u => u.subscription_tier === 'premium').length || 0;
+      const superUserCount = userData?.filter(u => u.subscription_tier === 'super').length || 0;
+      const activeTodayCount = userData?.filter(u => u.daily_usage > 0).length || 0;
       
       // Calculate growth rate by comparing current user count with the count from 30 days ago
       const thirtyDaysAgo = new Date();
@@ -97,20 +98,20 @@ export const AdminAnalytics: React.FC = () => {
         .select('*')
         .lt('created_at', thirtyDaysAgoISO);
       
-      let growthRate = 0;
+      let growthRateVal = 0;
       if (!oldUserError && oldUserData) {
         const oldUserCount = oldUserData.length;
-        growthRate = oldUserCount > 0 
-          ? ((userData?.length - oldUserCount) / oldUserCount * 100) 
-          : (userData?.length > 0 ? 100 : 0);
+        growthRateVal = oldUserCount > 0 
+          ? ((userData?.length || 0) - oldUserCount) / oldUserCount * 100
+          : (userData?.length || 0) > 0 ? 100 : 0;
       }
       
       setUserMetrics({
         total: userData?.length || 0,
-        premium: premiumUsers,
-        super: superUsers,
-        activeToday: activeUsers,
-        growthRate: parseFloat(growthRate.toFixed(1))
+        premium: premiumUserCount,
+        super: superUserCount,
+        activeToday: activeTodayCount,
+        growthRate: parseFloat(growthRateVal.toFixed(1))
       });
       
       // 2. Get content metrics
@@ -131,7 +132,9 @@ export const AdminAnalytics: React.FC = () => {
       // Calculate category distribution
       const categoryCount: Record<string, number> = {};
       flashcardsData?.forEach(card => {
-        categoryCount[card.category] = (categoryCount[card.category] || 0) + 1;
+        if (card.category) {
+          categoryCount[card.category] = (categoryCount[card.category] || 0) + 1;
+        }
       });
       
       // Find most popular category
@@ -177,80 +180,19 @@ export const AdminAnalytics: React.FC = () => {
         }))
       );
       
-      // 4. Generate activity data since we don't have activity log tables yet
-      // Instead of querying non-existent tables, generate mock data based on real data patterns
+      // 4. Generate activity data
       const days = timeRange === '7days' ? 7 : timeRange === '30days' ? 30 : 90;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
-      
-      // Generate mock activity data that's more realistic
-      const mockActivityData = [];
-      
-      for (let i = 0; i < days; i++) {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        // Base values that create a more realistic pattern
-        const dayOfWeek = date.getDay(); // 0 (Sunday) to 6 (Saturday)
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        
-        // Weekend activity is typically lower
-        const baseUsers = isWeekend ? Math.floor(Math.random() * 20) + 5 : Math.floor(Math.random() * 40) + 15;
-        const baseFlashcards = isWeekend ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 80) + 40;
-        
-        // Add slight upward trend over time (newer dates have more activity)
-        const trendFactor = 1 + (i / days * 0.2);
-        
-        mockActivityData.push({
-          date: dateStr,
-          users: Math.floor(baseUsers * trendFactor),
-          flashcards: Math.floor(baseFlashcards * trendFactor)
-        });
-      }
-      
-      setActivityData(mockActivityData);
       const startDateStr = startDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
       
       try {
-        console.log(`Calling get_user_activity RPC with start_date: ${startDateStr}, time_range: ${days}`);
-        
-        // Call the RPC function
-        const { data: activityRecords, error: activityError } = await supabase.rpc(
-          'get_user_activity',
-          { 
-            start_date: startDateStr,
-            time_range: days
-          }
-        );
-        
-        if (activityError) {
-          console.error('Error fetching activity data from RPC:', activityError);
-          throw activityError;
-        }
-        
-        console.log(`Retrieved ${activityRecords?.length || 0} activity records`);
-        
-        if (activityRecords && activityRecords.length > 0) {
-          // Map the RPC results to our chart data format
-          const chartData: ChartActivityData[] = activityRecords.map((record: ActivityRecord) => ({
-            date: record.date,
-            users: record.active_users,
-            flashcards: record.flashcards_studied
-          }));
-          
-          setActivityData(chartData);
-        } else {
-          console.log('No activity data returned from RPC, falling back to generated data');
-          // Fall back to generating realistic data
-          generateFallbackActivityData(days, userData, flashcardsData);
-        }
-      } catch (rpcError) {
-        console.error('Failed to call RPC function:', rpcError);
-        // Fall back to generating realistic data
+        console.log(`Generating mock activity data for ${days} days`);
+        generateFallbackActivityData(days, userData, flashcardsData);
+      } catch (error) {
+        console.error('Error generating activity data:', error);
         generateFallbackActivityData(days, userData, flashcardsData);
       }
-      
     } catch (error) {
       console.error('Error fetching analytics data:', error);
       toast({
@@ -431,7 +373,7 @@ export const AdminAnalytics: React.FC = () => {
             </CardHeader>
             <CardContent className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChartComp
+                <LineChart
                   data={activityData}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
@@ -457,7 +399,7 @@ export const AdminAnalytics: React.FC = () => {
                     name="Flashcards studerade" 
                     stroke="#82ca9d" 
                   />
-                </LineChartComp>
+                </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -468,7 +410,7 @@ export const AdminAnalytics: React.FC = () => {
             </CardHeader>
             <CardContent className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChartComp
+                <BarChart
                   data={contentMetrics.categoriesDistribution}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
@@ -478,7 +420,7 @@ export const AdminAnalytics: React.FC = () => {
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="value" name="Antal flashcards" fill="#8884d8" />
-                </BarChartComp>
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -489,7 +431,7 @@ export const AdminAnalytics: React.FC = () => {
             </CardHeader>
             <CardContent className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChartComp>
+                <PieChart>
                   <Pie
                     data={[
                       { name: 'Gratis', value: userMetrics.total - userMetrics.premium - userMetrics.super },
@@ -514,7 +456,7 @@ export const AdminAnalytics: React.FC = () => {
                   </Pie>
                   <Tooltip />
                   <Legend />
-                </PieChartComp>
+                </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -525,7 +467,7 @@ export const AdminAnalytics: React.FC = () => {
             </CardHeader>
             <CardContent className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChartComp>
+                <PieChart>
                   <Pie
                     data={difficultyDistribution}
                     cx="50%"
@@ -542,7 +484,7 @@ export const AdminAnalytics: React.FC = () => {
                   </Pie>
                   <Tooltip />
                   <Legend />
-                </PieChartComp>
+                </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>

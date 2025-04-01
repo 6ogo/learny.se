@@ -1,4 +1,3 @@
-
 export type Program = {
   id: string;
   name: string;
@@ -9,4 +8,5 @@ export type Program = {
   completedByUser?: boolean;
   progress?: number;
   hasExam?: boolean; // Indicates if the program has an exam at the end
+  flashcardCount?: number; // Add this new property
 };

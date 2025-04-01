@@ -101,10 +101,19 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [initAttempt, setInitAttempt] = useState(0);
 
   // Initialize context with improved error handling
+  // Initialize context with improved error handling
   const initializeContext = useCallback(async (userId: string) => {
-    if (userId === currentUserId && !isContextLoading && flashcards.length > 0) {
+    // If context is already fully initialized for this user, just exit
+    if (userId === currentUserId && flashcards.length > 0) {
       console.log("LocalStorageContext: Context already initialized for", userId);
-      return; // Skip if already initialized for this user and not currently loading
+      setIsContextLoading(false); // Ensure loading state is reset
+      return;
+    }
+
+    // Prevent concurrent initialization attempts
+    if (isContextLoading) {
+      console.log("LocalStorageContext: Already loading, skipping duplicate initialization");
+      return;
     }
 
     console.log("LocalStorageContext: Initializing context for user", userId);
@@ -117,7 +126,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const initTimeout = setTimeout(() => {
         console.log("LocalStorageContext: Init timed out");
         setIsContextLoading(false);
-      }, 10000); // 10s timeout
+      }, 5000); // 5s timeout
 
       // Fetch user's flashcards with improved error handling and debugging
       try {
@@ -182,7 +191,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           console.error("Error fetching flashcard modules:", modulesError);
         } else if (modules && modules.length > 0) {
           console.log(`Successfully fetched ${modules.length} flashcard modules`);
-          
+
           // Create programs based on modules
           const modulePrograms: Program[] = modules.map(module => ({
             id: module.id,
@@ -194,7 +203,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
             progress: 0,
             hasExam: false,
           }));
-          
+
           setPrograms(modulePrograms);
         } else {
           // Generate placeholder programs if no modules exist
@@ -229,9 +238,13 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (error) {
       console.error("Error initializing LocalStorageContext:", error);
     } finally {
-      setIsContextLoading(false);
+      // Always reset loading state, with a small delay to prevent React batching issues
+      setTimeout(() => {
+        setIsContextLoading(false);
+        console.log("LocalStorageContext: Initialization complete, loading state reset");
+      }, 50);
     }
-  }, [categories, currentUserId, isContextLoading, flashcards.length]);
+  }, [currentUserId, flashcards.length]);
 
   // Reset context (used on logout)
   const resetContext = useCallback(() => {
@@ -320,13 +333,13 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
             return card.module_id === program.id;
           })
           .map(card => card.id);
-        
+
         return {
           ...program,
           flashcards: programFlashcards
         };
       });
-      
+
       setPrograms(updatedPrograms);
     }
   }, [flashcards, programs]);
@@ -358,7 +371,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       console.log(`Fetching flashcards for category ${categoryId} from Supabase`);
-      
+
       // If no cached data, fetch from DB
       const { data, error } = await supabase
         .from('flashcards')
@@ -372,7 +385,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       console.log(`Fetched ${data?.length || 0} flashcards for category ${categoryId}`);
-      
+
       // Format for frontend
       const formattedCards = data.map(f => ({
         id: f.id,
@@ -385,7 +398,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         incorrectCount: f.incorrect_count,
         lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
         learned: f.learned,
-        reviewLater: f.review_later, 
+        reviewLater: f.review_later,
         reportCount: f.report_count,
         reportReason: f.report_reason,
         isApproved: f.is_approved,
@@ -418,22 +431,22 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (localCategoryPrograms.length > 0) {
         return localCategoryPrograms;
       }
-      
+
       // If no local programs for this category, try to fetch modules from Supabase
       const { data: modules, error } = await supabase
         .from('flashcard_modules')
         .select('*')
         .eq('category', categoryId)
         .eq('user_id', currentUserId);
-        
+
       if (error) {
         console.error("Error fetching modules by category:", error);
         throw error;
       }
-      
+
       if (modules && modules.length > 0) {
         console.log(`Fetched ${modules.length} modules for category ${categoryId}`);
-        
+
         // Convert modules to programs
         const modulePrograms: Program[] = modules.map(module => ({
           id: module.id,
@@ -445,19 +458,19 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           progress: 0,
           hasExam: false,
         }));
-        
+
         // Update programs state with these new programs
         setPrograms(prev => {
           const filtered = prev.filter(p => p.category !== categoryId);
           return [...filtered, ...modulePrograms];
         });
-        
+
         return modulePrograms;
       }
-      
+
       // If no real modules found, return placeholder programs
       return generatePlaceholderPrograms([getCategory(categoryId)].filter(Boolean) as Category[]);
-      
+
     } catch (error) {
       console.error("Error fetching programs by category:", error);
       // For now, just filter local programs state as fallback
@@ -475,7 +488,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     try {
       const program = programs.find(p => p.id === programId);
-      
+
       // Check if it's a real module ID (not containing a dash)
       if (program && !programId.includes('-')) {
         // For real module IDs, fetch from Supabase directly
@@ -483,14 +496,14 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           .from('flashcards')
           .select('*')
           .eq('module_id', programId);
-          
+
         if (error) {
           console.error("Error fetching flashcards for module:", error);
           throw error;
         }
-        
+
         console.log(`Fetched ${data?.length || 0} flashcards for module ${programId}`);
-        
+
         // Format for frontend
         const formattedCards = data.map(f => ({
           id: f.id,
@@ -509,35 +522,35 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           isApproved: f.is_approved,
           module_id: f.module_id,
         }));
-        
+
         // Update local cache
         setFlashcards(prev => {
           // Keep cards that aren't from this module
           const filtered = prev.filter(card => card.module_id !== programId);
           return [...filtered, ...formattedCards];
         });
-        
+
         return formattedCards;
       }
-      
+
       // For placeholder programs (containing a dash), filter by category and difficulty
       if (program && programId.includes('-')) {
         const [category, difficulty] = programId.split('-');
-        
+
         // Fetch all flashcards for this category and difficulty
         const { data, error } = await supabase
           .from('flashcards')
           .select('*')
           .eq('category', category)
           .eq('difficulty', difficulty);
-          
+
         if (error) {
           console.error("Error fetching flashcards by category and difficulty:", error);
           throw error;
         }
-        
+
         console.log(`Fetched ${data?.length || 0} flashcards for ${category}/${difficulty}`);
-        
+
         // Format for frontend
         const formattedCards = data.map(f => ({
           id: f.id,
@@ -556,13 +569,13 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           isApproved: f.is_approved,
           module_id: f.module_id,
         }));
-        
+
         return formattedCards;
       }
-      
+
       // If program not found, return empty array
       return [];
-      
+
     } catch (error) {
       console.error("Error fetching flashcards for program:", error);
       return [];
@@ -582,7 +595,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (program) {
       return program;
     }
-    
+
     // If it's not a placeholder program (no dash), try to fetch it from Supabase
     if (!programId.includes('-')) {
       try {
@@ -591,12 +604,12 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           .select('*')
           .eq('id', programId)
           .single();
-          
+
         if (error) {
           console.error("Error fetching module:", error);
           throw error;
         }
-        
+
         if (data) {
           // Convert to program format
           const newProgram: Program = {
@@ -609,17 +622,17 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
             progress: 0,
             hasExam: false,
           };
-          
+
           // Add to local state
           setPrograms(prev => [...prev, newProgram]);
-          
+
           return newProgram;
         }
       } catch (error) {
         console.error("Error fetching program:", error);
       }
     }
-    
+
     return null;
   }, [isContextLoading, programs]);
 
@@ -690,7 +703,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Add a new flashcard with proper module handling
   const addFlashcard = useCallback(async (flashcard: Flashcard) => {
     if (!currentUserId) return;
-    
+
     try {
       // First, find or create a default module for this category
       const { data: existingModule, error: moduleError } = await supabase
@@ -700,14 +713,14 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .eq('user_id', currentUserId)
         .limit(1)
         .maybeSingle();
-      
+
       let moduleId: string;
-      
+
       if (moduleError) {
         console.error("Error checking for existing module:", moduleError);
         return;
       }
-      
+
       if (existingModule) {
         // Use existing module
         moduleId = existingModule.id;
@@ -725,15 +738,15 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           })
           .select()
           .single();
-          
+
         if (createError) {
           console.error("Error creating default module:", createError);
           return;
         }
-        
+
         moduleId = newModule.id;
       }
-      
+
       // Convert flashcard to database format
       const dbFlashcard = {
         question: flashcard.question,
@@ -752,19 +765,19 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         report_reason: flashcard.reportReason || [],
         is_approved: flashcard.isApproved || false
       };
-      
+
       // Insert into Supabase
       const { data, error } = await supabase
         .from('flashcards')
         .insert(dbFlashcard)
         .select()
         .single();
-        
+
       if (error) {
         console.error("Error adding flashcard to Supabase:", error);
         return;
       }
-      
+
       // Convert back to frontend format with the new ID
       const newFlashcard: Flashcard = {
         id: data.id,
@@ -783,12 +796,12 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         isApproved: Boolean(data.is_approved),
         module_id: data.module_id,
       };
-      
+
       // Update local state
       setFlashcards(prev => [...prev, newFlashcard]);
-      
+
       console.log("Flashcard added successfully:", newFlashcard);
-      
+
     } catch (error) {
       console.error("Error in addFlashcard:", error);
     }
@@ -797,7 +810,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Update a flashcard
   const updateFlashcard = useCallback(async (id: string, updatedFlashcard: Partial<Flashcard>) => {
     if (!currentUserId) return;
-    
+
     try {
       // Convert to database format (only the fields being updated)
       const dbUpdate: any = {};
@@ -810,7 +823,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (updatedFlashcard.correctCount !== undefined) dbUpdate.correct_count = updatedFlashcard.correctCount;
       if (updatedFlashcard.incorrectCount !== undefined) dbUpdate.incorrect_count = updatedFlashcard.incorrectCount;
       if (updatedFlashcard.lastReviewed !== undefined) {
-        dbUpdate.last_reviewed = updatedFlashcard.lastReviewed ? 
+        dbUpdate.last_reviewed = updatedFlashcard.lastReviewed ?
           new Date(updatedFlashcard.lastReviewed).toISOString() : null;
       }
       if (updatedFlashcard.learned !== undefined) dbUpdate.learned = updatedFlashcard.learned;
@@ -821,26 +834,26 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       // Always update the updated_at timestamp
       dbUpdate.updated_at = new Date().toISOString();
-      
+
       // Update in Supabase
       const { error } = await supabase
         .from('flashcards')
         .update(dbUpdate)
         .eq('id', id)
         .eq('user_id', currentUserId);
-        
+
       if (error) {
         console.error("Error updating flashcard in Supabase:", error);
         return;
       }
-      
+
       // Update local state
       setFlashcards(prev =>
         prev.map(card => card.id === id ? { ...card, ...updatedFlashcard } : card)
       );
-      
+
       console.log("Flashcard updated successfully:", id);
-      
+
     } catch (error) {
       console.error("Error in updateFlashcard:", error);
     }
@@ -849,7 +862,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Delete a flashcard
   const deleteFlashcard = useCallback(async (id: string) => {
     if (!currentUserId) return;
-    
+
     try {
       // Delete from Supabase
       const { error } = await supabase
@@ -857,17 +870,17 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .delete()
         .eq('id', id)
         .eq('user_id', currentUserId);
-        
+
       if (error) {
         console.error("Error deleting flashcard from Supabase:", error);
         return;
       }
-      
+
       // Update local state
       setFlashcards(prev => prev.filter(card => card.id !== id));
-      
+
       console.log("Flashcard deleted successfully:", id);
-      
+
     } catch (error) {
       console.error("Error in deleteFlashcard:", error);
     }

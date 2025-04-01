@@ -28,18 +28,20 @@ export const ProtectedRoute: React.FC = () => {
       setInitStarted(true);
       initializeContext(user.id).catch(err => {
         console.error("Error initializing context:", err);
+        // Set timeoutExpired to true to force continuation on error
+        setTimeoutExpired(true);
       });
     }
-  }, [user, initStarted, initializeContext]);
+  }, [user?.id, initStarted, initializeContext]); // Only depend on user.id, not the entire user object
 
   // Show loading only for a reasonable amount of time
   const isLoading = (authIsLoading || (initStarted && isLocalStorageLoading)) && !timeoutExpired;
 
-  console.log("ProtectedRoute: AuthLoading:", authIsLoading, 
-              "LocalStorageLoading:", isLocalStorageLoading,
-              "InitStarted:", initStarted,
-              "TimeoutExpired:", timeoutExpired,
-              "User:", user ? user.id : null);
+  console.log("ProtectedRoute: AuthLoading:", authIsLoading,
+    "LocalStorageLoading:", isLocalStorageLoading,
+    "InitStarted:", initStarted,
+    "TimeoutExpired:", timeoutExpired,
+    "User:", user ? user.id : null);
 
   if (isLoading) {
     console.log("ProtectedRoute: Rendering Loading Spinner");
@@ -72,37 +74,37 @@ export const ProtectedRoute: React.FC = () => {
 
 // PublicRoute for auth pages
 export const PublicRoute: React.FC = () => {
-    const { user, isLoading: authIsLoading } = useAuth();
-    const location = useLocation();
-    const from = location.state?.from?.pathname || '/home';
-    const [timeoutExpired, setTimeoutExpired] = useState(false);
+  const { user, isLoading: authIsLoading } = useAuth();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/home';
+  const [timeoutExpired, setTimeoutExpired] = useState(false);
 
-    // Setup timeout to prevent infinite loading
-    useEffect(() => {
-      const timeout = setTimeout(() => {
-        setTimeoutExpired(true);
-      }, 10000); // 10s timeout
-      
-      return () => clearTimeout(timeout);
-    }, []);
+  // Setup timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setTimeoutExpired(true);
+    }, 10000); // 10s timeout
 
-    // Only show loading for a reasonable time
-    const isLoading = authIsLoading && !timeoutExpired;
+    return () => clearTimeout(timeout);
+  }, []);
 
-    console.log("PublicRoute: AuthLoading:", authIsLoading, "TimeoutExpired:", timeoutExpired, "User:", user ? user.id : null);
+  // Only show loading for a reasonable time
+  const isLoading = authIsLoading && !timeoutExpired;
 
-    if (isLoading) {
-        console.log("PublicRoute: Rendering Loading Spinner");
-        return <div className="flex items-center justify-center min-h-screen bg-gray-900">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-learny-purple"></div>
-        </div>;
-    }
+  console.log("PublicRoute: AuthLoading:", authIsLoading, "TimeoutExpired:", timeoutExpired, "User:", user ? user.id : null);
 
-    if (user && location.pathname === '/auth') {
-        console.log("PublicRoute: User logged in, redirecting from /auth to", from);
-        return <Navigate to={from} replace />;
-    }
+  if (isLoading) {
+    console.log("PublicRoute: Rendering Loading Spinner");
+    return <div className="flex items-center justify-center min-h-screen bg-gray-900">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-learny-purple"></div>
+    </div>;
+  }
 
-    console.log("PublicRoute: Rendering Outlet");
-    return <Outlet />;
+  if (user && location.pathname === '/auth') {
+    console.log("PublicRoute: User logged in, redirecting from /auth to", from);
+    return <Navigate to={from} replace />;
+  }
+
+  console.log("PublicRoute: Rendering Outlet");
+  return <Outlet />;
 };

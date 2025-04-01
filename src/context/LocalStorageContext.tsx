@@ -98,12 +98,11 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [userStats, setUserStats] = useState<UserStats>(defaultUserStats);
   const [isContextLoading, setIsContextLoading] = useState<boolean>(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [initAttempt, setInitAttempt] = useState(0);
 
-  // Replace the initializeContext function in LocalStorageContext.tsx with this improved version
-
-  // Initialize context
+  // Initialize context with improved error handling
   const initializeContext = useCallback(async (userId: string) => {
-    if (userId === currentUserId && !isContextLoading) {
+    if (userId === currentUserId && !isContextLoading && flashcards.length > 0) {
       console.log("LocalStorageContext: Context already initialized for", userId);
       return; // Skip if already initialized for this user and not currently loading
     }
@@ -111,6 +110,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log("LocalStorageContext: Initializing context for user", userId);
     setIsContextLoading(true);
     setCurrentUserId(userId);
+    setInitAttempt(prev => prev + 1);
 
     try {
       // Setup timeout to prevent hanging
@@ -123,24 +123,11 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       try {
         console.log(`Attempting to fetch flashcards for user ${userId}...`);
 
-        // First check if we can access the table at all (permissions test)
-        const { count, error: countError } = await supabase
-          .from('flashcards')
-          .select('*', { count: 'exact', head: true });
-
-        if (countError) {
-          console.error("Error accessing flashcards table:", countError);
-          throw countError;
-        }
-
-        console.log(`Flashcards table accessible, found approximately ${count} total cards`);
-
-        // Now fetch user's flashcards
+        // Fetch user's flashcards
         const { data: userFlashcards, error: flashcardsError } = await supabase
           .from('flashcards')
-          .select('*');
-        // Temporarily remove the user filter to see if that's the issue
-        // .eq('user_id', userId);
+          .select('*')
+          .eq('user_id', userId);
 
         if (flashcardsError) {
           console.error("Error fetching flashcards:", flashcardsError);
@@ -169,6 +156,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
             reportCount: f.report_count || 0,
             reportReason: f.report_reason,
             isApproved: Boolean(f.is_approved),
+            module_id: f.module_id,
           }));
 
           console.log(`Successfully formatted ${formattedFlashcards.length} flashcards`);
@@ -207,6 +195,24 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setUserStats(defaultUserStats);
       }
 
+      // Fetch flashcard modules from Supabase
+      try {
+        const { data: modules, error: modulesError } = await supabase
+          .from('flashcard_modules')
+          .select('*')
+          .eq('user_id', userId);
+
+        if (modulesError) {
+          console.error("Error fetching flashcard modules:", modulesError);
+        } else if (modules && modules.length > 0) {
+          console.log(`Successfully fetched ${modules.length} flashcard modules`);
+          
+          // We'll use these modules in the future, for now we're using placeholder programs
+        }
+      } catch (modulesError) {
+        console.error("Flashcard modules fetch failed:", modulesError);
+      }
+
       clearTimeout(initTimeout);
       console.log("LocalStorageContext: Context initialized for user", userId);
     } catch (error) {
@@ -214,7 +220,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       setIsContextLoading(false);
     }
-  }, [categories, currentUserId, isContextLoading]);
+  }, [categories, currentUserId, isContextLoading, flashcards.length]);
 
   // Reset context (used on logout)
   const resetContext = useCallback(() => {
@@ -304,7 +310,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return flashcards.filter(card => card.category === categoryId);
   }, [flashcards]);
 
-  // Mock fetch method - will be replaced with real API calls later
+  // Fetch flashcards by category from Supabase
   const fetchFlashcardsByCategory = useCallback(async (categoryId: string): Promise<Flashcard[]> => {
     // If we're still loading or no user, return empty array after a delay
     if (isContextLoading || !currentUserId) {
@@ -316,9 +322,12 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // First try to use cached data if available
       const cachedCards = flashcards.filter(card => card.category === categoryId);
       if (cachedCards.length > 0) {
+        console.log(`Using ${cachedCards.length} cached flashcards for category ${categoryId}`);
         return cachedCards;
       }
 
+      console.log(`Fetching flashcards for category ${categoryId} from Supabase`);
+      
       // If no cached data, fetch from DB
       const { data, error } = await supabase
         .from('flashcards')
@@ -326,10 +335,15 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .eq('category', categoryId)
         .eq('user_id', currentUserId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching flashcards by category:", error);
+        throw error;
+      }
 
+      console.log(`Fetched ${data?.length || 0} flashcards for category ${categoryId}`);
+      
       // Format for frontend
-      return data.map(f => ({
+      const formattedCards = data.map(f => ({
         id: f.id,
         question: f.question,
         answer: f.answer,
@@ -340,11 +354,19 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         incorrectCount: f.incorrect_count,
         lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
         learned: f.learned,
-        reviewLater: f.review_later,
+        reviewLater: f.review_later, // Fixed: use review_later from the database
         reportCount: f.report_count,
         reportReason: f.report_reason,
         isApproved: f.is_approved,
       }));
+
+      // Update local cache
+      setFlashcards(prev => {
+        const filtered = prev.filter(card => card.category !== categoryId);
+        return [...filtered, ...formattedCards];
+      });
+
+      return formattedCards;
     } catch (error) {
       console.error("Error fetching flashcards by category:", error);
       return [];
@@ -454,22 +476,191 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setCategories(prev => [...prev, category]);
   }, []);
 
-  // Add a new flashcard
-  const addFlashcard = useCallback((flashcard: Flashcard) => {
-    setFlashcards(prev => [...prev, flashcard]);
-  }, []);
+  // Add a new flashcard with proper module handling
+  const addFlashcard = useCallback(async (flashcard: Flashcard) => {
+    if (!currentUserId) return;
+    
+    try {
+      // First, find or create a default module for this category
+      const { data: existingModule, error: moduleError } = await supabase
+        .from('flashcard_modules')
+        .select('id')
+        .eq('category', flashcard.category)
+        .eq('user_id', currentUserId)
+        .limit(1)
+        .maybeSingle();
+      
+      let moduleId: string;
+      
+      if (moduleError) {
+        console.error("Error checking for existing module:", moduleError);
+        return;
+      }
+      
+      if (existingModule) {
+        // Use existing module
+        moduleId = existingModule.id;
+      } else {
+        // Create a new default module for this category
+        const categoryName = categories.find(c => c.id === flashcard.category)?.name || flashcard.category;
+        const { data: newModule, error: createError } = await supabase
+          .from('flashcard_modules')
+          .insert({
+            name: `${categoryName} Default Module`,
+            description: `Default module for ${categoryName}`,
+            category: flashcard.category,
+            subcategory: flashcard.subcategory || null,
+            user_id: currentUserId,
+          })
+          .select()
+          .single();
+          
+        if (createError) {
+          console.error("Error creating default module:", createError);
+          return;
+        }
+        
+        moduleId = newModule.id;
+      }
+      
+      // Convert flashcard to database format
+      const dbFlashcard = {
+        question: flashcard.question,
+        answer: flashcard.answer,
+        category: flashcard.category,
+        subcategory: flashcard.subcategory || null,
+        difficulty: flashcard.difficulty,
+        module_id: moduleId, // Now we have a module_id
+        user_id: currentUserId,
+        correct_count: flashcard.correctCount || 0,
+        incorrect_count: flashcard.incorrectCount || 0,
+        last_reviewed: flashcard.lastReviewed ? new Date(flashcard.lastReviewed).toISOString() : null,
+        learned: flashcard.learned || false,
+        review_later: flashcard.reviewLater || false,
+        report_count: flashcard.reportCount || 0,
+        report_reason: flashcard.reportReason || [],
+        is_approved: flashcard.isApproved || false
+      };
+      
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('flashcards')
+        .insert(dbFlashcard)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error("Error adding flashcard to Supabase:", error);
+        return;
+      }
+      
+      // Convert back to frontend format with the new ID
+      const newFlashcard: Flashcard = {
+        id: data.id,
+        question: data.question,
+        answer: data.answer,
+        category: data.category,
+        subcategory: data.subcategory || undefined,
+        difficulty: data.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+        correctCount: data.correct_count || 0,
+        incorrectCount: data.incorrect_count || 0,
+        lastReviewed: data.last_reviewed ? new Date(data.last_reviewed).getTime() : undefined,
+        learned: Boolean(data.learned),
+        reviewLater: Boolean(data.review_later),
+        reportCount: data.report_count || 0,
+        reportReason: data.report_reason,
+        isApproved: Boolean(data.is_approved),
+        module_id: data.module_id,
+      };
+      
+      // Update local state
+      setFlashcards(prev => [...prev, newFlashcard]);
+      
+      console.log("Flashcard added successfully:", newFlashcard);
+      
+    } catch (error) {
+      console.error("Error in addFlashcard:", error);
+    }
+  }, [currentUserId, categories]);
 
   // Update a flashcard
-  const updateFlashcard = useCallback((id: string, updatedFlashcard: Partial<Flashcard>) => {
-    setFlashcards(prev =>
-      prev.map(card => card.id === id ? { ...card, ...updatedFlashcard } : card)
-    );
-  }, []);
+  const updateFlashcard = useCallback(async (id: string, updatedFlashcard: Partial<Flashcard>) => {
+    if (!currentUserId) return;
+    
+    try {
+      // Convert to database format (only the fields being updated)
+      const dbUpdate: any = {};
+
+      if (updatedFlashcard.question !== undefined) dbUpdate.question = updatedFlashcard.question;
+      if (updatedFlashcard.answer !== undefined) dbUpdate.answer = updatedFlashcard.answer;
+      if (updatedFlashcard.category !== undefined) dbUpdate.category = updatedFlashcard.category;
+      if (updatedFlashcard.subcategory !== undefined) dbUpdate.subcategory = updatedFlashcard.subcategory;
+      if (updatedFlashcard.difficulty !== undefined) dbUpdate.difficulty = updatedFlashcard.difficulty;
+      if (updatedFlashcard.correctCount !== undefined) dbUpdate.correct_count = updatedFlashcard.correctCount;
+      if (updatedFlashcard.incorrectCount !== undefined) dbUpdate.incorrect_count = updatedFlashcard.incorrectCount;
+      if (updatedFlashcard.lastReviewed !== undefined) {
+        dbUpdate.last_reviewed = updatedFlashcard.lastReviewed ? 
+          new Date(updatedFlashcard.lastReviewed).toISOString() : null;
+      }
+      if (updatedFlashcard.learned !== undefined) dbUpdate.learned = updatedFlashcard.learned;
+      if (updatedFlashcard.reviewLater !== undefined) dbUpdate.review_later = updatedFlashcard.reviewLater;
+      if (updatedFlashcard.reportCount !== undefined) dbUpdate.report_count = updatedFlashcard.reportCount;
+      if (updatedFlashcard.reportReason !== undefined) dbUpdate.report_reason = updatedFlashcard.reportReason;
+      if (updatedFlashcard.isApproved !== undefined) dbUpdate.is_approved = updatedFlashcard.isApproved;
+
+      // Always update the updated_at timestamp
+      dbUpdate.updated_at = new Date().toISOString();
+      
+      // Update in Supabase
+      const { error } = await supabase
+        .from('flashcards')
+        .update(dbUpdate)
+        .eq('id', id)
+        .eq('user_id', currentUserId);
+        
+      if (error) {
+        console.error("Error updating flashcard in Supabase:", error);
+        return;
+      }
+      
+      // Update local state
+      setFlashcards(prev =>
+        prev.map(card => card.id === id ? { ...card, ...updatedFlashcard } : card)
+      );
+      
+      console.log("Flashcard updated successfully:", id);
+      
+    } catch (error) {
+      console.error("Error in updateFlashcard:", error);
+    }
+  }, [currentUserId]);
 
   // Delete a flashcard
-  const deleteFlashcard = useCallback((id: string) => {
-    setFlashcards(prev => prev.filter(card => card.id !== id));
-  }, []);
+  const deleteFlashcard = useCallback(async (id: string) => {
+    if (!currentUserId) return;
+    
+    try {
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('flashcards')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', currentUserId);
+        
+      if (error) {
+        console.error("Error deleting flashcard from Supabase:", error);
+        return;
+      }
+      
+      // Update local state
+      setFlashcards(prev => prev.filter(card => card.id !== id));
+      
+      console.log("Flashcard deleted successfully:", id);
+      
+    } catch (error) {
+      console.error("Error in deleteFlashcard:", error);
+    }
+  }, [currentUserId]);
 
   // Context value
   const value: LocalStorageContextType = {

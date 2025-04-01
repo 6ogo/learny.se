@@ -1,3 +1,4 @@
+
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
@@ -14,7 +15,7 @@ interface AuthContextType {
   user: ExtendedUser | null;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any; data: any }>;
+  signUp: (email: string, password: string, options?: { captchaToken?: string | null }) => Promise<{ error: any; data: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   isLoading: boolean;
@@ -38,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [dailyUsage, setDailyUsage] = useState<number>(0);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [initDone, setInitDone] = useState(false);
+  const [fetchAttempt, setFetchAttempt] = useState(0);
 
   // Fetch user details (profile, admin status, achievements)
   const fetchUserDetails = useCallback(async (userId: string) => {
@@ -167,15 +169,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       console.log("AuthContext: onAuthStateChange triggered. Event:", event);
       
-      if (newSession?.user) {
-        console.log("AuthContext: User found in onAuthStateChange, fetching details...");
-        setSession(newSession);
-        setUser(newSession.user);
-        await fetchUserDetails(newSession.user.id);
-      } else {
-        console.log("AuthContext: No user in onAuthStateChange");
-        setSession(null);
-        setUser(null);
+      setSession(newSession);
+      setUser(newSession?.user || null);
+      
+      // We'll handle user details fetching in a separate useEffect to avoid
+      // potential infinite loop situations
+      if (!newSession) {
         setIsAdmin(false);
         setTier('free');
         setDailyUsage(0);
@@ -192,6 +191,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       authListener?.subscription.unsubscribe();
     };
   }, [fetchUserDetails, initDone]);
+
+  // Separate effect to handle fetching user details when the user changes
+  useEffect(() => {
+    if (user && !isLoading) {
+      // Use fetchAttempt as a dependency to allow retrying if needed
+      setFetchAttempt(prev => prev + 1);
+      console.log(`Fetching user details for ${user.id} (attempt ${fetchAttempt + 1})`);
+      
+      setIsLoading(true);
+      fetchUserDetails(user.id).catch(err => {
+        console.error("Error fetching user details:", err);
+        setIsLoading(false);
+      });
+    }
+  }, [user?.id]); // Only depend on user ID, not the entire user object
 
   // Refresh subscription from Stripe
   const refreshSubscription = async () => {
@@ -228,12 +242,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Sign up with email and password
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, options?: { captchaToken?: string | null }) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const captchaToken = options?.captchaToken;
+      
+      // Include captcha token in the gotrue_meta_security object if provided
+      const signUpOptions = captchaToken 
+        ? {
+            email,
+            password,
+            options: {
+              captchaToken: captchaToken
+            }
+          }
+        : {
+            email,
+            password
+          };
+      
+      const { data, error } = await supabase.auth.signUp(signUpOptions);
       
       return { error, data };
     } catch (error) {

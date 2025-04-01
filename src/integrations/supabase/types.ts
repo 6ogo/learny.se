@@ -42,6 +42,51 @@ export type Database = {
         }
         Relationships: []
       }
+      flashcard_interactions: {
+        Row: {
+          created_at: string | null
+          flashcard_id: string
+          id: string
+          is_correct: boolean | null
+          response_time_ms: number | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          flashcard_id: string
+          id?: string
+          is_correct?: boolean | null
+          response_time_ms?: number | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          flashcard_id?: string
+          id?: string
+          is_correct?: boolean | null
+          response_time_ms?: number | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_interactions_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flashcard_interactions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flashcard_modules: {
         Row: {
           category: string
@@ -71,6 +116,45 @@ export type Database = {
           name?: string
           subcategory?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcard_sessions: {
+        Row: {
+          cards_studied: number | null
+          category: string | null
+          completed: boolean | null
+          correct_count: number | null
+          end_time: string | null
+          id: string
+          incorrect_count: number | null
+          start_time: string | null
+          subcategory: string | null
+          user_id: string
+        }
+        Insert: {
+          cards_studied?: number | null
+          category?: string | null
+          completed?: boolean | null
+          correct_count?: number | null
+          end_time?: string | null
+          id?: string
+          incorrect_count?: number | null
+          start_time?: string | null
+          subcategory?: string | null
+          user_id: string
+        }
+        Update: {
+          cards_studied?: number | null
+          category?: string | null
+          completed?: boolean | null
+          correct_count?: number | null
+          end_time?: string | null
+          id?: string
+          incorrect_count?: number | null
+          start_time?: string | null
+          subcategory?: string | null
           user_id?: string
         }
         Relationships: []
@@ -203,28 +287,64 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity: {
+        Row: {
+          created_at: string | null
+          flashcards_studied: number | null
+          id: string
+          login_date: string
+          study_duration_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          flashcards_studied?: number | null
+          id?: string
+          login_date?: string
+          study_duration_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          flashcards_studied?: number | null
+          id?: string
+          login_date?: string
+          study_duration_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string
+          current_streak: number | null
           daily_usage: number
           id: string
           is_admin: boolean
+          last_active_date: string | null
+          longest_streak: number | null
           subscription_tier: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          current_streak?: number | null
           daily_usage?: number
           id: string
           is_admin?: boolean
+          last_active_date?: string | null
+          longest_streak?: number | null
           subscription_tier?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          current_streak?: number | null
           daily_usage?: number
           id?: string
           is_admin?: boolean
+          last_active_date?: string | null
+          longest_streak?: number | null
           subscription_tier?: string
           updated_at?: string
         }
@@ -235,6 +355,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_activity: {
+        Args: {
+          start_date: string
+          time_range: number
+        }
+        Returns: {
+          date: string
+          active_users: number
+          flashcards_studied: number
+        }[]
+      }
+      increment: {
+        Args: {
+          row_id: string
+          table_name: string
+          column_name: string
+        }
+        Returns: number
+      }
+      increment_flashcards_studied: {
+        Args: {
+          user_id: string
+          study_date: string
+          count: number
+        }
+        Returns: undefined
+      }
       is_admin: {
         Args: {
           user_id: string

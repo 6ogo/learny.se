@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,8 +71,6 @@ export const AdminAnalytics: React.FC = () => {
     try {
       console.log(`Fetching analytics data with time range: ${timeRange}`);
       
-      console.log(`Fetching analytics data with time range: ${timeRange}`);
-      
       // 1. Get user metrics
       const { data: userData, error: userError } = await supabase
         .from('user_profiles')
@@ -83,16 +80,7 @@ export const AdminAnalytics: React.FC = () => {
         console.error('Error fetching user profiles:', userError);
         throw userError;
       }
-      if (userError) {
-        console.error('Error fetching user profiles:', userError);
-        throw userError;
-      }
       
-      console.log(`Retrieved ${userData?.length || 0} user profiles`);
-      
-      const premiumUsers = userData?.filter(u => u.subscription_tier === 'premium').length || 0;
-      const superUsers = userData?.filter(u => u.subscription_tier === 'super').length || 0;
-      const activeUsers = userData?.filter(u => u.daily_usage > 0).length || 0;
       console.log(`Retrieved ${userData?.length || 0} user profiles`);
       
       const premiumUsers = userData?.filter(u => u.subscription_tier === 'premium').length || 0;
@@ -113,8 +101,6 @@ export const AdminAnalytics: React.FC = () => {
       if (!oldUserError && oldUserData) {
         const oldUserCount = oldUserData.length;
         growthRate = oldUserCount > 0 
-          ? ((userData?.length - oldUserCount) / oldUserCount * 100) 
-          : (userData?.length > 0 ? 100 : 0);
           ? ((userData?.length - oldUserCount) / oldUserCount * 100) 
           : (userData?.length > 0 ? 100 : 0);
       }

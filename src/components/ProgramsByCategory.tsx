@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { ProgramCard } from '@/components/ProgramCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

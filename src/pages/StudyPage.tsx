@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +8,8 @@ import { ChevronLeft, Trophy, BookOpen, AlertCircle, CheckCircle, FileQuestion, 
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flashcard as FlashcardType } from '@/types/flashcard'; // Import type
+import { startFlashcardSession, endFlashcardSession, trackFlashcardInteraction } from '@/utils/analytics';
+
 
 // Define a type for the answers being tracked
 type AnswerRecord = {
@@ -18,6 +20,8 @@ type AnswerRecord = {
 };
 
 const StudyPage = () => {
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<number>(0);
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
   const {
@@ -64,7 +68,7 @@ const StudyPage = () => {
         isCorrect: false, // Explicitly false
       }
     ]);
-     // No need to call handleNextCard here, Flashcard component will trigger onNext callback
+    // No need to call handleNextCard here, Flashcard component will trigger onNext callback
   };
 
   // This function is now called by the Flashcard component via the onNext prop
@@ -230,16 +234,16 @@ const StudyPage = () => {
                 </div>
               )}
               {incorrectAnswers.length === 0 && (
-                 <div className="mb-8 text-center p-4 bg-green-100 dark:bg-green-900/30 rounded-md border border-green-200 dark:border-green-700">
-                     <CheckCircle className="h-6 w-6 text-learny-green dark:text-learny-green-dark mx-auto mb-2"/>
-                     <p className="font-medium text-learny-green dark:text-learny-green-dark">Alla rätt! Bra jobbat!</p>
-                 </div>
+                <div className="mb-8 text-center p-4 bg-green-100 dark:bg-green-900/30 rounded-md border border-green-200 dark:border-green-700">
+                  <CheckCircle className="h-6 w-6 text-learny-green dark:text-learny-green-dark mx-auto mb-2" />
+                  <p className="font-medium text-learny-green dark:text-learny-green-dark">Alla rätt! Bra jobbat!</p>
+                </div>
               )}
 
 
               <div className="flex flex-wrap justify-center gap-3">
                 <Button variant="outline" onClick={handleRestartProgram}>
-                   <RefreshCcw className="h-4 w-4 mr-2"/> Öva igen
+                  <RefreshCcw className="h-4 w-4 mr-2" /> Öva igen
                 </Button>
 
                 {program.hasExam && (

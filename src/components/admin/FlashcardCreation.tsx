@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Upload, Eye, Save, X, Check } from 'lucide-react';
@@ -37,11 +37,105 @@ export const FlashcardCreation: React.FC = () => {
   const [csvContent, setCsvContent] = useState('');
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
-  
+  const categorySubcategoriesMap: Record<string, string[]> = {
+    coding: [
+      'AI/ML',
+      'Algoritmer',
+      'Databaser',
+      'Datastrukturer',
+      'Funktionell Programmering',
+      'Grundläggande Koncept',
+      'JavaScript',
+      'Kryptografi',
+      'OOP',
+      'Testning',
+      'Versionshantering',
+      'Webbutveckling - Allmänt',
+      'Webbutveckling - Backend',
+      'Webbutveckling - Frontend'
+    ],
+    economics: [
+      'Beteendeekonomi',
+      'Finansiell Ekonomi',
+      'Grundläggande Koncept',
+      'Internationell Ekonomi',
+      'Makroekonomi',
+      'Mikroekonomi'
+    ],
+    geography: [
+      'Fysisk Geografi',
+      'Geovetenskap',
+      'Grundläggande',
+      'Humangeografi',
+      'Kartografi & GIS',
+      'Politisk Geografi',
+      'Regional Geografi - Europa',
+      'Regional Geografi - Världen',
+      'Resursgeografi'
+    ],
+    history: [
+      'Forntiden',
+      'Historiografi & Metod',
+      'Medeltiden',
+      'Modern Historia',
+      'Nutidshistoria',
+      'Politisk Historia',
+      'Svensk Historia',
+      'Tidigmodern Tid',
+      'Världshistoria'
+    ],
+    languages: [
+      'Engelska',
+      'Grammatik - Allmänt',
+      'Lingvistik',
+      'Svenska'
+    ],
+    math: [
+      'Algebra',
+      'Aritmetik',
+      'Calculus',
+      'Diskret Matematik',
+      'Geometri',
+      'Linjär Algebra',
+      'Sannolikhet',
+      'Statistik',
+      'Talteori',
+      'Trigonometri'
+    ],
+    medicine: [
+      'Allmänt',
+      'Anatomi',
+      'Diagnostik',
+      'Farmakologi',
+      'Forskningsmetodik',
+      'Fysiologi',
+      'Genetik',
+      'Grundläggande',
+      'Immunologi',
+      'Medicinsk Terminologi',
+      'Mikrobiologi',
+      'Patofysiologi',
+      'Patologi'
+    ],
+    science: [
+      'Astronomi',
+      'Biologi',
+      'Fysik',
+      'Geovetenskap',
+      'Kemi'
+    ],
+    vehicles: [
+      'Bilar - Körning/Regler',
+      'Bilar - Teknik',
+      'Båtar & Sjöfart',
+      'Flygplan & Flyg'
+    ]
+  };
+
   // Function to fetch subcategories from either database or fallback to local data
   const fetchSubcategories = async (categoryId: string) => {
     setIsLoadingSubcategories(true);
-    
+
     try {
       // First try to fetch from the database
       const { data, error } = await supabase
@@ -49,9 +143,9 @@ export const FlashcardCreation: React.FC = () => {
         .select('subcategory')
         .eq('category', categoryId)
         .not('subcategory', 'is', null);
-      
+
       if (error) throw error;
-      
+
       if (data && data.length > 0) {
         // Extract unique subcategories
         const uniqueSubcategories = [...new Set(data.map(item => item.subcategory))].filter(Boolean);
@@ -68,26 +162,33 @@ export const FlashcardCreation: React.FC = () => {
       setIsLoadingSubcategories(false);
     }
   };
-  
+
   // Fallback function to extract subcategories from local data
   const fallbackToLocalSubcategories = (categoryId: string) => {
     console.log('Falling back to local subcategories data for category:', categoryId);
-    
-    // Only use medicine.ts for the 'medicine' category
+
+    // First try using medicine flashcards for backward compatibility
     if (categoryId === 'medicine') {
       const categoryFlashcards = medicineFlashcards.filter(f => f.category === categoryId);
       const uniqueSubcategories = [...new Set(categoryFlashcards.map(f => f.subcategory))].filter(Boolean) as string[];
-      
+
       if (uniqueSubcategories.length > 0) {
         setSubcategories(uniqueSubcategories);
         return;
       }
     }
-    
-    // If no matching local data or not medicine category, use default subcategories
+
+    // Then try using our comprehensive map
+    if (categorySubcategoriesMap[categoryId]) {
+      setSubcategories(categorySubcategoriesMap[categoryId]);
+      return;
+    }
+
+    // If no matching data found, use default subcategories
     setSubcategories(['Grundläggande', 'Avancerad', 'Specialiserad']);
   };
-  
+
+
   useEffect(() => {
     if (selectedCategory) {
       fetchSubcategories(selectedCategory);
@@ -96,23 +197,23 @@ export const FlashcardCreation: React.FC = () => {
       setSelectedSubcategory('');
     }
   }, [selectedCategory]);
-  
+
   const addFlashcardRow = () => {
     setBatchFlashcards([
-      ...batchFlashcards, 
+      ...batchFlashcards,
       { question: '', answer: '', difficulty: 'beginner' }
     ]);
   };
-  
+
   const removeFlashcardRow = (index: number) => {
     const newBatch = [...batchFlashcards];
     newBatch.splice(index, 1);
     setBatchFlashcards(newBatch);
   };
-  
+
   const updateFlashcardField = (
-    index: number, 
-    field: 'question' | 'answer' | 'difficulty', 
+    index: number,
+    field: 'question' | 'answer' | 'difficulty',
     value: string
   ) => {
     const newBatch = [...batchFlashcards];
@@ -123,7 +224,7 @@ export const FlashcardCreation: React.FC = () => {
     }
     setBatchFlashcards(newBatch);
   };
-  
+
   const handlePreview = () => {
     if (!selectedCategory || batchFlashcards.some(f => !f.question || !f.answer)) {
       toast({
@@ -133,18 +234,18 @@ export const FlashcardCreation: React.FC = () => {
       });
       return;
     }
-    
+
     setIsPreviewOpen(true);
   };
-  
+
   const handleImportCSV = () => {
     try {
       const rows = csvContent.split('\n');
       const newBatch: typeof batchFlashcards = [];
-      
+
       rows.forEach(row => {
         const [question, answer, difficulty = 'beginner'] = row.split(',').map(item => item.trim());
-        
+
         if (question && answer) {
           newBatch.push({
             question,
@@ -153,14 +254,14 @@ export const FlashcardCreation: React.FC = () => {
           });
         }
       });
-      
+
       if (newBatch.length === 0) {
         throw new Error('Inga giltiga rader hittades');
       }
-      
+
       setBatchFlashcards(newBatch);
       setIsImportOpen(false);
-      
+
       toast({
         title: 'Import lyckades',
         description: `${newBatch.length} flashcards importerade`
@@ -174,7 +275,7 @@ export const FlashcardCreation: React.FC = () => {
       });
     }
   };
-  
+
   const saveFlashcards = async () => {
     if (!selectedCategory) {
       toast({
@@ -184,7 +285,7 @@ export const FlashcardCreation: React.FC = () => {
       });
       return;
     }
-    
+
     if (batchFlashcards.some(f => !f.question || !f.answer)) {
       toast({
         title: 'Ofullständig data',
@@ -193,7 +294,7 @@ export const FlashcardCreation: React.FC = () => {
       });
       return;
     }
-    
+
     try {
       const flashcardsToSave = batchFlashcards.map(f => ({
         question: f.question,
@@ -210,18 +311,18 @@ export const FlashcardCreation: React.FC = () => {
         report_count: 0,  // Changed from reportCount to report_count to match database column
         is_approved: true // Changed from isApproved to is_approved to match database column
       }));
-      
+
       const { data, error } = await supabase
         .from('flashcards')
         .insert(flashcardsToSave);
-      
+
       if (error) throw error;
-      
+
       toast({
         title: 'Sparade framgångsrikt',
         description: `${flashcardsToSave.length} flashcards har lagts till`
       });
-      
+
       setBatchFlashcards([{ question: '', answer: '', difficulty: 'beginner' }]);
       setSelectedSubcategory('');
     } catch (error) {
@@ -233,27 +334,27 @@ export const FlashcardCreation: React.FC = () => {
       });
     }
   };
-  
+
   // Helper function to get category name by ID
   const getCategoryNameById = (id: string) => {
     const category = categories.find(c => c.id === id);
     return category ? category.name : id;
   };
-  
+
   return (
     <div className="text-foreground">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Skapa Flashcards</h2>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setIsImportOpen(true)}
           >
             <Upload className="h-4 w-4 mr-2" />
             Importera CSV
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handlePreview}
           >
             <Eye className="h-4 w-4 mr-2" />
@@ -265,7 +366,7 @@ export const FlashcardCreation: React.FC = () => {
           </Button>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium mb-1">Kategori</label>
@@ -280,11 +381,11 @@ export const FlashcardCreation: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium mb-1">Underkategori (valfritt)</label>
-          <Select 
-            value={selectedSubcategory} 
+          <Select
+            value={selectedSubcategory}
             onValueChange={setSelectedSubcategory}
             disabled={!selectedCategory || subcategories.length === 0 || isLoadingSubcategories}
           >
@@ -306,7 +407,7 @@ export const FlashcardCreation: React.FC = () => {
           </Select>
         </div>
       </div>
-      
+
       <Card className="bg-card text-card-foreground">
         <CardContent className="p-0">
           <Table>
@@ -338,8 +439,8 @@ export const FlashcardCreation: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Select 
-                      value={flashcard.difficulty} 
+                    <Select
+                      value={flashcard.difficulty}
                       onValueChange={(value) => updateFlashcardField(index, 'difficulty', value)}
                     >
                       <SelectTrigger className="bg-background text-foreground">
@@ -378,19 +479,19 @@ export const FlashcardCreation: React.FC = () => {
           </Button>
         </CardFooter>
       </Card>
-      
+
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
             <DialogTitle>Förhandsgranskning av Flashcards</DialogTitle>
           </DialogHeader>
-          
+
           <div className="py-4">
             <div className="flex gap-2 mb-4">
               <Badge>Kategori: {getCategoryNameById(selectedCategory)}</Badge>
               {selectedSubcategory && <Badge variant="outline">Underkategori: {selectedSubcategory}</Badge>}
             </div>
-            
+
             <Table>
               <TableHeader>
                 <TableRow>
@@ -417,7 +518,7 @@ export const FlashcardCreation: React.FC = () => {
               </TableBody>
             </Table>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>Stäng</Button>
             <Button onClick={() => {
@@ -430,13 +531,13 @@ export const FlashcardCreation: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Importera från CSV</DialogTitle>
           </DialogHeader>
-          
+
           <div className="py-4">
             <p className="text-sm text-muted-foreground mb-2">
               Ladda upp en CSV-fil med formatet: Fråga, Svar, Svårighetsgrad (valfritt)
@@ -448,7 +549,7 @@ export const FlashcardCreation: React.FC = () => {
               className="min-h-[200px]"
             />
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsImportOpen(false)}>Avbryt</Button>
             <Button onClick={handleImportCSV}>Importera</Button>

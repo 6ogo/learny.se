@@ -33,6 +33,8 @@ type AuthContextType = {
   achievements: Achievement[];
   addAchievement: (achievement: Omit<Achievement, 'id' | 'dateEarned' | 'displayed'>) => Promise<void>;
   markAchievementDisplayed: (id: string) => Promise<void>;
+  currentStreak: number;
+  longestStreak: number;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,6 +47,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
   const [dailyUsage, setDailyUsage] = useState(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [longestStreak, setLongestStreak] = useState(0);
+
+  // Track user activity and streak
+  const trackUserActivity = useCallback(async (userId: string) => {
+    try {
+      // First check if the current streak and last active date are valid
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('current_streak, longest_streak, last_active_date')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user streak data:', profileError);
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      let newCurrentStreak = profileData.current_streak || 0;
+      let newLongestStreak = profileData.longest_streak || 0;
+
+      // Create/update an entry for today in user_activity
+      await supabase
+        .from('user_activity')
+        .upsert({ 
+          user_id: userId,
+          login_date: today
+        }, { onConflict: ['user_id', 'login_date'] });
+      
+      // Update streak logic
+      const lastActiveDate = profileData.last_active_date ? new Date(profileData.last_active_date) : null;
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      if (lastActiveDate) {
+        const lastActiveDateStr = lastActiveDate.toISOString().split('T')[0];
+        
+        // If user was last active yesterday, increment streak
+        if (lastActiveDateStr === yesterdayStr) {
+          newCurrentStreak += 1;
+          newLongestStreak = Math.max(newLongestStreak, newCurrentStreak);
+        }
+        // If user hasn't been active since before yesterday, reset streak to 1
+        else if (lastActiveDateStr !== today) {
+          newCurrentStreak = 1;
+        }
+        // If already active today, do nothing to streak
+      } else {
+        // First time tracking activity
+        newCurrentStreak = 1;
+        newLongestStreak = 1;
+      }
+
+      // Update user_profiles with new streak and last active date
+      await supabase
+        .from('user_profiles')
+        .update({ 
+          last_active_date: today,
+          current_streak: newCurrentStreak,
+          longest_streak: newLongestStreak
+        })
+        .eq('id', userId);
+
+      // Update local state
+      setCurrentStreak(newCurrentStreak);
+      setLongestStreak(newLongestStreak);
+
+    } catch (error) {
+      console.error('Error tracking user activity:', error);
+    }
+  }, []);
 
   // --- Wrap functions with useCallback ---
   const fetchUserDetails = useCallback(async (userId: string) => {
@@ -69,7 +144,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("AuthContext: No profile found, creating one...");
         const { data: insertedData, error: insertError } = await supabase
           .from('user_profiles')
-          .insert([{ id: userId, subscription_tier: 'free', daily_usage: 0, is_admin: false, is_super_admin: null }])
+          .insert([{ 
+            id: userId, 
+            subscription_tier: 'free', 
+            daily_usage: 0, 
+            is_admin: false, 
+            is_super_admin: null,
+            current_streak: 1, 
+            longest_streak: 1,
+            last_active_date: new Date().toISOString().split('T')[0]
+          }])
           .select()
           .single();
         if (insertError) {
@@ -84,8 +168,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTier((userProfile.subscription_tier || 'free') as SubscriptionTier);
       setIsAdmin(userProfile.is_admin === true || userProfile.is_super_admin === 'yes');
       setDailyUsage(userProfile.daily_usage || 0);
+      setCurrentStreak(userProfile.current_streak || 0);
+      setLongestStreak(userProfile.longest_streak || 0);
       console.log("AuthContext: Profile details set - Tier:", userProfile.subscription_tier);
 
+      // Track user activity
+      trackUserActivity(userId);
 
       // Fetch achievements
       const { data: achievementsData, error: achievementsError } = await supabase
@@ -112,12 +200,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTier('free');
       setIsAdmin(false);
       setDailyUsage(0);
+      setCurrentStreak(0);
+      setLongestStreak(0);
       setAchievements([]);
     } finally {
       console.log("AuthContext: fetchUserDetails finished, setting isLoading to false.");
       setIsLoading(false); // Set loading false ONLY after fetching details or error
     }
-  }, []); // REMOVE isAdmin from dependency list - this is the main fix
+  }, [trackUserActivity]); // Add trackUserActivity to the dependency list
 
 
   useEffect(() => {
@@ -167,6 +257,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setTier('free');
             setIsAdmin(false);
             setDailyUsage(0);
+            setCurrentStreak(0);
+            setLongestStreak(0);
             setAchievements([]);
             setIsLoading(false);
           }
@@ -216,6 +308,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setTier('free');
             setIsAdmin(false);
             setDailyUsage(0);
+            setCurrentStreak(0);
+            setLongestStreak(0);
             setAchievements([]);
             setIsLoading(false);
           }
@@ -224,6 +318,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTier('free');
           setIsAdmin(false);
           setDailyUsage(0);
+          setCurrentStreak(0);
+          setLongestStreak(0);
           setAchievements([]);
           setIsLoading(false); // No user, stop loading
         }
@@ -337,6 +433,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTier('free');
     setIsAdmin(false);
     setDailyUsage(0);
+    setCurrentStreak(0);
+    setLongestStreak(0);
     setAchievements([]);
     setUser(null);
     setSession(null);
@@ -379,10 +477,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     achievements,
     addAchievement,
     markAchievementDisplayed,
+    currentStreak,
+    longestStreak
   }), [
     session, user, isLoading, signIn, signUp, signOut, resetPassword, updatePassword,
     signInWithProvider, tier, isAdmin, dailyUsage, incrementDailyUsage, resetDailyUsage,
-    achievements, addAchievement, markAchievementDisplayed
+    achievements, addAchievement, markAchievementDisplayed, currentStreak, longestStreak
   ]);
 
   console.log("AuthContext: Rendering Provider. isLoading:", isLoading, "User:", user ? user.id : null);

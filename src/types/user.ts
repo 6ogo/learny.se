@@ -22,7 +22,7 @@ export type UserProfile = {
   id: string;
   subscription_tier: string;
   is_admin: boolean;
-  is_super_admin?: string;  // Added this property
+  is_super_admin?: string;
   daily_usage: number;
   created_at: string;
   updated_at: string;

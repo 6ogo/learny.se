@@ -46,20 +46,42 @@ export const UserManagement: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
+      console.log('Fetching user profiles from Supabase...');
       // Fetch user profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('user_profiles')
         .select('*');
       
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching user profiles:', profilesError);
+        throw profilesError;
+      }
       
-      // Fetch auth users
-      // Note: In a real app, you'd need admin permissions to query auth.users
-      // This is a simplified example that would require proper authorization
-      const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
+      console.log(`Retrieved ${profilesData?.length || 0} user profiles`);
       
-      if (authError) {
-        // Fallback to mocked data for this demo
+      // Fetch auth users (requires admin privileges which we don't have in this client)
+      try {
+        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+        
+        if (authError) throw authError;
+        
+        // If successful, use the real auth data
+        const combinedUsers = authData.users.map((authUser) => {
+          const profile = profilesData.find((p) => p.id === authUser.id);
+          return {
+            id: authUser.id,
+            email: authUser.email || 'No email',
+            created_at: authUser.created_at,
+            last_sign_in: authUser.last_sign_in_at,
+            subscription_tier: (profile?.subscription_tier || 'free') as 'free' | 'premium' | 'super',
+            daily_usage: profile?.daily_usage || 0,
+          };
+        });
+        
+        setUsers(combinedUsers);
+        setTotalPages(Math.ceil(combinedUsers.length / USERS_PER_PAGE));
+      } catch (authError) {
+        // Fallback to mocked data for email addresses since we can't access auth.users
         console.log('Using mock user data since auth.admin.listUsers requires admin privileges');
         
         const mockUsers: UserData[] = profilesData.map((profile) => ({
@@ -73,22 +95,6 @@ export const UserManagement: React.FC = () => {
         
         setUsers(mockUsers);
         setTotalPages(Math.ceil(mockUsers.length / USERS_PER_PAGE));
-      } else {
-        // Combine the data (in a real app)
-        const combinedUsers = authUsersData.users.map((authUser) => {
-          const profile = profilesData.find((p) => p.id === authUser.id);
-          return {
-            id: authUser.id,
-            email: authUser.email || 'No email',
-            created_at: authUser.created_at,
-            last_sign_in: authUser.last_sign_in_at,
-            subscription_tier: profile?.subscription_tier as 'free' | 'premium' | 'super',
-            daily_usage: profile?.daily_usage || 0,
-          };
-        });
-        
-        setUsers(combinedUsers);
-        setTotalPages(Math.ceil(combinedUsers.length / USERS_PER_PAGE));
       }
     } catch (error) {
       console.error('Error fetching users:', error);

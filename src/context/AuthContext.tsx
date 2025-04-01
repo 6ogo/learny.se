@@ -62,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
+      // Cast the data to UserProfile type to ensure TypeScript properly recognizes is_super_admin
       let userProfile = data as UserProfile | null;
 
       // If profile doesn't exist, create it
@@ -82,10 +83,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Now we are sure userProfile exists
       setTier((userProfile.subscription_tier || 'free') as SubscriptionTier);
-      setIsAdmin(userProfile.is_admin === true || userProfile.is_super_admin === 'yes');
+      
+      // Check both is_admin and is_super_admin fields
+      const userIsAdmin = userProfile.is_admin === true || userProfile.is_super_admin === 'yes';
+      setIsAdmin(userIsAdmin);
+      
       setDailyUsage(userProfile.daily_usage || 0);
-      console.log("AuthContext: Profile details set - Tier:", userProfile.subscription_tier);
-
+      console.log("AuthContext: Profile details set - Tier:", userProfile.subscription_tier, "Is Admin:", userIsAdmin);
 
       // Fetch achievements
       const { data: achievementsData, error: achievementsError } = await supabase
@@ -117,141 +121,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("AuthContext: fetchUserDetails finished, setting isLoading to false.");
       setIsLoading(false); // Set loading false ONLY after fetching details or error
     }
-  }, []); // REMOVE isAdmin from dependency list - this is the main fix
+  }, []); // No dependencies to avoid endless loops
 
-
+  // Enhanced streak checking logic
   useEffect(() => {
-    console.log("AuthContext: Initializing...");
-
-    const getInitialSession = async () => {
-      console.log("AuthContext: Getting initial session...");
-      setIsLoading(true); // Start loading
-
-      try {
-        // Try to get session without timeout first, to avoid accidentally interrupting valid auth
-        const { data: { session }, error } = await supabase.auth.getSession();
-
-        if (error) {
-          console.error("AuthContext: Error getting initial session:", error);
-          setIsLoading(false);
-          return;
-        }
-
-        console.log("AuthContext: Initial session data received:", session ? `User ${session.user.id}` : "No session");
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          // Add a safety timeout just for the user details fetch
-          let detailsTimeoutId: any = null;
-          try {
-            const timeoutPromise = new Promise<void>((_, reject) => {
-              detailsTimeoutId = setTimeout(() => {
-                console.error("AuthContext: User details fetch timeout - continuing with basic session");
-                reject(new Error('User details fetch timeout'));
-              }, 10000); // Longer 10 second timeout
-            });
-
-            // Race between fetching details and timeout
-            await Promise.race([
-              fetchUserDetails(session.user.id),
-              timeoutPromise
-            ]);
-
-            if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
-
-          } catch (detailsError) {
-            // If details fetch times out, still keep the user session and set default values
-            if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
-            console.error("AuthContext: Error fetching user details, but continuing with session:", detailsError);
-            setTier('free');
-            setIsAdmin(false);
-            setDailyUsage(0);
-            setAchievements([]);
-            setIsLoading(false);
-          }
-        } else {
-          console.log("AuthContext: No initial user, setting isLoading to false.");
-          setIsLoading(false); // No user, stop loading
-        }
-      } catch (error) {
-        console.error("AuthContext: Session fetch exception:", error);
-        setIsLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log("AuthContext: onAuthStateChange triggered. Event:", _event);
-        setIsLoading(true); // Start loading on auth change
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          console.log("AuthContext: User found in onAuthStateChange, fetching details...");
-
-          // Add a safety timeout for user details
-          let detailsTimeoutId: any = null;
-          try {
-            const timeoutPromise = new Promise<void>((_, reject) => {
-              detailsTimeoutId = setTimeout(() => {
-                console.error("AuthContext: User details fetch timeout in onAuthStateChange - continuing with basic session");
-                reject(new Error('User details fetch timeout'));
-              }, 10000); // 10 second timeout
-            });
-
-            await Promise.race([
-              fetchUserDetails(session.user.id),
-              timeoutPromise
-            ]);
-
-            if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
-
-          } catch (detailsError) {
-            // If details fetch times out, still keep the user session
-            if (detailsTimeoutId) clearTimeout(detailsTimeoutId);
-            console.error("AuthContext: Error fetching user details in onAuthStateChange, but continuing with session:", detailsError);
-            setTier('free');
-            setIsAdmin(false);
-            setDailyUsage(0);
-            setAchievements([]);
-            setIsLoading(false);
-          }
-        } else {
-          console.log("AuthContext: No user in onAuthStateChange, resetting state and setting isLoading false.");
-          setTier('free');
-          setIsAdmin(false);
-          setDailyUsage(0);
-          setAchievements([]);
-          setIsLoading(false); // No user, stop loading
-        }
-      }
-    );
-
-    // Daily usage logic remains the same...
     try {
       const today = new Date().toISOString().split('T')[0];
       const storedData = localStorage.getItem('learny_usage');
+      
       if (storedData) {
         const parsedData = JSON.parse(storedData);
+        console.log('Streak check: Stored date:', parsedData.date, 'Today:', today);
+        
         if (parsedData.date === today) {
           // Only set if it's different from current state to avoid potential loops
           setDailyUsage(current => current === parsedData.count ? current : parsedData.count);
         }
-        else localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
+        else {
+          // Reset for a new day
+          console.log('Streak check: New day detected, resetting daily usage');
+          localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
+          if (user) updateUserUsage(0); // Reset in database too if user is logged in
+        }
       } else {
+        console.log('Streak check: No stored data, initializing');
         localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
       }
-    } catch (e) { console.error("Error handling daily usage in localStorage:", e); }
-
-
-    return () => {
-      console.log("AuthContext: Unsubscribing auth listener.");
-      subscription.unsubscribe();
-    };
-  }, [fetchUserDetails]); // Include fetchUserDetails in dependency array
+    } catch (e) { 
+      console.error("Error handling daily usage in localStorage:", e); 
+    }
+  }, [user]); // Depend on user to ensure this runs when login state changes
 
   const updateUserUsage = useCallback(async (count: number) => {
     if (!user) return;

@@ -55,16 +55,23 @@ export const AdminAnalytics: React.FC = () => {
   const fetchAnalyticsData = async () => {
     setLoading(true);
     try {
+      console.log(`Fetching analytics data with time range: ${timeRange}`);
+      
       // 1. Get user metrics
       const { data: userData, error: userError } = await supabase
         .from('user_profiles')
         .select('*');
       
-      if (userError) throw userError;
+      if (userError) {
+        console.error('Error fetching user profiles:', userError);
+        throw userError;
+      }
       
-      const premiumUsers = userData.filter(u => u.subscription_tier === 'premium').length;
-      const superUsers = userData.filter(u => u.subscription_tier === 'super').length;
-      const activeUsers = userData.filter(u => u.daily_usage > 0).length;
+      console.log(`Retrieved ${userData?.length || 0} user profiles`);
+      
+      const premiumUsers = userData?.filter(u => u.subscription_tier === 'premium').length || 0;
+      const superUsers = userData?.filter(u => u.subscription_tier === 'super').length || 0;
+      const activeUsers = userData?.filter(u => u.daily_usage > 0).length || 0;
       
       // Calculate growth rate by comparing current user count with the count from 30 days ago
       const thirtyDaysAgo = new Date();
@@ -80,12 +87,12 @@ export const AdminAnalytics: React.FC = () => {
       if (!oldUserError && oldUserData) {
         const oldUserCount = oldUserData.length;
         growthRate = oldUserCount > 0 
-          ? ((userData.length - oldUserCount) / oldUserCount * 100) 
-          : (userData.length > 0 ? 100 : 0);
+          ? ((userData?.length - oldUserCount) / oldUserCount * 100) 
+          : (userData?.length > 0 ? 100 : 0);
       }
       
       setUserMetrics({
-        total: userData.length,
+        total: userData?.length || 0,
         premium: premiumUsers,
         super: superUsers,
         activeToday: activeUsers,
@@ -97,14 +104,19 @@ export const AdminAnalytics: React.FC = () => {
         .from('flashcards')
         .select('*');
       
-      if (flashcardsError) throw flashcardsError;
+      if (flashcardsError) {
+        console.error('Error fetching flashcards:', flashcardsError);
+        throw flashcardsError;
+      }
+      
+      console.log(`Retrieved ${flashcardsData?.length || 0} flashcards`);
       
       // Make sure to use the snake_case field names from the database
-      const reportedCount = flashcardsData.filter(f => f.report_count && f.report_count > 0).length;
+      const reportedCount = flashcardsData?.filter(f => f.report_count && f.report_count > 0).length || 0;
       
       // Calculate category distribution
       const categoryCount: Record<string, number> = {};
-      flashcardsData.forEach(card => {
+      flashcardsData?.forEach(card => {
         categoryCount[card.category] = (categoryCount[card.category] || 0) + 1;
       });
       
@@ -124,7 +136,7 @@ export const AdminAnalytics: React.FC = () => {
         .slice(0, 6); // Top 6 categories
       
       setContentMetrics({
-        totalFlashcards: flashcardsData.length,
+        totalFlashcards: flashcardsData?.length || 0,
         reportedFlashcards: reportedCount,
         mostPopularCategory,
         categoriesDistribution: categoryDistribution
@@ -138,8 +150,10 @@ export const AdminAnalytics: React.FC = () => {
         expert: 0
       };
       
-      flashcardsData.forEach(card => {
-        diffCount[card.difficulty] = (diffCount[card.difficulty] || 0) + 1;
+      flashcardsData?.forEach(card => {
+        if (card.difficulty && diffCount[card.difficulty] !== undefined) {
+          diffCount[card.difficulty] = (diffCount[card.difficulty] || 0) + 1;
+        }
       });
       
       setDifficultyDistribution(
@@ -157,14 +171,13 @@ export const AdminAnalytics: React.FC = () => {
       const startDateISO = startDate.toISOString();
       
       try {
-        // Attempt to get user login activity
+        // Attempt to get user login activity and flashcard study activity
         const { data: loginData, error: loginError } = await supabase
           .from('user_activity_logs')  // Adjust table name as needed
           .select('date, count')
           .gte('date', startDateISO)
           .order('date', { ascending: true });
           
-        // Attempt to get flashcard study activity
         const { data: studyData, error: studyError } = await supabase
           .from('flashcard_study_logs')  // Adjust table name as needed
           .select('date, count')

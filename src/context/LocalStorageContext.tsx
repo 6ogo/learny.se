@@ -354,7 +354,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         incorrectCount: f.incorrect_count,
         lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
         learned: f.learned,
-        reviewLater: f.reviewLater,
+        reviewLater: f.review_later, // Fixed: use review_later from the database
         reportCount: f.report_count,
         reportReason: f.report_reason,
         isApproved: f.is_approved,

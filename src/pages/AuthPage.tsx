@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -249,7 +248,6 @@ const AuthPage: React.FC = () => {
     }
   };
 
-  // Reset captcha token when switching tabs
   const handleTabChange = (value: string) => {
     setCaptchaToken(null);
     setActiveTab(value as 'login' | 'signup');
@@ -540,7 +538,6 @@ const AuthPage: React.FC = () => {
                             siteKey={TURNSTILE_SITE_KEY}
                             onSuccess={handleCaptchaVerification}
                             onError={handleCaptchaError}
-                            theme="dark"
                           />
                         </div>
                         

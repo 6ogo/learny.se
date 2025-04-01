@@ -13,6 +13,7 @@ export type Flashcard = {
   learned?: boolean;
   reviewLater?: boolean;
   createdById?: string;
+  module_id?: string;
   
   // Reporting functionality fields (camelCase for frontend usage)
   reportCount?: number;

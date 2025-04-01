@@ -1,4 +1,3 @@
-
 // src/context/LocalStorageContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Category } from '@/types/category';
@@ -481,6 +480,48 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!currentUserId) return;
     
     try {
+      // First, find or create a default module for this category
+      const { data: existingModule, error: moduleError } = await supabase
+        .from('flashcard_modules')
+        .select('id')
+        .eq('category', flashcard.category)
+        .eq('user_id', currentUserId)
+        .limit(1)
+        .maybeSingle();
+      
+      let moduleId: string;
+      
+      if (moduleError) {
+        console.error("Error checking for existing module:", moduleError);
+        return;
+      }
+      
+      if (existingModule) {
+        // Use existing module
+        moduleId = existingModule.id;
+      } else {
+        // Create a new default module for this category
+        const categoryName = categories.find(c => c.id === flashcard.category)?.name || flashcard.category;
+        const { data: newModule, error: createError } = await supabase
+          .from('flashcard_modules')
+          .insert({
+            name: `${categoryName} Default Module`,
+            description: `Default module for ${categoryName}`,
+            category: flashcard.category,
+            subcategory: flashcard.subcategory || null,
+            user_id: currentUserId,
+          })
+          .select()
+          .single();
+          
+        if (createError) {
+          console.error("Error creating default module:", createError);
+          return;
+        }
+        
+        moduleId = newModule.id;
+      }
+      
       // Convert flashcard to database format
       const dbFlashcard = {
         question: flashcard.question,
@@ -488,6 +529,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         category: flashcard.category,
         subcategory: flashcard.subcategory || null,
         difficulty: flashcard.difficulty,
+        module_id: moduleId, // Now we have a module_id
         user_id: currentUserId,
         correct_count: flashcard.correctCount || 0,
         incorrect_count: flashcard.incorrectCount || 0,
@@ -527,6 +569,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         reportCount: data.report_count || 0,
         reportReason: data.report_reason,
         isApproved: Boolean(data.is_approved),
+        module_id: data.module_id,
       };
       
       // Update local state
@@ -537,7 +580,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (error) {
       console.error("Error in addFlashcard:", error);
     }
-  }, [currentUserId]);
+  }, [currentUserId, categories]);
 
   // Update a flashcard
   const updateFlashcard = useCallback(async (id: string, updatedFlashcard: Partial<Flashcard>) => {

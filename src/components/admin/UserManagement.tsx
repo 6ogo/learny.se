@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -47,7 +46,6 @@ export const UserManagement: React.FC = () => {
     setLoading(true);
     try {
       console.log('Fetching user profiles from Supabase...');
-      // Fetch user profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('user_profiles')
         .select('*');
@@ -59,13 +57,11 @@ export const UserManagement: React.FC = () => {
       
       console.log(`Retrieved ${profilesData?.length || 0} user profiles`);
       
-      // Fetch auth users (requires admin privileges which we don't have in this client)
       try {
         const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
         
         if (authError) throw authError;
         
-        // If successful, use the real auth data
         const combinedUsers = authData.users.map((authUser) => {
           const profile = profilesData.find((p) => p.id === authUser.id);
           return {
@@ -81,7 +77,6 @@ export const UserManagement: React.FC = () => {
         setUsers(combinedUsers);
         setTotalPages(Math.ceil(combinedUsers.length / USERS_PER_PAGE));
       } catch (authError) {
-        // Fallback to mocked data for email addresses since we can't access auth.users
         console.log('Using mock user data since auth.admin.listUsers requires admin privileges');
         
         const mockUsers: UserData[] = profilesData.map((profile) => ({
@@ -131,7 +126,6 @@ export const UserManagement: React.FC = () => {
     if (!selectedUser) return;
     
     try {
-      // Update the user's subscription tier
       const { error } = await supabase
         .from('user_profiles')
         .update({ subscription_tier: selectedTier })
@@ -139,7 +133,6 @@ export const UserManagement: React.FC = () => {
         
       if (error) throw error;
       
-      // Update local state
       setUsers(users.map(user => 
         user.id === selectedUser.id 
           ? { ...user, subscription_tier: selectedTier } 
@@ -163,14 +156,12 @@ export const UserManagement: React.FC = () => {
   };
   
   const handleSendEmail = (user: UserData) => {
-    // In a real app, this would integrate with an email service
     toast({
       title: 'E-post funktion',
       description: `Skulle skicka ett e-postmeddelande till ${user.email}`
     });
   };
   
-  // Apply sorting and filtering
   const filteredUsers = users
     .filter(user => {
       const matchesSearch = user.email.toLowerCase().includes(search.toLowerCase());
@@ -180,21 +171,18 @@ export const UserManagement: React.FC = () => {
       return matchesSearch && matchesSubscription;
     })
     .sort((a, b) => {
-      // Special handling for dates
       if (sortField === 'created_at' || sortField === 'last_sign_in') {
         const dateA = new Date(a[sortField] || 0).getTime();
         const dateB = new Date(b[sortField] || 0).getTime();
         return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
       }
       
-      // Numbers
       if (typeof a[sortField] === 'number') {
         return sortDirection === 'asc' 
           ? (a[sortField] as number) - (b[sortField] as number)
           : (b[sortField] as number) - (a[sortField] as number);
       }
       
-      // Strings
       const valA = String(a[sortField] || '');
       const valB = String(b[sortField] || '');
       return sortDirection === 'asc' 
@@ -202,7 +190,6 @@ export const UserManagement: React.FC = () => {
         : valB.localeCompare(valA);
     });
   
-  // Paginate
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * USERS_PER_PAGE,
     currentPage * USERS_PER_PAGE
@@ -349,7 +336,6 @@ export const UserManagement: React.FC = () => {
         </Card>
       )}
       
-      {/* Pagination */}
       {filteredUsers.length > 0 && (
         <Pagination className="mt-4">
           <PaginationContent>
@@ -358,6 +344,7 @@ export const UserManagement: React.FC = () => {
                 <PaginationLink
                   isActive={currentPage === page}
                   onClick={() => setCurrentPage(page)}
+                  size="icon"
                 >
                   {page}
                 </PaginationLink>
@@ -367,7 +354,6 @@ export const UserManagement: React.FC = () => {
         </Pagination>
       )}
       
-      {/* User Edit Dialog */}
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
         <DialogContent>
           <DialogHeader>

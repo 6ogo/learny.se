@@ -32,7 +32,7 @@ export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [subscriptionFilter, setSubscriptionFilter] = useState<string>('');
+  const [subscriptionFilter, setSubscriptionFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
@@ -168,7 +168,9 @@ export const UserManagement: React.FC = () => {
   const filteredUsers = users
     .filter(user => {
       const matchesSearch = user.email.toLowerCase().includes(search.toLowerCase());
-      const matchesSubscription = subscriptionFilter ? user.subscription_tier === subscriptionFilter : true;
+      const matchesSubscription = subscriptionFilter && subscriptionFilter !== 'all' 
+      ? user.subscription_tier === subscriptionFilter 
+      : true;
       return matchesSearch && matchesSubscription;
     })
     .sort((a, b) => {
@@ -225,7 +227,7 @@ export const UserManagement: React.FC = () => {
             <SelectValue placeholder="Prenumerationsnivå" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Alla nivåer</SelectItem>
+            <SelectItem value="all">Alla nivåer</SelectItem>
             <SelectItem value="free">Gratis</SelectItem>
             <SelectItem value="premium">Premium</SelectItem>
             <SelectItem value="super">Super</SelectItem>

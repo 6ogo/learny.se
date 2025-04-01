@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -47,7 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   // --- Wrap functions with useCallback ---
-
   const fetchUserDetails = useCallback(async (userId: string) => {
     // Don't set isLoading true here, let useEffect handle it
     try {
@@ -59,8 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error && error.code !== 'PGRST116') { // Allow 'PGRST116' (0 rows)
-         console.error('AuthContext: Error fetching user profile (select):', error);
-         throw error;
+        console.error('AuthContext: Error fetching user profile (select):', error);
+        throw error;
       }
 
       let userProfile = data as UserProfile | null;
@@ -74,8 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .select()
           .single();
         if (insertError) {
-             console.error('AuthContext: Error creating user profile:', insertError);
-             throw insertError;
+          console.error('AuthContext: Error creating user profile:', insertError);
+          throw insertError;
         }
         userProfile = insertedData as UserProfile;
         console.log("AuthContext: Profile created.");
@@ -85,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTier((userProfile.subscription_tier || 'free') as SubscriptionTier);
       setIsAdmin(userProfile.is_admin === true || userProfile.is_super_admin === 'yes');
       setDailyUsage(userProfile.daily_usage || 0);
-      console.log("AuthContext: Profile details set - Tier:", userProfile.subscription_tier, "IsAdmin:", isAdmin);
+      console.log("AuthContext: Profile details set - Tier:", userProfile.subscription_tier);
 
 
       // Fetch achievements
@@ -118,7 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("AuthContext: fetchUserDetails finished, setting isLoading to false.");
       setIsLoading(false); // Set loading false ONLY after fetching details or error
     }
-  }, [isAdmin]); // Added isAdmin to dependency list as it's checked inside
+  }, []); // REMOVE isAdmin from dependency list - this is the main fix
+
 
   useEffect(() => {
     console.log("AuthContext: Initializing...");
@@ -126,11 +126,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("AuthContext: Getting initial session...");
       setIsLoading(true); // Start loading
       const { data: { session }, error } = await supabase.auth.getSession();
-       if (error) {
-          console.error("AuthContext: Error getting initial session:", error);
-          setIsLoading(false);
-          return;
-       }
+      if (error) {
+        console.error("AuthContext: Error getting initial session:", error);
+        setIsLoading(false);
+        return;
+      }
       console.log("AuthContext: Initial session data received:", session ? `User ${session.user.id}` : "No session");
       setSession(session);
       setUser(session?.user ?? null);
@@ -166,18 +166,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // --- Daily usage logic ---
     try {
-        const today = new Date().toISOString().split('T')[0];
-        const storedData = localStorage.getItem('learny_usage');
-        if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            if (parsedData.date === today) {
-                // Only set if it's different from current state to avoid potential loops
-                setDailyUsage(current => current === parsedData.count ? current : parsedData.count);
-            }
-            else localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
-        } else {
-            localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
+      const today = new Date().toISOString().split('T')[0];
+      const storedData = localStorage.getItem('learny_usage');
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        if (parsedData.date === today) {
+          // Only set if it's different from current state to avoid potential loops
+          setDailyUsage(current => current === parsedData.count ? current : parsedData.count);
         }
+        else localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
+      } else {
+        localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: 0 }));
+      }
     } catch (e) { console.error("Error handling daily usage in localStorage:", e); }
 
 
@@ -200,11 +200,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const incrementDailyUsage = useCallback(() => {
     setDailyUsage(currentCount => {
-       const newCount = currentCount + 1;
-       const today = new Date().toISOString().split('T')[0];
-       localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: newCount }));
-       if (user) updateUserUsage(newCount);
-       return newCount;
+      const newCount = currentCount + 1;
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem('learny_usage', JSON.stringify({ date: today, count: newCount }));
+      if (user) updateUserUsage(newCount);
+      return newCount;
     });
   }, [user, updateUserUsage]);
 
@@ -220,8 +220,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data: existing } = await supabase.from('user_achievements').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('name', achievement.name);
       if (existing && existing.length > 0) {
-           console.log(`AuthContext: Achievement "${achievement.name}" already exists.`);
-           return;
+        console.log(`AuthContext: Achievement "${achievement.name}" already exists.`);
+        return;
       }
 
       const { data, error } = await supabase.from('user_achievements')

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, FC, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, FC, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Flashcard } from '@/types/flashcard';

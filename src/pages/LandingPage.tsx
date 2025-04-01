@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Brain, BarChart3, Clock, Lightbulb, ArrowRight, BookOpen, Smartphone, Award } from 'lucide-react';

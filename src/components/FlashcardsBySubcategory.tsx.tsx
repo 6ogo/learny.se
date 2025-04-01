@@ -1,5 +1,5 @@
 // src/components/FlashcardsBySubcategory.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { Flashcard } from '@/components/Flashcard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

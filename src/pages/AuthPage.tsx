@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';

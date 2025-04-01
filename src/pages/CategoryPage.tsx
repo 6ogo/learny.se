@@ -1,5 +1,5 @@
 // src/pages/CategoryPage.tsx
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { ProgramsByCategory } from '@/components/ProgramsByCategory';

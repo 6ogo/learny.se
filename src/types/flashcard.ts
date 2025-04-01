@@ -25,7 +25,6 @@ export type Flashcard = {
   incorrect_count?: number;
   last_reviewed?: string;
   created_at?: string;
-  module_id?: string;
   user_id?: string;
   next_review?: string;
   

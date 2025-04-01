@@ -1,110 +1,194 @@
+// src/utils/analytics.ts
 import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Starts a flashcard study session and returns the session data
- * @param userId The ID of the user starting the session
- * @param category The category of flashcards being studied
- * @param subcategory Optional subcategory of flashcards
- * @returns The created session object or null if there was an error
- */
-export async function startFlashcardSession(userId: string, category: string, subcategory?: string) {
+// Track user login activity
+export const trackUserLogin = async (userId: string) => {
   try {
-    const { data, error } = await supabase
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Check if we already have an entry for today
+    const { data: existingActivity } = await supabase
+      .from('user_activity')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('login_date', today)
+      .maybeSingle();
+    
+    if (existingActivity) {
+      // Already logged today, no need to create a new record
+      return;
+    }
+    
+    // Create new activity record
+    await supabase
+      .from('user_activity')
+      .insert({
+        user_id: userId,
+        login_date: today,
+        flashcards_studied: 0,
+        study_duration_seconds: 0
+      });
+      
+    // Update user profile streak
+    await updateUserStreak(userId);
+    
+  } catch (error) {
+    console.error('Error tracking user login:', error);
+  }
+};
+
+// Update user streak
+const updateUserStreak = async (userId: string) => {
+  try {
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('current_streak, last_active_date, longest_streak')
+      .eq('id', userId)
+      .single();
+      
+    if (!profile) return;
+    
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // If no last active date, this is first login
+    if (!profile.last_active_date) {
+      await supabase
+        .from('user_profiles')
+        .update({
+          current_streak: 1,
+          longest_streak: 1,
+          last_active_date: todayStr
+        })
+        .eq('id', userId);
+      return;
+    }
+    
+    // Check if last active date was yesterday
+    const lastActive = new Date(profile.last_active_date);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const isYesterday = lastActive.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0];
+    const isToday = lastActive.toISOString().split('T')[0] === todayStr;
+    
+    if (isToday) {
+      // Already logged in today, no streak change
+      return;
+    } else if (isYesterday) {
+      // Continuing streak
+      const newStreak = (profile.current_streak || 0) + 1;
+      const newLongestStreak = Math.max(newStreak, profile.longest_streak || 0);
+      
+      await supabase
+        .from('user_profiles')
+        .update({
+          current_streak: newStreak,
+          longest_streak: newLongestStreak,
+          last_active_date: todayStr
+        })
+        .eq('id', userId);
+    } else {
+      // Streak broken
+      await supabase
+        .from('user_profiles')
+        .update({
+          current_streak: 1,
+          last_active_date: todayStr
+        })
+        .eq('id', userId);
+    }
+  } catch (error) {
+    console.error('Error updating user streak:', error);
+  }
+};
+
+// Track flashcard study session
+export const trackStudySession = async (
+  userId: string, 
+  flashcardIds: string[], 
+  correctCount: number,
+  incorrectCount: number,
+  category?: string,
+  subcategory?: string
+) => {
+  try {
+    const startTime = new Date().toISOString();
+    
+    // Create session record
+    const { data: session, error } = await supabase
       .from('flashcard_sessions')
       .insert({
         user_id: userId,
-        category,
+        start_time: startTime,
+        category: category || null,
         subcategory: subcategory || null,
-        start_time: new Date().toISOString()
+        cards_studied: flashcardIds.length,
+        correct_count: correctCount,
+        incorrect_count: incorrectCount,
+        completed: false
       })
-      .select();
+      .select()
+      .single();
       
-    if (error) throw error;
-    return data[0];
+    if (error) {
+      console.error('Error creating study session:', error);
+      return null;
+    }
+    
+    return session.id;
   } catch (error) {
-    console.error('Error starting flashcard session:', error);
+    console.error('Error tracking study session:', error);
     return null;
   }
-}
+};
 
-/**
- * Ends a flashcard study session and updates activity metrics
- * @param sessionId The ID of the session to end
- * @param userId The ID of the user who started the session
- * @param cardsStudied Total number of cards studied in the session
- * @param correctCount Number of correct answers in the session
- * @param incorrectCount Number of incorrect answers in the session
- */
-export async function endFlashcardSession(
-  sessionId: string, 
+// Complete a study session
+export const completeStudySession = async (
+  sessionId: string,
   userId: string,
-  cardsStudied: number, 
-  correctCount: number, 
-  incorrectCount: number
-) {
+  finalCorrectCount: number,
+  finalIncorrectCount: number
+) => {
   try {
-    // Update the session record
+    const endTime = new Date().toISOString();
+    
+    // Update session record
     await supabase
       .from('flashcard_sessions')
       .update({
-        end_time: new Date().toISOString(),
-        cards_studied: cardsStudied,
-        correct_count: correctCount,
-        incorrect_count: incorrectCount,
+        end_time: endTime,
+        correct_count: finalCorrectCount,
+        incorrect_count: finalIncorrectCount,
         completed: true
       })
-      .eq('id', sessionId);
+      .eq('id', sessionId)
+      .eq('user_id', userId);
       
-    // Update total flashcards studied for today
+    // Update user's daily flashcards studied count
     const today = new Date().toISOString().split('T')[0];
+    await supabase.rpc('increment_flashcards_studied', {
+      user_id: userId,
+      study_date: today,
+      count: finalCorrectCount + finalIncorrectCount
+    });
     
-    // First, check if we have an entry for today
-    const { data: activityData } = await supabase
-      .from('user_activity')
-      .select('id, flashcards_studied')
-      .eq('user_id', userId)
-      .eq('login_date', today)
-      .single();
-    
-    if (activityData) {
-      // Update existing record
-      await supabase
-        .from('user_activity')
-        .update({ 
-          flashcards_studied: (activityData.flashcards_studied || 0) + cardsStudied 
-        })
-        .eq('id', activityData.id);
-    } else {
-      // Create new record
-      await supabase
-        .from('user_activity')
-        .insert({
-          user_id: userId,
-          login_date: today,
-          flashcards_studied: cardsStudied
-        });
-    }
   } catch (error) {
-    console.error('Error ending flashcard session:', error);
+    console.error('Error completing study session:', error);
   }
-}
+};
 
-/**
- * Tracks an individual flashcard interaction
- * @param userId The ID of the user interacting with the flashcard
- * @param flashcardId The ID of the flashcard
- * @param sessionId The ID of the current study session
- * @param isCorrect Whether the user answered correctly
- * @param responseTimeMs The time in milliseconds it took to respond
- */
-export async function trackFlashcardInteraction(
+// Track flashcard interaction
+export const trackFlashcardInteraction = async (
   userId: string,
   flashcardId: string,
-  sessionId: string,
+  sessionId: string | null,
   isCorrect: boolean,
   responseTimeMs: number
-) {
+) => {
   try {
+    // Record the interaction
     await supabase
       .from('flashcard_interactions')
       .insert({
@@ -112,114 +196,106 @@ export async function trackFlashcardInteraction(
         flashcard_id: flashcardId,
         session_id: sessionId,
         is_correct: isCorrect,
-        response_time_ms: responseTimeMs,
+        response_time_ms: responseTimeMs
       });
       
-    // Also update the flashcard's correct/incorrect counts
-    // This ensures our interaction tracking is consistent with our flashcard stats
+    // Update the flashcard's correct/incorrect counts
     await supabase
       .from('flashcards')
       .update({
-        [isCorrect ? 'correct_count' : 'incorrect_count']: supabase.rpc('increment', { 
-          row_id: flashcardId,
-          table_name: 'flashcards',
-          column_name: isCorrect ? 'correct_count' : 'incorrect_count'
-        })
+        correct_count: supabase.rpc('increment', { 
+          table_name: 'flashcards', 
+          column_name: isCorrect ? 'correct_count' : 'incorrect_count',
+          row_id: flashcardId
+        }),
+        last_reviewed: new Date().toISOString()
       })
       .eq('id', flashcardId);
+      
   } catch (error) {
     console.error('Error tracking flashcard interaction:', error);
   }
-}
+};
 
-/**
- * Gets user analytics data for a specific time period
- * @param userId The user ID to get analytics for
- * @param days Number of days to include in the report
- * @returns Object containing analytics data
- */
-export async function getUserAnalytics(userId: string, days: number = 30) {
+// Fix for error TS2322: Type 'string' is not assignable to type 'number'
+const convertTimestampToNumber = (timestamp: string | number | undefined): number => {
+  if (typeof timestamp === 'string') {
+    return new Date(timestamp).getTime();
+  }
+  if (typeof timestamp === 'number') {
+    return timestamp;
+  }
+  return Date.now(); // Default value if undefined
+};
+
+// Calculate next review date using spaced repetition algorithm
+export const calculateNextReview = (
+  lastReviewed: string | number | undefined,
+  correctCount: number,
+  incorrectCount: number
+): number => {
+  const now = Date.now();
+  const lastReviewedTime = convertTimestampToNumber(lastReviewed);
+  
+  // If never reviewed before or reviewed more than 6 months ago, start fresh
+  if (!lastReviewed || (now - lastReviewedTime > 15768000000)) {
+    return now + 86400000; // Review tomorrow
+  }
+  
+  // Calculate success rate (minimum 10%)
+  const totalReviews = correctCount + incorrectCount;
+  const successRate = totalReviews > 0 
+    ? Math.max(0.1, correctCount / totalReviews) 
+    : 0.5;
+  
+  // Base interval calculation
+  let interval: number;
+  
+  if (totalReviews <= 1) {
+    interval = 1; // 1 day for first review
+  } else if (totalReviews <= 3) {
+    interval = 3; // 3 days for early reviews
+  } else if (totalReviews <= 5) {
+    interval = 7; // 1 week
+  } else if (totalReviews <= 10) {
+    interval = 14; // 2 weeks
+  } else {
+    interval = 30; // 1 month
+  }
+  
+  // Adjust interval based on success rate
+  if (successRate > 0.9) {
+    interval *= 1.5; // Extend interval for high success
+  } else if (successRate < 0.6) {
+    interval *= 0.5; // Shorten interval for low success
+  }
+  
+  // Convert interval from days to milliseconds
+  const intervalMs = Math.round(interval * 86400000);
+  
+  return now + intervalMs;
+};
+
+// Get user activity statistics
+export const getUserActivityStats = async (userId: string, days: number = 30) => {
   try {
-    // Calculate the start date
+    const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-    const startDateStr = startDate.toISOString().split('T')[0];
     
-    // Get activity data
-    const { data: activityData, error: activityError } = await supabase
-      .from('user_activity')
-      .select('login_date, flashcards_studied')
-      .eq('user_id', userId)
-      .gte('login_date', startDateStr)
-      .order('login_date', { ascending: true });
-      
-    if (activityError) throw activityError;
-    
-    // Get flashcard interactions
-    const { data: interactionsData, error: interactionsError } = await supabase
-      .from('flashcard_interactions')
-      .select('is_correct, created_at')
-      .eq('user_id', userId)
-      .gte('created_at', startDate.toISOString())
-      .order('created_at', { ascending: true });
-      
-    if (interactionsError) throw interactionsError;
-    
-    // Get study sessions
-    const { data: sessionsData, error: sessionsError } = await supabase
-      .from('flashcard_sessions')
-      .select('category, subcategory, cards_studied, correct_count, incorrect_count, start_time, end_time')
-      .eq('user_id', userId)
-      .gte('start_time', startDate.toISOString())
-      .order('start_time', { ascending: true });
-      
-    if (sessionsError) throw sessionsError;
-    
-    // Calculate analytics
-    const totalFlashcardsStudied = activityData?.reduce((sum, day) => sum + (day.flashcards_studied || 0), 0) || 0;
-    const correctAnswers = interactionsData?.filter(i => i.is_correct).length || 0;
-    const incorrectAnswers = interactionsData?.filter(i => !i.is_correct).length || 0;
-    const accuracy = interactionsData?.length ? (correctAnswers / interactionsData.length * 100).toFixed(1) : '0';
-    
-    // Calculate study time (in minutes)
-    const totalStudyTimeMinutes = sessionsData?.reduce((sum, session) => {
-      if (!session.end_time || !session.start_time) return sum;
-      const startTime = new Date(session.start_time).getTime();
-      const endTime = new Date(session.end_time).getTime();
-      const durationMinutes = (endTime - startTime) / (1000 * 60);
-      return sum + (durationMinutes < 180 ? durationMinutes : 0); // Cap at 3 hours to avoid outliers
-    }, 0) || 0;
-    
-    // Get most studied category
-    const categoryCount: Record<string, number> = {};
-    sessionsData?.forEach(session => {
-      const category = session.category || 'unknown';
-      categoryCount[category] = (categoryCount[category] || 0) + (session.cards_studied || 0);
+    const { data, error } = await supabase.rpc('get_user_activity', {
+      start_date: startDate.toISOString().split('T')[0],
+      time_range: days
     });
     
-    // Find category with highest count
-    let mostStudiedCategory = 'none';
-    let maxCount = 0;
-    Object.entries(categoryCount).forEach(([category, count]) => {
-      if (count > maxCount) {
-        mostStudiedCategory = category;
-        maxCount = count;
-      }
-    });
+    if (error) {
+      console.error('Error getting user activity stats:', error);
+      return [];
+    }
     
-    return {
-      dailyActivity: activityData || [],
-      totalDaysActive: activityData?.length || 0,
-      totalFlashcardsStudied,
-      correctAnswers,
-      incorrectAnswers,
-      accuracy: `${accuracy}%`,
-      totalStudyTimeMinutes: Math.round(totalStudyTimeMinutes),
-      mostStudiedCategory,
-      sessions: sessionsData || []
-    };
+    return data || [];
   } catch (error) {
-    console.error('Error getting user analytics:', error);
-    return null;
+    console.error('Error in getUserActivityStats:', error);
+    return [];
   }
-}
+};

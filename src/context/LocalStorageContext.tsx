@@ -100,7 +100,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [initAttempt, setInitAttempt] = useState(0);
 
-  // Initialize context
+  // Initialize context with improved error handling
   const initializeContext = useCallback(async (userId: string) => {
     if (userId === currentUserId && !isContextLoading && flashcards.length > 0) {
       console.log("LocalStorageContext: Context already initialized for", userId);
@@ -156,6 +156,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
             reportCount: f.report_count || 0,
             reportReason: f.report_reason,
             isApproved: Boolean(f.is_approved),
+            module_id: f.module_id,
           }));
 
           console.log(`Successfully formatted ${formattedFlashcards.length} flashcards`);
@@ -353,7 +354,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         incorrectCount: f.incorrect_count,
         lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
         learned: f.learned,
-        reviewLater: f.review_later,
+        reviewLater: f.reviewLater,
         reportCount: f.report_count,
         reportReason: f.report_reason,
         isApproved: f.is_approved,
@@ -475,7 +476,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setCategories(prev => [...prev, category]);
   }, []);
 
-  // Add a new flashcard
+  // Add a new flashcard with proper module handling
   const addFlashcard = useCallback(async (flashcard: Flashcard) => {
     if (!currentUserId) return;
     
@@ -535,9 +536,9 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         incorrect_count: flashcard.incorrectCount || 0,
         last_reviewed: flashcard.lastReviewed ? new Date(flashcard.lastReviewed).toISOString() : null,
         learned: flashcard.learned || false,
-        review_later: flashcard.reviewLater || false,
+        reviewLater: flashcard.reviewLater || false,
         report_count: flashcard.reportCount || 0,
-        report_reason: flashcard.reportReason || [],
+        reportReason: flashcard.reportReason || [],
         is_approved: flashcard.isApproved || false
       };
       

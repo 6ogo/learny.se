@@ -93,11 +93,13 @@ const AuthPage: React.FC = () => {
   };
 
   const handleCaptchaError = () => {
+    console.error("Captcha verification failed");
     toast({
       variant: "destructive",
       title: "Captcha verifiering misslyckades",
       description: "Vänligen försök igen.",
     });
+    setCaptchaToken(null);
   };
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {

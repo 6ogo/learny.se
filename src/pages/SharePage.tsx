@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -121,11 +120,9 @@ const SharePage = () => {
     }
   };
   
-  // Custom function to handle when a flashcard is answered correctly or incorrectly
-  const handleFlashcardAction = () => {
-    // This function can be empty since we just need to satisfy the props interface
-    // and we're not tracking card performance on the share page
-  };
+  // These handlers are required by the Flashcard component
+  const handleCorrect = () => {};
+  const handleIncorrect = () => {};
   
   if (isLoading) {
     return (
@@ -161,9 +158,10 @@ const SharePage = () => {
               <Card className="h-[400px] overflow-hidden relative">
                 <FlashcardComponent 
                   flashcard={flashcards[currentIndex]} 
-                  onCorrect={handleFlashcardAction} 
-                  onIncorrect={handleFlashcardAction}
-                  // Remove the onNext prop since it's not in the component interface
+                  onCorrect={handleCorrect} 
+                  onIncorrect={handleIncorrect}
+                  onNext={handleNext}
+                  showControls={true}
                 />
               </Card>
               

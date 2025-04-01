@@ -1,37 +1,450 @@
 // src/context/LocalStorageContext.tsx
-import { createContext, useContext, useState, useEffect, ReactNode, FC, useCallback, useMemo } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { toast } from '@/hooks/use-toast';
-import { Flashcard } from '@/types/flashcard';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Category } from '@/types/category';
+import { Flashcard } from '@/types/flashcard';
 import { Program } from '@/types/program';
 import { UserStats } from '@/types/user';
-import { initialCategories } from '@/data/categories'; // Still using initial for simplicity
-import { initialUserStats } from '@/data/user';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define the shape of the context value
-type LocalStorageContextType = {
-  programs: Program[]; // Keep local programs state FOR NOW - requires migration
+// Define initial state
+interface LocalStorageState {
+  // Collections of data
   categories: Category[];
+  flashcards: Flashcard[];
+  programs: Program[];
   userStats: UserStats;
+  
+  // Loading states
   isContextLoading: boolean;
+}
 
-  // Fetching functions
+// Define context methods
+interface LocalStorageContextType extends LocalStorageState {
+  // Data fetching methods
+  fetchFlashcardsByCategory: (categoryId: string) => Promise<Flashcard[]>;
   fetchFlashcardsByProgramId: (programId: string) => Promise<Flashcard[]>;
-  fetchFlashcardsByCategory: (category: string, subcategory?: string, difficulty?: string) => Promise<Flashcard[]>;
+  fetchProgramsByCategory: (categoryId: string) => Promise<Program[]>;
   fetchProgram: (programId: string) => Promise<Program | null>;
-  fetchProgramsByCategory: (category: string) => Promise<Program[]>;
-  fetchCategories: () => Promise<Category[]>;
-
-  // Stats and Completion functions
-  updateUserStats: (updates: Partial<UserStats>) => void;
+  
+  // Data manipulation methods
+  addCategory: (category: Category) => void;
+  addFlashcard: (flashcard: Flashcard) => void;
+  updateFlashcard: (id: string, updatedFlashcard: Partial<Flashcard>) => void;
+  deleteFlashcard: (id: string) => void;
+  
+  // Helper methods
+  getCategory: (id: string) => Category | undefined;
+  getFlashcardsByCategory: (categoryId: string) => Flashcard[];
   markProgramCompleted: (programId: string) => void;
-  getCategory: (categoryId: string) => Category | undefined; // Simple getter
-};
+  updateUserStats: (partialStats: Partial<UserStats>) => void;
+  
+  // Context management
+  initializeContext: (userId: string) => void;
+  resetContext: () => void;
+}
 
 // Create the context
 const LocalStorageContext = createContext<LocalStorageContextType | undefined>(undefined);
+
+// Default values
+const defaultUserStats: UserStats = {
+  streak: 0,
+  lastActivity: Date.now(),
+  totalCorrect: 0,
+  totalIncorrect: 0,
+  cardsLearned: 0,
+  achievements: [],
+  completedPrograms: [],
+};
+
+// Sample categories (will be replaced with DB data)
+const sampleCategories: Category[] = [
+  {
+    id: 'medicine',
+    name: 'Medicin',
+    icon: 'stethoscope',
+    description: 'Läkemedelslära, anatomi, fysiologi och mer',
+    color: 'bg-learny-red',
+  },
+  {
+    id: 'programming',
+    name: 'Programmering',
+    icon: 'code',
+    description: 'Koda, algoritmer och datastrukturer',
+    color: 'bg-learny-blue',
+  },
+  {
+    id: 'languages',
+    name: 'Språk',
+    icon: 'languages',
+    description: 'Lär dig nya språk med flashcards',
+    color: 'bg-learny-purple',
+  },
+  {
+    id: 'science',
+    name: 'Vetenskap',
+    icon: 'atom',
+    description: 'Fysik, kemi, biologi och mer',
+    color: 'bg-learny-green',
+  },
+];
+
+// Provider Component
+export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // State initialization
+  const [categories, setCategories] = useState<Category[]>(sampleCategories);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [userStats, setUserStats] = useState<UserStats>(defaultUserStats);
+  const [isContextLoading, setIsContextLoading] = useState<boolean>(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
+  // Initialize context
+  const initializeContext = useCallback(async (userId: string) => {
+    if (userId === currentUserId) return; // Skip if already initialized for this user
+    
+    setIsContextLoading(true);
+    setCurrentUserId(userId);
+    
+    try {
+      console.log("LocalStorageContext: Initializing context for user", userId);
+      
+      // Fetch user's flashcards
+      const { data: userFlashcards, error: flashcardsError } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (flashcardsError) {
+        console.error("Error fetching flashcards:", flashcardsError);
+      } else {
+        // Format for frontend
+        const formattedFlashcards: Flashcard[] = userFlashcards.map(f => ({
+          id: f.id,
+          question: f.question,
+          answer: f.answer,
+          category: f.category,
+          subcategory: f.subcategory || undefined,
+          difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+          correctCount: f.correct_count,
+          incorrectCount: f.incorrect_count,
+          lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+          learned: f.learned,
+          reviewLater: f.review_later,
+          reportCount: f.report_count,
+          reportReason: f.report_reason,
+          isApproved: f.is_approved,
+        }));
+        
+        setFlashcards(formattedFlashcards);
+      }
+      
+      // Fetch programs (placeholder)
+      // In a real implementation, this would fetch from the database
+      // For now, generate some placeholder programs
+      const placeholderPrograms: Program[] = generatePlaceholderPrograms(categories, userFlashcards);
+      setPrograms(placeholderPrograms);
+      
+      // Load user stats from localStorage for now
+      // Will be migrated to DB later
+      try {
+        const savedUserStats = localStorage.getItem(`user_stats_${userId}`);
+        if (savedUserStats) {
+          setUserStats(JSON.parse(savedUserStats));
+        } else {
+          // If no saved stats, use defaults and store them
+          localStorage.setItem(`user_stats_${userId}`, JSON.stringify(defaultUserStats));
+          setUserStats(defaultUserStats);
+        }
+      } catch (storageError) {
+        console.error("Error accessing localStorage:", storageError);
+        setUserStats(defaultUserStats);
+      }
+      
+      console.log("LocalStorageContext: Context initialized for user", userId);
+    } catch (error) {
+      console.error("Error initializing LocalStorageContext:", error);
+    } finally {
+      setIsContextLoading(false);
+    }
+  }, [currentUserId, categories]);
+  
+  // Reset context (used on logout)
+  const resetContext = useCallback(() => {
+    setCategories(sampleCategories);
+    setFlashcards([]);
+    setPrograms([]);
+    setUserStats(defaultUserStats);
+    setCurrentUserId(null);
+  }, []);
+  
+  // Helper function to generate placeholder programs
+  // This will be replaced with real DB data in the future
+  const generatePlaceholderPrograms = (cats: Category[], cards: any[]): Program[] => {
+    const programs: Program[] = [];
+    
+    cats.forEach(category => {
+      // Create beginner program
+      programs.push({
+        id: `${category.id}-beginner`,
+        name: `${category.name} för nybörjare`,
+        description: `Grundläggande ${category.name.toLowerCase()}.`,
+        category: category.id,
+        difficulty: 'beginner',
+        flashcards: filterCardsByCategory(cards, category.id, 'beginner'),
+        progress: Math.floor(Math.random() * 101),
+        hasExam: Math.random() > 0.5,
+      });
+      
+      // Create intermediate program
+      programs.push({
+        id: `${category.id}-intermediate`,
+        name: `${category.name} fortsättning`,
+        description: `Fortsättningskurs i ${category.name.toLowerCase()}.`,
+        category: category.id,
+        difficulty: 'intermediate',
+        flashcards: filterCardsByCategory(cards, category.id, 'intermediate'),
+        progress: Math.floor(Math.random() * 101),
+        hasExam: Math.random() > 0.5,
+      });
+      
+      // Add advanced and expert programs for some categories
+      if (Math.random() > 0.5) {
+        programs.push({
+          id: `${category.id}-advanced`,
+          name: `Avancerad ${category.name.toLowerCase()}`,
+          description: `För dig som behärskar ${category.name.toLowerCase()} väl.`,
+          category: category.id,
+          difficulty: 'advanced',
+          flashcards: filterCardsByCategory(cards, category.id, 'advanced'),
+          progress: Math.floor(Math.random() * 101),
+          hasExam: Math.random() > 0.5,
+        });
+      }
+      
+      if (Math.random() > 0.7) {
+        programs.push({
+          id: `${category.id}-expert`,
+          name: `${category.name} för experter`,
+          description: `Expertmaterial inom ${category.name.toLowerCase()}.`,
+          category: category.id,
+          difficulty: 'expert',
+          flashcards: filterCardsByCategory(cards, category.id, 'expert'),
+          progress: Math.floor(Math.random() * 101),
+          hasExam: Math.random() > 0.5,
+        });
+      }
+    });
+    
+    return programs;
+  };
+  
+  // Helper to filter cards by category and difficulty
+  const filterCardsByCategory = (cards: any[], categoryId: string, difficulty?: string): string[] => {
+    return cards
+      .filter(card => card.category === categoryId && (!difficulty || card.difficulty === difficulty))
+      .map(card => card.id);
+  };
+  
+  // Get a specific category by ID
+  const getCategory = useCallback((id: string): Category | undefined => {
+    return categories.find(category => category.id === id);
+  }, [categories]);
+  
+  // Get flashcards for a specific category
+  const getFlashcardsByCategory = useCallback((categoryId: string): Flashcard[] => {
+    return flashcards.filter(card => card.category === categoryId);
+  }, [flashcards]);
+  
+  // Mock fetch method - will be replaced with real API calls later
+  const fetchFlashcardsByCategory = useCallback(async (categoryId: string): Promise<Flashcard[]> => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (!currentUserId) return [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('category', categoryId)
+        .eq('user_id', currentUserId);
+      
+      if (error) throw error;
+      
+      // Format for frontend
+      return data.map(f => ({
+        id: f.id,
+        question: f.question,
+        answer: f.answer,
+        category: f.category,
+        subcategory: f.subcategory || undefined,
+        difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+        correctCount: f.correct_count,
+        incorrectCount: f.incorrect_count,
+        lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+        learned: f.learned,
+        reviewLater: f.review_later,
+        reportCount: f.report_count,
+        reportReason: f.report_reason,
+        isApproved: f.is_approved,
+      }));
+    } catch (error) {
+      console.error("Error fetching flashcards by category:", error);
+      return [];
+    }
+  }, [currentUserId]);
+  
+  // Fetch programs for a category
+  const fetchProgramsByCategory = useCallback(async (categoryId: string): Promise<Program[]> => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // For now, just filter local programs state
+    // Will be replaced with a real API call
+    return programs.filter(program => program.category === categoryId);
+  }, [programs]);
+  
+  // Fetch flashcards for a program
+  const fetchFlashcardsByProgramId = useCallback(async (programId: string): Promise<Flashcard[]> => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const program = programs.find(p => p.id === programId);
+    if (!program) return [];
+    
+    // Get flashcards that are part of this program
+    return flashcards.filter(card => program.flashcards.includes(card.id));
+  }, [flashcards, programs]);
+  
+  // Fetch a single program
+  const fetchProgram = useCallback(async (programId: string): Promise<Program | null> => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const program = programs.find(p => p.id === programId);
+    return program || null;
+  }, [programs]);
+  
+  // Mark a program as completed
+  const markProgramCompleted = useCallback((programId: string) => {
+    setUserStats(prev => {
+      if (prev.completedPrograms.includes(programId)) {
+        return prev;
+      }
+      
+      const updated = {
+        ...prev,
+        completedPrograms: [...prev.completedPrograms, programId]
+      };
+      
+      // Update local storage
+      if (currentUserId) {
+        localStorage.setItem(`user_stats_${currentUserId}`, JSON.stringify(updated));
+      }
+      
+      return updated;
+    });
+  }, [currentUserId]);
+  
+  // Update user stats
+  const updateUserStats = useCallback((partialStats: Partial<UserStats>) => {
+    setUserStats(prev => {
+      const updated = { ...prev, ...partialStats };
+      
+      // Always update lastActivity on any stats update
+      updated.lastActivity = Date.now();
+      
+      // Check streak
+      const today = new Date().toISOString().split('T')[0];
+      const lastDate = prev.lastActivity ? new Date(prev.lastActivity).toISOString().split('T')[0] : null;
+      
+      if (lastDate !== today) {
+        if (!lastDate || isYesterday(new Date(prev.lastActivity))) {
+          // Either first activity or continued streak
+          updated.streak = prev.streak + 1;
+        } else {
+          // Streak broken
+          updated.streak = 1;
+        }
+      }
+      
+      // Update local storage
+      if (currentUserId) {
+        localStorage.setItem(`user_stats_${currentUserId}`, JSON.stringify(updated));
+      }
+      
+      return updated;
+    });
+  }, [currentUserId]);
+  
+  // Check if date is yesterday
+  const isYesterday = (date: Date): boolean => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0] === date.toISOString().split('T')[0];
+  };
+  
+  // Add a new category
+  const addCategory = useCallback((category: Category) => {
+    setCategories(prev => [...prev, category]);
+  }, []);
+  
+  // Add a new flashcard
+  const addFlashcard = useCallback((flashcard: Flashcard) => {
+    setFlashcards(prev => [...prev, flashcard]);
+  }, []);
+  
+  // Update a flashcard
+  const updateFlashcard = useCallback((id: string, updatedFlashcard: Partial<Flashcard>) => {
+    setFlashcards(prev => 
+      prev.map(card => card.id === id ? { ...card, ...updatedFlashcard } : card)
+    );
+  }, []);
+  
+  // Delete a flashcard
+  const deleteFlashcard = useCallback((id: string) => {
+    setFlashcards(prev => prev.filter(card => card.id !== id));
+  }, []);
+  
+  // Context value
+  const value: LocalStorageContextType = {
+    // State
+    categories,
+    flashcards,
+    programs,
+    userStats,
+    isContextLoading,
+    
+    // Data fetching methods
+    fetchFlashcardsByCategory,
+    fetchFlashcardsByProgramId,
+    fetchProgramsByCategory,
+    fetchProgram,
+    
+    // Data manipulation methods
+    addCategory,
+    addFlashcard,
+    updateFlashcard,
+    deleteFlashcard,
+    
+    // Helper methods
+    getCategory,
+    getFlashcardsByCategory,
+    markProgramCompleted,
+    updateUserStats,
+    
+    // Context management
+    initializeContext,
+    resetContext,
+  };
+  
+  return (
+    <LocalStorageContext.Provider value={value}>
+      {children}
+    </LocalStorageContext.Provider>
+  );
+};
 
 // Hook to use the context
 export const useLocalStorage = () => {
@@ -40,226 +453,4 @@ export const useLocalStorage = () => {
     throw new Error('useLocalStorage must be used within a LocalStorageProvider');
   }
   return context;
-};
-
-// Helper to map DB flashcards to Frontend type
-const mapDbFlashcardToFrontend = (dbCard: any): Flashcard => ({
-    id: dbCard.id,
-    question: dbCard.question,
-    answer: dbCard.answer,
-    category: dbCard.category,
-    subcategory: dbCard.subcategory || undefined,
-    difficulty: dbCard.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-    correctCount: dbCard.correct_count || 0,
-    incorrectCount: dbCard.incorrect_count || 0,
-    lastReviewed: dbCard.last_reviewed ? new Date(dbCard.last_reviewed).getTime() : undefined,
-    nextReview: dbCard.next_review ? new Date(dbCard.next_review).getTime() : undefined,
-    learned: Boolean(dbCard.learned),
-    reviewLater: Boolean(dbCard.review_later),
-    reportCount: dbCard.report_count || 0,
-    reportReason: dbCard.report_reason || [],
-    isApproved: Boolean(dbCard.is_approved),
-    // Keep snake_case for potential direct DB updates elsewhere if needed
-    correct_count: dbCard.correct_count,
-    incorrect_count: dbCard.incorrect_count,
-    last_reviewed: dbCard.last_reviewed,
-    created_at: dbCard.created_at,
-    module_id: dbCard.module_id,
-    user_id: dbCard.user_id,
-    next_review: dbCard.next_review,
-    report_count: dbCard.report_count,
-    report_reason: dbCard.report_reason,
-    is_approved: dbCard.is_approved,
-});
-
-// Provider component
-export const LocalStorageProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const { user, addAchievement: addAuthAchievement } = useAuth();
-  const [programs, setPrograms] = useState<Program[]>([]); // Keep local state *temporarily*
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [userStats, setUserStats] = useState<UserStats>(initialUserStats);
-  const [isContextLoading, setIsContextLoading] = useState(true);
-
-  // --- Load initial user stats and static data ---
-  useEffect(() => {
-    console.log("LocalStorageContext Mount: Loading user stats and static data...");
-    let loadedUserStats = { ...initialUserStats };
-    try {
-      const storedUserStats = localStorage.getItem('userStats');
-      if (storedUserStats) {
-        const parsedStats = JSON.parse(storedUserStats);
-        loadedUserStats = { ...initialUserStats, ...parsedStats };
-      }
-    } catch (e) { console.error("LocalStorageContext: Error parsing stored userStats:", e); }
-
-    setUserStats(loadedUserStats);
-    setCategories(initialCategories); // Load static categories
-
-    // ** REMOVE THIS AFTER PROGRAM MIGRATION **
-    // TEMPORARY: Load initial programs from hardcoded data
-    try {
-        import('@/data/programs').then(module => {
-            if (module.initialPrograms) {
-                setPrograms(module.initialPrograms);
-                 console.warn("LocalStorageContext: Using hardcoded initial programs. Migrate programs to Supabase.")
-            }
-        }).catch(err => console.warn("Could not load initial programs, likely deleted after migration.", err));
-    } catch (error) {
-         console.warn("Error attempting to load initial programs.", error);
-    }
-    // ** END OF TEMPORARY BLOCK **
-
-    setIsContextLoading(false);
-    console.log("LocalStorageContext Mount: Initial load complete.");
-  }, []);
-
-  // --- Streak Check (Same logic as before) ---
-  useEffect(() => {
-     if (isContextLoading) return;
-     setUserStats(currentStats => {
-       const now = new Date();
-       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-       const lastActivityTimestamp = typeof currentStats.lastActivity === 'number' ? currentStats.lastActivity : 0;
-       if (lastActivityTimestamp === 0 || isNaN(lastActivityTimestamp)) {
-         return currentStats.lastActivity === today ? currentStats : { ...currentStats, lastActivity: today };
-       }
-       const lastActivityDay = new Date(new Date(lastActivityTimestamp).getFullYear(), new Date(lastActivityTimestamp).getMonth(), new Date(lastActivityTimestamp).getDate()).getTime();
-       const oneDayMs = 24 * 60 * 60 * 1000;
-       const daysSinceLastActivity = Math.floor((today - lastActivityDay) / oneDayMs);
-
-       if (daysSinceLastActivity === 0) { return currentStats; }
-       else if (daysSinceLastActivity === 1) {
-         const newStreak = (currentStats.streak || 0) + 1;
-         if (newStreak === 7) addAuthAchievement({ name: '7-dagars Streak', description: 'Använt Learny 7 dagar i rad!', icon: 'flame' });
-         else if (newStreak === 30) addAuthAchievement({ name: '30-dagars Streak', description: 'Använt Learny 30 dagar i rad!', icon: 'flame' });
-         return { ...currentStats, streak: newStreak, lastActivity: today };
-       } else { return { ...currentStats, streak: 1, lastActivity: today }; }
-     });
-   }, [isContextLoading, addAuthAchievement]);
-
-  // --- Save User Stats ---
-  useEffect(() => {
-    if (isContextLoading) return;
-    localStorage.setItem('userStats', JSON.stringify(userStats));
-  }, [userStats, isContextLoading]);
-
-
-  // --- Data Fetching Functions ---
-
-  // Define fetchFlashcardsByCategory FIRST
-  const fetchFlashcardsByCategory = useCallback(async (category: string, subcategory?: string, difficulty?: string): Promise<Flashcard[]> => {
-    try {
-      let query = supabase
-        .from('flashcards')
-        .select('*')
-        .eq('category', category)
-        .eq('is_approved', true);
-
-      if (subcategory) query = query.eq('subcategory', subcategory);
-      if (difficulty) query = query.eq('difficulty', difficulty);
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data.map(mapDbFlashcardToFrontend);
-    } catch (error: any) {
-      console.error("Error fetching flashcards by category:", error);
-      toast({ title: 'Fel', description: `Kunde inte hämta flashcards: ${error.message}`, variant: 'destructive' });
-      return [];
-    }
-  }, []); // No dependencies needed here if it doesn't use other useCallback functions
-
-  // Define fetchFlashcardsByProgramId AFTER fetchFlashcardsByCategory
-  const fetchFlashcardsByProgramId = useCallback(async (progId: string): Promise<Flashcard[]> => {
-    console.warn("Fetching flashcards by program ID relies on program migration.");
-    const localProgram = programs.find(p => p.id === progId);
-    if (localProgram) {
-      const cards = await fetchFlashcardsByCategory(localProgram.category, undefined, localProgram.difficulty); // NOW fetchFlashcardsByCategory is defined
-      // Further filter by hardcoded IDs if needed (VERY FRAGILE)
-      if(localProgram.flashcards && localProgram.flashcards.length > 0){
-          const idSet = new Set(localProgram.flashcards);
-          return cards.filter(card => idSet.has(card.id));
-      }
-      return cards.slice(0, 20); // Limit fallback results
-    }
-    return [];
-  }, [programs, fetchFlashcardsByCategory]); // Include fetchFlashcardsByCategory dependency
-
-  const fetchProgram = useCallback(async (programId: string): Promise<Program | null> => {
-    console.warn("Fetching program relies on program migration.");
-    const localProg = programs.find(p => p.id === programId) || null;
-    if (localProg) {
-      localProg.completedByUser = userStats.completedPrograms.includes(localProg.id);
-    }
-    return localProg;
-  }, [programs, userStats.completedPrograms]);
-
-  const fetchProgramsByCategory = useCallback(async (category: string): Promise<Program[]> => {
-    console.warn("Fetching programs by category relies on program migration.");
-    return programs
-      .filter(p => p.category === category)
-      .map(p => ({ ...p, completedByUser: userStats.completedPrograms.includes(p.id) }));
-  }, [programs, userStats.completedPrograms]);
-
-  const fetchCategories = useCallback(async (): Promise<Category[]> => {
-    return initialCategories;
-  }, []);
-
-  // --- Update User Stats (Internal & Exported) ---
-  const updateUserStatsInternal = useCallback((updates: Partial<UserStats>) => {
-    setUserStats((prev) => {
-      const newState = { ...prev, ...updates };
-      if (Object.keys(updates).length > 0 || !prev.lastActivity) {
-        newState.lastActivity = Date.now();
-      }
-      return newState;
-    });
-  }, []);
-
-  // --- Mark Program Completed ---
-  const markProgramCompleted = useCallback((programId: string) => {
-    const program = programs.find((p) => p.id === programId);
-    setUserStats((prev) => {
-      if (!prev.completedPrograms.includes(programId)) {
-        const updatedCompletedPrograms = [...prev.completedPrograms, programId];
-        if (program && user) {
-          console.log(`Marking program ${program.name} as completed, triggering achievement.`);
-          addAuthAchievement({ name: `Avklarat: ${program.name}`, description: `Slutfört programmet "${program.name}"!`, icon: 'trophy' });
-        }
-        return { ...prev, completedPrograms: updatedCompletedPrograms, lastActivity: Date.now() };
-      }
-      return { ...prev, lastActivity: Date.now() };
-    });
-  }, [programs, addAuthAchievement, user]);
-
-  // --- Simple Getters ---
-  const getCategory = useCallback((categoryId: string): Category | undefined => {
-    return categories.find((category) => category.id === categoryId);
-  }, [categories]);
-
-  // --- Context Value ---
-  const contextValue = useMemo(() => ({
-    programs,
-    categories,
-    userStats,
-    isContextLoading,
-    fetchFlashcardsByProgramId,
-    fetchFlashcardsByCategory,
-    fetchProgram,
-    fetchProgramsByCategory,
-    fetchCategories,
-    updateUserStats: updateUserStatsInternal,
-    markProgramCompleted,
-    getCategory,
-  }), [
-    programs, categories, userStats, isContextLoading,
-    fetchFlashcardsByProgramId, fetchFlashcardsByCategory, fetchProgram,
-    fetchProgramsByCategory, fetchCategories, updateUserStatsInternal,
-    markProgramCompleted, getCategory
-  ]);
-
-  return (
-    <LocalStorageContext.Provider value={contextValue}>
-      {children}
-    </LocalStorageContext.Provider>
-  );
 };

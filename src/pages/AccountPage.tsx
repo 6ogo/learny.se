@@ -18,7 +18,7 @@ import { supabase } from '@/lib/supabase';
 
 const AccountPage: React.FC = () => {
   const { user, signOut } = useAuth();
-  const { currentTierDetails, refreshSubscription } = useSubscription();
+  const { currentTierDetails } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);

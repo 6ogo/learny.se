@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Award, Flame, Trophy, Medal, Star } from 'lucide-react';
@@ -12,7 +11,7 @@ interface AchievementCardProps {
     name: string;
     description: string;
     icon: string;
-    dateEarned: string;
+    dateEarned: string | number; // Accept both string and number
     displayed?: boolean;
   };
   isNew?: boolean;
@@ -38,8 +37,10 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
     }
   };
 
-  const formatDate = (date: string) => {
-    return format(new Date(date), 'd MMMM yyyy', { locale: sv });
+  const formatDate = (date: string | number) => {
+    // Handle both string and number formats
+    const dateObj = typeof date === 'number' ? new Date(date) : new Date(date);
+    return format(dateObj, 'd MMMM yyyy', { locale: sv });
   };
 
   return (

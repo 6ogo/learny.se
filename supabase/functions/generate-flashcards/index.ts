@@ -1,6 +1,6 @@
 // supabase/functions/generate-flashcards/index.ts
 
-// Imports using paths expected by deno.json/import_map.json
+// These imports might show as errors in VS Code, but they work in the Deno runtime
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.26.0";
 
@@ -128,7 +128,8 @@ serve(async (req: Request) => {
      }
 
     // --- Get API Key ---
-    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    // Note: This will work in Deno even if VS Code shows an error
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY') || '';
     if (!GROQ_API_KEY) {
       console.error('CRITICAL: GROQ_API_KEY secret not set in Supabase Function settings.');
       return new Response(
@@ -187,8 +188,8 @@ serve(async (req: Request) => {
     // Check structure more carefully
     if (parsedData && Array.isArray(parsedData) && parsedData.every(card => card && typeof card.question === 'string' && typeof card.answer === 'string')) {
         flashcards = parsedData;
-    } else if (parsedData && parsedData.flashcards && Array.isArray(parsedData.flashcards) && parsedData.flashcards.every(card => card && typeof card.question === 'string' && typeof card.answer === 'string')){
-        flashcards = parsedData.flashcards; // Handle cases where it's wrapped { flashcards: [...] }
+    } else if (parsedData && parsedData.flashcards && Array.isArray(parsedData.flashcards) && parsedData.flashcards.every((card: { question: any; answer: any; }) => card && typeof card.question === 'string' && typeof card.answer === 'string')){
+        flashcards = parsedData.flashcards;
         console.warn("Extracted 'flashcards' array from Groq object response.");
     } else {
         console.error('Failed to parse or validate flashcard structure from Groq response:', rawContent);
@@ -310,7 +311,10 @@ serve(async (req: Request) => {
     // Catch unexpected errors in the main try block
     console.error('Unexpected error in generate-flashcards function:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal Server Error', details: error.message }),
+      JSON.stringify({ 
+        error: 'Internal Server Error', 
+        details: error instanceof Error ? error.message : String(error) 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

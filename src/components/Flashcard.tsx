@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ThumbsUp, ThumbsDown, RotateCw, CheckCircle, XCircle } from 'lucide-react'; // Added CheckCircle, XCircle
+import { ThumbsUp, ThumbsDown, RotateCw, CheckCircle, XCircle } from 'lucide-react';
 import { Flashcard as FlashcardType } from '@/types/flashcard';
 import { cn } from '@/lib/utils';
 
-interface FlashcardProps {
+export interface FlashcardProps {
   flashcard: FlashcardType;
   onCorrect: (id: string) => void;
   onIncorrect: (id: string) => void;

@@ -478,7 +478,7 @@ export const FlashcardCreation: React.FC = () => {
           <div className="py-4">
             <div className="flex gap-2 mb-4">
               <Badge className="bg-secondary text-secondary-foreground">{getCategoryNameById(selectedCategory)}</Badge>
-              {selectedSubcategory && <Badge variant="outline">{selectedSubcategory}</Badge>}
+              {selectedSubcategory && <Badge className="border border-input text-foreground">{selectedSubcategory}</Badge>}
             </div>
 
             <Table>

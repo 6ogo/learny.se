@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { Flashcard } from '@/components/Flashcard';
@@ -49,11 +50,6 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
     setCurrentIndex(prev => (prev < filteredFlashcards.length - 1 ? prev + 1 : 0));
   };
 
-  // Dummy handlers to satisfy FlashcardProps interface
-  const handleCorrect = () => {};
-  const handleIncorrect = () => {};
-  const handleCardNext = () => {};
-
   return (
     <Card className={cn("mb-8 border-l-4", getDifficultyColor())}>
       <CardHeader>
@@ -82,11 +78,7 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
       <CardContent>
         {filteredFlashcards.length > 0 && (
           <Flashcard 
-            flashcard={filteredFlashcards[currentIndex]} 
-            showControls={false}
-            onCorrect={handleCorrect}
-            onIncorrect={handleIncorrect}
-            onNext={handleCardNext}
+            flashcard={filteredFlashcards[currentIndex]}
           />
         )}
       </CardContent>

@@ -9,12 +9,20 @@ export interface FlashcardProps {
   flashcard: FlashcardType;
   isFlipped?: boolean;
   onFlip?: () => void;
+  showControls?: boolean;
+  onCorrect?: () => void;
+  onIncorrect?: () => void;
+  onNext?: () => void;
 }
 
 export const Flashcard: React.FC<FlashcardProps> = ({ 
   flashcard, 
   isFlipped = false, 
-  onFlip 
+  onFlip,
+  showControls = false,
+  onCorrect = () => {},
+  onIncorrect = () => {},
+  onNext = () => {}
 }) => {
   const [internalFlipped, setInternalFlipped] = useState(false);
   

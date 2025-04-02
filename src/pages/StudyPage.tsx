@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
@@ -49,7 +48,7 @@ export default function StudyPage() {
   const [sessionComplete, setSessionComplete] = useState(false);
   
   // Parse category and difficulty from programId if it's in the format "category-difficulty"
-  const isCategoryDifficultyFormat = programId?.includes('-');
+  const isCategoryDifficultyFormat = programId?.includes('-') && programId.split('-').length === 2;
   let categoryId, difficultyLevel;
   
   if (isCategoryDifficultyFormat && programId) {
@@ -119,7 +118,7 @@ export default function StudyPage() {
       
       setProgram(programData);
       
-      // Fetch flashcards for this program
+      // Fetch flashcards for this program - only fetch once
       console.log(`StudyPage: Fetching flashcards for program: ${programId}`);
       const cards = await fetchFlashcardsByProgramId(programId);
       
@@ -152,10 +151,10 @@ export default function StudyPage() {
     }
   }, [programId, fetchProgram, fetchFlashcardsByProgramId, createSession, debugFlashcardLoading]);
   
-  // Initial data loading
+  // Initial data loading - use empty dependency array to load only once
   useEffect(() => {
     loadStudyData();
-  }, [loadStudyData]);
+  }, []);
   
   // Update current card when index changes
   useEffect(() => {
@@ -351,9 +350,6 @@ export default function StudyPage() {
               <Progress 
                 className="h-3"
                 value={correctPercent} 
-                // Fixed: removed indicatorClassName prop which doesn't exist
-                // Instead, apply the color directly to the Progress component
-                // The Progress component from shadcn doesn't have an indicatorClassName prop
               />
             </div>
           </div>
@@ -403,8 +399,6 @@ export default function StudyPage() {
         <div className="mb-8">
           <Flashcard
             flashcard={currentCard}
-            // Instead of passing flipped and onFlip directly, we'll use the format
-            // expected by the component
             isFlipped={flipped}
             onFlip={() => setFlipped(!flipped)}
           />

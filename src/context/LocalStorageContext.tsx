@@ -32,6 +32,7 @@ interface LocalStorageContextType extends LocalStorageState {
   updateFlashcard: (id: string, updatedFlashcard: Partial<Flashcard>) => void;
   deleteFlashcard: (id: string) => void;
   importFlashcards: (flashcards: Flashcard[]) => Promise<void>;
+  updateFlashcardUserInteraction: (flashcardId: string, updates: { learned?: boolean, reviewLater?: boolean }) => Promise<void>;
 
   // Helper methods
   getCategory: (id: string) => Category | undefined;
@@ -331,8 +332,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const { data, error } = await supabase
         .from('flashcards')
         .select('*')
-        .eq('category', categoryId)
-        .eq('user_id', currentUserId);
+        .eq('category', categoryId);
 
       if (error) {
         console.error("Error fetching flashcards by category:", error);
@@ -352,11 +352,12 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         correctCount: f.correct_count,
         incorrectCount: f.incorrect_count,
         lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
-        learned: f.learned,
-        reviewLater: f.review_later,
+        learned: Boolean(f.learned),
+        reviewLater: Boolean(f.review_later),
         reportCount: f.report_count,
         reportReason: f.report_reason,
-        isApproved: f.is_approved,
+        isApproved: Boolean(f.is_approved),
+        module_id: f.module_id,
       }));
 
       // Update local cache
@@ -451,7 +452,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     try {
       // For placeholder programs with category-difficulty format (e.g. 'math-beginner')
-      if (programId.includes('-')) {
+      if (programId.includes('-') && programId.split('-').length === 2) {
         const [category, difficulty] = programId.split('-');
         console.log(`Fetching flashcards for category: ${category}, difficulty: ${difficulty}`);
 
@@ -466,17 +467,11 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
 
         // Otherwise fetch from DB
-        if (!currentUserId) {
-          console.warn("No user ID available for DB fetch");
-          return [];
-        }
-
         const { data, error } = await supabase
           .from('flashcards')
           .select('*')
           .eq('category', category)
-          .eq('difficulty', difficulty)
-          .eq('user_id', currentUserId);
+          .eq('difficulty', difficulty);
 
         if (error) {
           console.error("Error fetching flashcards by category/difficulty:", error);
@@ -490,8 +485,8 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         console.log(`Fetched ${data.length} flashcards for ${category}/${difficulty}`);
 
-        // Format and return
-        return data.map(f => ({
+        // Format and update local state
+        const formattedCards = data.map(f => ({
           id: f.id,
           question: f.question,
           answer: f.answer,
@@ -501,68 +496,190 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           correctCount: f.correct_count,
           incorrectCount: f.incorrect_count,
           lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
-          learned: f.learned,
-          reviewLater: f.review_later,
+          learned: Boolean(f.learned),
+          reviewLater: Boolean(f.review_later),
           reportCount: f.report_count,
           reportReason: f.report_reason,
-          isApproved: f.is_approved,
+          isApproved: Boolean(f.is_approved),
           module_id: f.module_id,
         }));
+
+        // Update cache
+        setFlashcards(prev => {
+          const filtered = prev.filter(card => !(card.category === category && card.difficulty === difficulty));
+          return [...filtered, ...formattedCards];
+        });
+
+        return formattedCards;
       }
+      // For real module IDs or UUIDs
+      else {
+        // For UUID format IDs that aren't in category-difficulty format
+        // First try to find the program to get its category and difficulty
+        const program = await fetchProgram(programId);
+        
+        if (program && program.category) {
+          console.log(`Fetching flashcards for module: ${programId} with category ${program.category}`);
+          
+          // First try cached data
+          const cachedCards = flashcards.filter(card => card.module_id === programId);
+          if (cachedCards.length > 0) {
+            console.log(`Found ${cachedCards.length} cached cards for module ${programId}`);
+            return cachedCards;
+          }
 
-      // For real module IDs (without dashes)
-      console.log(`Fetching flashcards for module: ${programId}`);
+          // If no module_id matches, try with category/difficulty if available
+          if (program.difficulty && cachedCards.length === 0) {
+            const categoryDifficultyCards = flashcards.filter(
+              card => card.category === program.category && card.difficulty === program.difficulty
+            );
+            
+            if (categoryDifficultyCards.length > 0) {
+              console.log(`Found ${categoryDifficultyCards.length} cached cards for ${program.category}/${program.difficulty}`);
+              return categoryDifficultyCards;
+            }
+          }
 
-      // First try cached data
-      const cachedCards = flashcards.filter(card => card.module_id === programId);
-      if (cachedCards.length > 0) {
-        console.log(`Found ${cachedCards.length} cached cards for module ${programId}`);
-        return cachedCards;
+          // If still no cards, fetch from DB by module_id
+          const { data, error } = await supabase
+            .from('flashcards')
+            .select('*')
+            .eq('module_id', programId);
+
+          // If no results with module_id, try by category/difficulty
+          if ((!data || data.length === 0) && program.difficulty) {
+            const { data: categoryData, error: categoryError } = await supabase
+              .from('flashcards')
+              .select('*')
+              .eq('category', program.category)
+              .eq('difficulty', program.difficulty);
+
+            if (categoryError) {
+              console.error("Error fetching flashcards by category/difficulty:", categoryError);
+              return [];
+            }
+
+            if (categoryData && categoryData.length > 0) {
+              console.log(`Fetched ${categoryData.length} flashcards for ${program.category}/${program.difficulty}`);
+              
+              // Format and update local state
+              const formattedCards = categoryData.map(f => ({
+                id: f.id,
+                question: f.question,
+                answer: f.answer,
+                category: f.category,
+                subcategory: f.subcategory || undefined,
+                difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+                correctCount: f.correct_count,
+                incorrectCount: f.incorrect_count,
+                lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+                learned: Boolean(f.learned),
+                reviewLater: Boolean(f.review_later),
+                reportCount: f.report_count,
+                reportReason: f.report_reason,
+                isApproved: Boolean(f.is_approved),
+                module_id: f.module_id,
+              }));
+
+              // Update cache
+              setFlashcards(prev => {
+                const filtered = prev.filter(card => !(card.category === program.category && card.difficulty === program.difficulty));
+                return [...filtered, ...formattedCards];
+              });
+
+              return formattedCards;
+            }
+          }
+
+          if (error) {
+            console.error("Error fetching flashcards for module:", error);
+            return [];
+          }
+
+          if (data && data.length > 0) {
+            console.log(`Fetched ${data.length} flashcards for module ${programId}`);
+            
+            // Format and update local state
+            const formattedCards = data.map(f => ({
+              id: f.id,
+              question: f.question,
+              answer: f.answer,
+              category: f.category,
+              subcategory: f.subcategory || undefined,
+              difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+              correctCount: f.correct_count,
+              incorrectCount: f.incorrect_count,
+              lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+              learned: Boolean(f.learned),
+              reviewLater: Boolean(f.review_later),
+              reportCount: f.report_count,
+              reportReason: f.report_reason,
+              isApproved: Boolean(f.is_approved),
+              module_id: f.module_id,
+            }));
+
+            // Update cache
+            setFlashcards(prev => {
+              const filtered = prev.filter(card => card.module_id !== programId);
+              return [...filtered, ...formattedCards];
+            });
+
+            return formattedCards;
+          }
+        }
+        
+        // Fallback to just module_id query without program info
+        console.log(`Fetching flashcards for module ID directly: ${programId}`);
+        const { data, error } = await supabase
+          .from('flashcards')
+          .select('*')
+          .eq('module_id', programId);
+
+        if (error) {
+          console.error("Error fetching flashcards for module:", error);
+          return [];
+        }
+
+        if (!data || data.length === 0) {
+          console.log(`No flashcards found for module ${programId}`);
+          return [];
+        }
+
+        console.log(`Fetched ${data.length} flashcards for module ${programId}`);
+
+        // Format and return
+        const formattedCards = data.map(f => ({
+          id: f.id,
+          question: f.question,
+          answer: f.answer,
+          category: f.category,
+          subcategory: f.subcategory || undefined,
+          difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+          correctCount: f.correct_count,
+          incorrectCount: f.incorrect_count,
+          lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
+          learned: Boolean(f.learned),
+          reviewLater: Boolean(f.review_later),
+          reportCount: f.report_count,
+          reportReason: f.report_reason,
+          isApproved: Boolean(f.is_approved),
+          module_id: f.module_id,
+        }));
+
+        // Update cache
+        setFlashcards(prev => {
+          const filtered = prev.filter(card => card.module_id !== programId);
+          return [...filtered, ...formattedCards];
+        });
+
+        return formattedCards;
       }
-
-      // Otherwise fetch from DB
-      const { data, error } = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('module_id', programId);
-
-      if (error) {
-        console.error("Error fetching flashcards for module:", error);
-        return [];
-      }
-
-      if (!data || data.length === 0) {
-        console.log(`No flashcards found for module ${programId}`);
-        return [];
-      }
-
-      console.log(`Fetched ${data.length} flashcards for module ${programId}`);
-
-      // Format and return
-      const formattedCards = data.map(f => ({
-        id: f.id,
-        question: f.question,
-        answer: f.answer,
-        category: f.category,
-        subcategory: f.subcategory || undefined,
-        difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-        correctCount: f.correct_count,
-        incorrectCount: f.incorrect_count,
-        lastReviewed: f.last_reviewed ? new Date(f.last_reviewed).getTime() : undefined,
-        learned: f.learned,
-        reviewLater: f.review_later,
-        reportCount: f.report_count,
-        reportReason: f.report_reason,
-        isApproved: f.is_approved,
-        module_id: f.module_id,
-      }));
-
-      return formattedCards;
     } catch (error) {
       console.error("Error in fetchFlashcardsByProgramId:", error);
       return [];
     }
-  }, [flashcards, isContextLoading, currentUserId]);
+  }, [flashcards, isContextLoading, fetchProgram]);
+
   // Debug helper function to diagnose flashcard loading issues
   const debugFlashcardLoading = async (programId: string) => {
     console.group(`🔍 Debugging flashcard loading for program: ${programId}`);
@@ -1140,6 +1257,44 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [currentUserId, categories]);
 
+  // Update user interactions with flashcards (learned, review later)
+  const updateFlashcardUserInteraction = useCallback(async (flashcardId: string, updates: { learned?: boolean, reviewLater?: boolean }): Promise<void> => {
+    if (!currentUserId || !flashcardId) return;
+    
+    try {
+      // First update in the database
+      const dbUpdates: Record<string, any> = {};
+      if (updates.learned !== undefined) dbUpdates.learned = updates.learned;
+      if (updates.reviewLater !== undefined) dbUpdates.review_later = updates.reviewLater;
+      
+      const { error } = await supabase
+        .from('flashcards')
+        .update(dbUpdates)
+        .eq('id', flashcardId);
+      
+      if (error) {
+        console.error("Error updating flashcard user interaction:", error);
+        return;
+      }
+      
+      // Then update in local state
+      setFlashcards(prev => 
+        prev.map(card => 
+          card.id === flashcardId 
+            ? { 
+                ...card, 
+                learned: updates.learned !== undefined ? updates.learned : card.learned,
+                reviewLater: updates.reviewLater !== undefined ? updates.reviewLater : card.reviewLater
+              } 
+            : card
+        )
+      );
+      
+    } catch (error) {
+      console.error("Error updating flashcard user interaction:", error);
+    }
+  }, [currentUserId]);
+
   // Context value
   const value: LocalStorageContextType = {
     // State
@@ -1161,6 +1316,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     updateFlashcard,
     deleteFlashcard,
     importFlashcards,
+    updateFlashcardUserInteraction,
 
     // Helper methods
     getCategory,

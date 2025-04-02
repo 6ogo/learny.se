@@ -2,8 +2,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { BookmarkIcon, BookmarkCheck, RotateCw } from 'lucide-react';
 import { Flashcard as FlashcardType } from '@/types/flashcard';
 import { cn } from '@/lib/utils';
+import { useLocalStorage } from '@/context/LocalStorageContext';
 
 export interface FlashcardProps {
   flashcard: FlashcardType;
@@ -13,6 +16,7 @@ export interface FlashcardProps {
   onCorrect?: () => void;
   onIncorrect?: () => void;
   onNext?: () => void;
+  showInteractions?: boolean;
 }
 
 export const Flashcard: React.FC<FlashcardProps> = ({ 
@@ -22,9 +26,11 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   showControls = false,
   onCorrect = () => {},
   onIncorrect = () => {},
-  onNext = () => {}
+  onNext = () => {},
+  showInteractions = false
 }) => {
   const [internalFlipped, setInternalFlipped] = useState(false);
+  const { updateFlashcardUserInteraction } = useLocalStorage();
   
   // If external control is provided, use it, otherwise use internal state
   const flipped = onFlip ? isFlipped : internalFlipped;
@@ -54,6 +60,16 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   
   const difficultyInfo = getDifficultyDisplay(flashcard.difficulty);
   
+  const toggleLearnedStatus = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card flip
+    updateFlashcardUserInteraction(flashcard.id, { learned: !flashcard.learned });
+  };
+  
+  const toggleReviewLater = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card flip
+    updateFlashcardUserInteraction(flashcard.id, { reviewLater: !flashcard.reviewLater });
+  };
+  
   return (
     <div 
       className="relative perspective-1000 w-full cursor-pointer"
@@ -78,7 +94,31 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           
           <div className="flex justify-between items-center mt-4">
             <p className="text-sm text-gray-500">Klicka för att visa svar</p>
-            <Badge className={difficultyInfo.color}>{difficultyInfo.label}</Badge>
+            <div className="flex items-center gap-2">
+              {showInteractions && (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={toggleLearnedStatus}
+                    className={cn(flashcard.learned ? "text-green-500" : "text-gray-400")}
+                    title={flashcard.learned ? "Markera som ej inlärd" : "Markera som inlärd"}
+                  >
+                    {flashcard.learned ? <BookmarkCheck /> : <BookmarkIcon />}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={toggleReviewLater}
+                    className={cn(flashcard.reviewLater ? "text-blue-500" : "text-gray-400")}
+                    title={flashcard.reviewLater ? "Ta bort från granska senare" : "Granska senare"}
+                  >
+                    <RotateCw />
+                  </Button>
+                </>
+              )}
+              <Badge className={difficultyInfo.color}>{difficultyInfo.label}</Badge>
+            </div>
           </div>
         </CardContent>
         
@@ -95,7 +135,31 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           
           <div className="flex justify-between items-center mt-4">
             <p className="text-sm text-gray-500">Klicka för att visa fråga</p>
-            <Badge className={difficultyInfo.color}>{difficultyInfo.label}</Badge>
+            <div className="flex items-center gap-2">
+              {showInteractions && (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={toggleLearnedStatus}
+                    className={cn(flashcard.learned ? "text-green-500" : "text-gray-400")}
+                    title={flashcard.learned ? "Markera som ej inlärd" : "Markera som inlärd"}
+                  >
+                    {flashcard.learned ? <BookmarkCheck /> : <BookmarkIcon />}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={toggleReviewLater}
+                    className={cn(flashcard.reviewLater ? "text-blue-500" : "text-gray-400")}
+                    title={flashcard.reviewLater ? "Ta bort från granska senare" : "Granska senare"}
+                  >
+                    <RotateCw />
+                  </Button>
+                </>
+              )}
+              <Badge className={difficultyInfo.color}>{difficultyInfo.label}</Badge>
+            </div>
           </div>
         </CardContent>
       </Card>

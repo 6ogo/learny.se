@@ -1,542 +1,441 @@
-// src/pages/StudyPage.tsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useLocalStorage } from '@/context/LocalStorageContext';
-import { useAuth } from '@/context/AuthContext';
-import { Flashcard as FlashcardComponent } from '@/components/Flashcard';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, Trophy, BookOpen, AlertCircle, CheckCircle, FileQuestion, RefreshCcw, Loader2 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Flashcard as FlashcardType } from '@/types/flashcard';
-import { Program } from '@/types/program';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { initialCategories as categories } from '@/data/categories';
 
-type AnswerRecord = {
-  question: string;
-  userAnswer?: string;
-  correctAnswer: string;
-  isCorrect: boolean;
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useLocalStorage } from '@/context/LocalStorageContext';
+import { Program } from '@/types/program';
+import { Flashcard as FlashcardType } from '@/types/flashcard';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Home, X, Check } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Flashcard } from '@/components/Flashcard';
+import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+
+const difficulty = {
+  beginner: 'Nybörjare',
+  intermediate: 'Medel',
+  advanced: 'Avancerad',
+  expert: 'Expert'
 };
 
-const StudyPage = () => {
+export default function StudyPage() {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const {
-    fetchProgram,
-    fetchFlashcardsByProgramId,
-    updateUserStats,
-    markProgramCompleted,
-    userStats
-  } = useLocalStorage();
-  const { user, addAchievement } = useAuth();
-
+  const { fetchFlashcardsByProgramId, fetchProgram, markProgramCompleted, updateUserStats, debugFlashcardLoading } = useLocalStorage();
+  const { user } = useAuth();
+  
+  // Program state
   const [program, setProgram] = useState<Program | null>(null);
-  const [programFlashcards, setProgramFlashcards] = useState<FlashcardType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [flashcards, setFlashcards] = useState<FlashcardType[]>([]);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [currentCard, setCurrentCard] = useState<FlashcardType | null>(null);
+  const [flipped, setFlipped] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [sessionCorrectCount, setSessionCorrectCount] = useState(0);
-  const [sessionIncorrectCount, setSessionIncorrectCount] = useState(0);
-  const [incorrectAnswers, setIncorrectAnswers] = useState<AnswerRecord[]>([]);
-  const [isFinished, setIsFinished] = useState(false);
+  
+  // Stats tracking
+  const [sessionStats, setSessionStats] = useState({
+    correct: 0,
+    incorrect: 0,
+    total: 0,
+    cardsStudied: 0,
+  });
+  
+  // Session management
   const [sessionId, setSessionId] = useState<string | null>(null);
-
-  const loadStudyData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    setProgram(null);
-    setProgramFlashcards([]);
+  const [sessionComplete, setSessionComplete] = useState(false);
   
-    if (!programId) {
-      setError("Program ID saknas.");
-      setIsLoading(false);
-      return;
-    }
+  // Parse category and difficulty from programId if it's in the format "category-difficulty"
+  const isCategoryDifficultyFormat = programId?.includes('-');
+  let categoryId, difficultyLevel;
   
+  if (isCategoryDifficultyFormat && programId) {
+    console.log(`StudyPage: Detected category-difficulty format: ${programId}`);
+    [categoryId, difficultyLevel] = programId.split('-');
+    console.log(`StudyPage: Program set: ${categoryId} (${difficultyLevel})`);
+  }
+  
+  // Create or retrieve a study session
+  const createSession = useCallback(async () => {
+    if (!user?.id) return null;
+    
     try {
-      console.log(`StudyPage: Loading program data for ID: ${programId}`);
+      console.log('Creating new flashcard session');
       
-      if (user) {
-        try {
-          const { data: sessionData, error: sessionError } = await supabase
-            .from('flashcard_sessions')
-            .insert({
-              user_id: user.id,
-              category: programId.includes('-') ? programId.split('-')[0] : null,
-              start_time: new Date().toISOString(),
-              completed: false
-            })
-            .select()
-            .single();
-            
-          if (sessionError) {
-            console.error("Error creating session:", sessionError);
-          } else if (sessionData) {
-            sessionId = sessionData.id;
-            setSessionId(sessionData.id);
-            console.log("Created study session:", sessionData.id);
-          }
-        } catch (sessionErr) {
-          console.error("Failed to create session:", sessionErr);
-          // Continue anyway - session is not critical
-        }
-      }
-  
-      let fetchedProgram = null;
+      // Determine category from either the program or parsed categoryId
+      const category = program?.category || categoryId || null;
       
-      if (programId.includes('-')) {
-        const [category, difficulty] = programId.split('-');
-        console.log(`StudyPage: Detected category-difficulty format: ${category}-${difficulty}`);
-        
-        fetchedProgram = {
-          id: programId,
-          name: `${categories.find(c => c.id === category)?.name || category} (${difficulty})`,
-          description: `Flashcards för ${categories.find(c => c.id === category)?.name || category} på ${difficulty} nivå`,
-          category,
-          difficulty: difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-          flashcards: [],
-          hasExam: false
-        };
-      } else {
-        const program = await fetchProgram(programId);
-        
-        if (!program) {
-          try {
-            console.log("StudyPage: fetchProgram returned null, trying direct DB fetch");
-            const { data: moduleData, error: moduleError } = await supabase
-              .from('flashcard_modules')
-              .select('*')
-              .eq('id', programId)
-              .single();
-              
-            if (moduleError) {
-              throw new Error(`Kunde inte hitta modulen: ${moduleError.message}`);
-            }
-            
-            if (!moduleData) {
-              throw new Error("Modulen hittades inte i databasen");
-            }
-            
-            fetchedProgram = {
-              id: moduleData.id,
-              name: moduleData.name,
-              description: moduleData.description || moduleData.name,
-              category: moduleData.category,
-              difficulty: 'beginner',
-              flashcards: [],
-              hasExam: false
-            };
-            
-            console.log("StudyPage: Successfully fetched module directly:", fetchedProgram.name);
-          } catch (directFetchError) {
-            console.error("StudyPage: Direct module fetch failed:", directFetchError);
-            throw new Error("Programmet kunde inte hittas.");
-          }
-        } else {
-          fetchedProgram = program;
-        }
-      }
-  
-      if (!fetchedProgram) {
-        throw new Error("Programmet kunde inte hittas.");
-      }
-      
-      setProgram(fetchedProgram);
-      console.log("StudyPage: Program set:", fetchedProgram.name);
-  
-      let fetchedFlashcards: FlashcardType[] = [];
-      
-      try {
-        fetchedFlashcards = await fetchFlashcardsByProgramId(programId);
-        console.log(`StudyPage: Fetched ${fetchedFlashcards.length} flashcards`);
-        
-        if (fetchedFlashcards.length === 0) {
-          if (programId.includes('-')) {
-            const [category, difficulty] = programId.split('-');
-            console.log(`StudyPage: Direct DB fetch for ${category}-${difficulty}`);
-            
-            const { data, error } = await supabase
-              .from('flashcards')
-              .select('*')
-              .eq('category', category)
-              .eq('difficulty', difficulty);
-              
-            if (error) {
-              console.error("StudyPage: Direct flashcard fetch error:", error);
-            } else if (data && data.length > 0) {
-              console.log(`StudyPage: Direct fetch found ${data.length} flashcards`);
-              fetchedFlashcards = data.map(f => ({
-                id: f.id,
-                question: f.question,
-                answer: f.answer,
-                category: f.category,
-                difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-                subcategory: f.subcategory || undefined,
-                correctCount: f.correct_count || 0,
-                incorrectCount: f.incorrect_count || 0
-              }));
-            }
-          } else {
-            console.log(`StudyPage: Direct DB fetch for module ${programId}`);
-            
-            const { data, error } = await supabase
-              .from('flashcards')
-              .select('*')
-              .eq('module_id', programId);
-              
-            if (error) {
-              console.error("StudyPage: Direct flashcard fetch error:", error);
-            } else if (data && data.length > 0) {
-              console.log(`StudyPage: Direct fetch found ${data.length} flashcards`);
-              fetchedFlashcards = data.map(f => ({
-                id: f.id,
-                question: f.question,
-                answer: f.answer,
-                category: f.category,
-                difficulty: f.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-                subcategory: f.subcategory || undefined,
-                correctCount: f.correct_count || 0,
-                incorrectCount: f.incorrect_count || 0
-              }));
-            }
-          }
-        }
-      } catch (flashcardsError) {
-        console.error("StudyPage: Error fetching flashcards:", flashcardsError);
-        fetchedFlashcards = [];
-      }
-  
-      if (fetchedFlashcards.length === 0) {
-        throw new Error("Inga flashcards hittades för detta program.");
-      }
-      
-      const shuffledFlashcards = [...fetchedFlashcards].sort(() => 0.5 - Math.random());
-      setProgramFlashcards(shuffledFlashcards);
-  
-    } catch (err: any) {
-      console.error("StudyPage: Error in loadStudyData:", err);
-      setError(err.message || "Kunde inte ladda studieuppgifter.");
-      toast({ title: 'Fel', description: err.message || 'Kunde inte ladda programmet.', variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [programId, fetchProgram, fetchFlashcardsByProgramId, toast, user, categories]);
-
-  useEffect(() => {
-    let isMounted = true;
-    
-    if (isMounted) {
-      loadStudyData();
-      updateUserStats({});
-    }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const updateFlashcardStats = async (flashcardId: string, isCorrect: boolean) => {
-    if (!user) return;
-
-    const currentCard = programFlashcards.find(f => f.id === flashcardId);
-    if (!currentCard) return;
-    
-    const columnToIncrement = isCorrect ? 'correct_count' : 'incorrect_count';
-    const currentValue = (isCorrect ? currentCard.correct_count : currentCard.incorrect_count) || 0;
-
-    try {
-      const { error } = await supabase
-        .from('flashcards')
-        .update({
-          [columnToIncrement]: currentValue + 1,
-          last_reviewed: new Date().toISOString(),
-        })
-        .eq('id', flashcardId);
-
-      if (error) {
-        console.error("Error updating flashcard stats in DB:", error);
-      }
-      
-      if (sessionId) {
-        const { error: interactionError } = await supabase
-          .from('flashcard_interactions')
-          .insert({
-            user_id: user.id,
-            flashcard_id: flashcardId,
-            session_id: sessionId,
-            is_correct: isCorrect,
-            response_time_ms: 0
-          });
-          
-        if (interactionError) {
-          console.error("Error recording flashcard interaction:", interactionError);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to update flashcard stats:", err);
-    }
-  };
-
-  const handleCorrect = (id: string) => {
-    setSessionCorrectCount(prev => prev + 1);
-    updateFlashcardStats(id, true);
-  };
-
-  const handleIncorrect = (id: string) => {
-    setSessionIncorrectCount(prev => prev + 1);
-    updateFlashcardStats(id, false);
-
-    const currentCard = programFlashcards[currentIndex];
-    if (currentCard) {
-      setIncorrectAnswers(prev => [
-        ...prev,
-        {
-          question: currentCard.question,
-          correctAnswer: currentCard.answer,
-          isCorrect: false,
-        }
-      ]);
-    }
-  };
-
-  const handleNextCard = () => {
-    if (currentIndex < programFlashcards.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      setIsFinished(true);
-
-      if (sessionId && user) {
-        supabase
-          .from('flashcard_sessions')
-          .update({
-            end_time: new Date().toISOString(),
-            completed: true,
-            cards_studied: programFlashcards.length,
-            correct_count: sessionCorrectCount,
-            incorrect_count: sessionIncorrectCount
-          })
-          .eq('id', sessionId)
-          .then(({ error }) => {
-            if (error) console.error("Error updating session:", error);
-            else console.log("Session completed:", sessionId);
-          });
-          
-        supabase.rpc('increment_flashcards_studied', { 
-          user_id: user.id, 
-          study_date: new Date().toISOString().split('T')[0], 
-          count: programFlashcards.length 
-        }).then(({ error }) => {
-          if (error) console.error("Error incrementing flashcards studied:", error);
-        });
-      }
-
-      updateUserStats({
-        totalCorrect: (userStats.totalCorrect || 0) + sessionCorrectCount,
-        totalIncorrect: (userStats.totalIncorrect || 0) + sessionIncorrectCount,
-        cardsLearned: (userStats.cardsLearned || 0) + sessionCorrectCount,
-      });
-
-      if (program) {
-        console.log(`Program ${program.name} finished, marking complete.`);
-        markProgramCompleted(program.id);
-      }
-    }
-  };
-
-  const handleRestartProgram = () => {
-    if (user && programId) {
-      supabase
+      const { data, error } = await supabase
         .from('flashcard_sessions')
         .insert({
           user_id: user.id,
-          category: programId.includes('-') ? programId.split('-')[0] : null,
+          category: category,
           start_time: new Date().toISOString(),
-          completed: false
+          completed: false,
+          cards_studied: 0,
+          correct_count: 0,
+          incorrect_count: 0,
         })
         .select()
-        .single()
-        .then(({ data, error }) => {
-          if (error) console.error("Error creating restart session:", error);
-          else if (data) setSessionId(data.id);
-        });
+        .single();
+      
+      if (error) {
+        console.log(' Error creating session:', error);
+        return null;
+      }
+      
+      console.log('Session created:', data.id);
+      return data.id;
+    } catch (err) {
+      console.error('Error in createSession:', err);
+      return null;
+    }
+  }, [user, program, categoryId]);
+  
+  // Load study data (program and flashcards)
+  const loadStudyData = useCallback(async () => {
+    if (!programId) {
+      setError('Inget program-ID angivet');
+      setLoading(false);
+      return;
     }
     
-    const shuffledFlashcards = [...programFlashcards].sort(() => 0.5 - Math.random());
-    setProgramFlashcards(shuffledFlashcards);
+    console.log(`StudyPage: Loading program data for ID: ${programId}`);
+    setLoading(true);
+    setError(null);
     
-    setCurrentIndex(0);
-    setSessionCorrectCount(0);
-    setSessionIncorrectCount(0);
-    setIncorrectAnswers([]);
-    setIsFinished(false);
-  };
-
-  const handleStartExam = () => {
-    if (programId) {
-      navigate(`/exam/${programId}`);
+    try {
+      // Fetch program data
+      const programData = await fetchProgram(programId);
+      
+      if (!programData) {
+        setError('Programmet kunde inte hittas');
+        setLoading(false);
+        return;
+      }
+      
+      setProgram(programData);
+      
+      // Fetch flashcards for this program
+      console.log(`StudyPage: Fetching flashcards for program: ${programId}`);
+      const cards = await fetchFlashcardsByProgramId(programId);
+      
+      if (!cards || cards.length === 0) {
+        console.log('No flashcards found for program');
+        await debugFlashcardLoading(programId);
+        throw new Error('Inga flashcards hittades för detta program.');
+      }
+      
+      setFlashcards(cards);
+      setCurrentCard(cards[0]);
+      setCurrentCardIndex(0);
+      
+      // Create a new session
+      const newSessionId = await createSession();
+      setSessionId(newSessionId);
+      
+      setSessionStats({
+        correct: 0,
+        incorrect: 0,
+        total: cards.length,
+        cardsStudied: 0,
+      });
+      
+      setLoading(false);
+    } catch (err: any) {
+      console.log(' StudyPage: Error in loadStudyData:', err);
+      setError(err.message || 'Ett fel uppstod vid laddning av studie-data');
+      setLoading(false);
+    }
+  }, [programId, fetchProgram, fetchFlashcardsByProgramId, createSession, debugFlashcardLoading]);
+  
+  // Initial data loading
+  useEffect(() => {
+    loadStudyData();
+  }, [loadStudyData]);
+  
+  // Update current card when index changes
+  useEffect(() => {
+    if (flashcards.length > 0 && currentCardIndex < flashcards.length) {
+      setCurrentCard(flashcards[currentCardIndex]);
+    }
+  }, [flashcards, currentCardIndex]);
+  
+  // Mark answer as correct or incorrect
+  const handleAnswer = async (correct: boolean) => {
+    if (!currentCard || !user?.id) return;
+    
+    // Update session stats
+    setSessionStats(prev => ({
+      ...prev,
+      correct: correct ? prev.correct + 1 : prev.correct,
+      incorrect: correct ? prev.incorrect : prev.incorrect + 1,
+      cardsStudied: prev.cardsStudied + 1,
+    }));
+    
+    // Update flashcard stats in Supabase
+    try {
+      const updates = {
+        [correct ? 'correct_count' : 'incorrect_count']: supabase.rpc('increment', {
+          row_id: parseInt(currentCard.id),
+          column_name: correct ? 'correct_count' : 'incorrect_count',
+          table_name: 'flashcards'
+        }),
+        last_reviewed: new Date().toISOString()
+      };
+      
+      await supabase
+        .from('flashcards')
+        .update(updates)
+        .eq('id', currentCard.id);
+      
+      // Record interaction
+      if (sessionId) {
+        await supabase
+          .from('flashcard_interactions')
+          .insert({
+            user_id: user.id,
+            flashcard_id: currentCard.id,
+            is_correct: correct,
+            session_id: sessionId,
+            response_time_ms: 0 // We're not tracking time for now
+          });
+      }
+    } catch (err) {
+      console.error('Error recording answer:', err);
+    }
+    
+    // Move to next card or complete session
+    if (currentCardIndex < flashcards.length - 1) {
+      setCurrentCardIndex(currentCardIndex + 1);
+      setFlipped(false);
+    } else {
+      completeSession();
     }
   };
-
-  if (isLoading) {
+  
+  // Complete the study session
+  const completeSession = async () => {
+    setSessionComplete(true);
+    
+    // Update user stats
+    updateUserStats({
+      totalCorrect: sessionStats.correct,
+      totalIncorrect: sessionStats.incorrect,
+      cardsLearned: sessionStats.cardsStudied
+    });
+    
+    // If program exists, mark it as completed
+    if (program) {
+      markProgramCompleted(program.id);
+    }
+    
+    // Update session in Supabase
+    if (sessionId && user?.id) {
+      try {
+        await supabase
+          .from('flashcard_sessions')
+          .update({
+            completed: true,
+            end_time: new Date().toISOString(),
+            cards_studied: sessionStats.cardsStudied,
+            correct_count: sessionStats.correct,
+            incorrect_count: sessionStats.incorrect
+          })
+          .eq('id', sessionId)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.error('Error completing session:', err);
+      }
+    }
+    
+    toast({
+      title: 'Session avslutad',
+      description: `Du har slutfört alla flashcards i detta program!`
+    });
+  };
+  
+  // Navigate back
+  const handleBack = () => {
+    navigate(-1);
+  };
+  
+  // Navigate home
+  const handleHome = () => {
+    navigate('/home');
+  };
+  
+  // Restart session
+  const handleRestart = () => {
+    setCurrentCardIndex(0);
+    setFlipped(false);
+    setSessionComplete(false);
+    setSessionStats({
+      correct: 0,
+      incorrect: 0,
+      total: flashcards.length,
+      cardsStudied: 0,
+    });
+    // Create a new session
+    createSession().then(newId => {
+      setSessionId(newId);
+    });
+  };
+  
+  // Loading state
+  if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Laddar program...</span>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-learny-purple"></div>
+        <p className="mt-4 text-gray-600 dark:text-gray-300">Laddar flashcards...</p>
       </div>
     );
   }
-
-  if (error || !program || programFlashcards.length === 0) {
+  
+  // Error state
+  if (error) {
     return (
-      <div>
-        <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">
-          {error || "Programmet kunde inte laddas eller saknar flashcards."}
-        </p>
-        <Button asChild className="mt-4">
-          <Link to="/home">Tillbaka till startsidan</Link>
-        </Button>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+        <X className="h-16 w-16 text-red-500 mb-4" />
+        <h2 className="text-2xl font-bold text-center mb-2">Ett fel uppstod</h2>
+        <p className="text-gray-600 dark:text-gray-300 text-center mb-6">{error}</p>
+        <div className="flex gap-4">
+          <Button onClick={handleBack} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Tillbaka
+          </Button>
+          <Button onClick={handleHome}>
+            <Home className="h-4 w-4 mr-2" />
+            Hem
+          </Button>
+        </div>
       </div>
     );
   }
-
-  const progress = Math.round(((currentIndex) / programFlashcards.length) * 100);
-
-  return (
-    <div>
-      <Link to="/home" className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-learny-purple dark:hover:text-learny-purple-dark mb-6">
-        <ChevronLeft className="h-5 w-5 mr-1" />
-        Tillbaka till startsidan
-      </Link>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 dark:text-white">{program.name}</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300">{program.description}</p>
-      </div>
-
-      {!isFinished && (
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center">
-              <BookOpen className="h-5 w-5 text-learny-purple dark:text-learny-purple-dark mr-2" />
-              <span className="text-sm font-medium dark:text-gray-300">
-                {currentIndex + 1} av {programFlashcards.length} flashcards
-              </span>
-            </div>
+  
+  // Session complete state
+  if (sessionComplete) {
+    const correctPercent = Math.round((sessionStats.correct / sessionStats.total) * 100);
+    
+    return (
+      <div className="max-w-2xl mx-auto px-4">
+        <h1 className="text-2xl font-bold mb-6">Session avslutad!</h1>
+        
+        <Card className="p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Ditt resultat</h2>
+          
+          <div className="space-y-4">
             <div>
-              <span className="text-sm font-medium text-learny-green dark:text-learny-green-dark">
-                {sessionCorrectCount} rätt
-              </span>
-              <span className="mx-2 dark:text-gray-400">•</span>
-              <span className="text-sm font-medium text-learny-red dark:text-learny-red-dark">
-                {sessionIncorrectCount} fel
-              </span>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Korrekt:</p>
+              <div className="flex items-center">
+                <span className="text-2xl font-bold mr-2">{sessionStats.correct}</span>
+                <span className="text-gray-500 dark:text-gray-400">av {sessionStats.total}</span>
+                <Badge className="ml-auto bg-green-500">{correctPercent}%</Badge>
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Fel:</p>
+              <div className="flex items-center">
+                <span className="text-2xl font-bold mr-2">{sessionStats.incorrect}</span>
+                <span className="text-gray-500 dark:text-gray-400">av {sessionStats.total}</span>
+                <Badge className="ml-auto bg-red-500">{100 - correctPercent}%</Badge>
+              </div>
+            </div>
+            
+            <div className="pt-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Totalt resultat:</p>
+              <Progress 
+                className="h-3"
+                value={correctPercent} 
+                indicatorClassName={correctPercent > 70 ? "bg-green-500" : correctPercent > 40 ? "bg-yellow-500" : "bg-red-500"}
+              />
             </div>
           </div>
-          <Progress value={progress} className="h-2" />
+        </Card>
+        
+        <div className="flex gap-4 justify-between">
+          <Button onClick={handleBack} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Tillbaka
+          </Button>
+          <Button onClick={handleRestart}>
+            Börja om
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Regular study state
+  return (
+    <div className="max-w-2xl mx-auto px-4">
+      {program && (
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">{program.name}</h1>
+          <p className="text-gray-600 dark:text-gray-300">{program.description}</p>
+          
+          {isCategoryDifficultyFormat && difficultyLevel && (
+            <Badge className="mt-2">{difficulty[difficultyLevel as keyof typeof difficulty] || difficultyLevel}</Badge>
+          )}
         </div>
       )}
-
-      <AnimatePresence mode="wait">
-        {!isFinished ? (
-          <motion.div
-            key={`flashcard-${programFlashcards[currentIndex]?.id || currentIndex}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <FlashcardComponent
-              flashcard={programFlashcards[currentIndex]}
-              onCorrect={handleCorrect}
-              onIncorrect={handleIncorrect}
-              onNext={handleNextCard}
-              showControls={true}
-            />
-          </motion.div>
+      
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Kort {currentCardIndex + 1} av {flashcards.length}
+          </span>
+          <div className="flex gap-2">
+            <Badge variant="outline">{sessionStats.correct} rätt</Badge>
+            <Badge variant="outline" className="border-red-500">{sessionStats.incorrect} fel</Badge>
+          </div>
+        </div>
+        <Progress value={(currentCardIndex / flashcards.length) * 100} className="h-2" />
+      </div>
+      
+      {currentCard && (
+        <div className="mb-8">
+          <Flashcard
+            flashcard={currentCard}
+            flipped={flipped}
+            onFlip={() => setFlipped(!flipped)}
+          />
+        </div>
+      )}
+      
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        {flipped ? (
+          <>
+            <Button 
+              onClick={() => handleAnswer(false)} 
+              variant="outline" 
+              className="flex-1 border-red-500 hover:bg-red-500 hover:text-white"
+            >
+              <X className="h-5 w-5 mr-2" />
+              Fel
+            </Button>
+            <Button 
+              onClick={() => handleAnswer(true)} 
+              variant="outline" 
+              className="flex-1 border-green-500 hover:bg-green-500 hover:text-white"
+            >
+              <Check className="h-5 w-5 mr-2" />
+              Rätt
+            </Button>
+          </>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mt-4"
+          <Button 
+            onClick={() => setFlipped(true)} 
+            className="flex-1 bg-learny-purple hover:bg-learny-purple-dark"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 max-w-lg mx-auto text-center">
-              <div className="inline-flex items-center justify-center rounded-full bg-learny-purple/10 dark:bg-learny-purple-dark/10 p-4 mb-4">
-                <Trophy className="h-10 w-10 text-learny-purple dark:text-learny-purple-dark" />
-              </div>
-              <h2 className="text-2xl font-bold mb-4 dark:text-white">
-                Träningspass slutfört!
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Du har gått igenom alla flashcards i detta program.
-              </p>
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center justify-center mb-2">
-                    <CheckCircle className="h-5 w-5 text-learny-green dark:text-learny-green-dark mr-2" />
-                    <span className="font-medium dark:text-white">Rätt svar</span>
-                  </div>
-                  <p className="text-2xl font-bold text-learny-green dark:text-learny-green-dark">
-                    {sessionCorrectCount}
-                  </p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center justify-center mb-2">
-                    <AlertCircle className="h-5 w-5 text-learny-red dark:text-learny-red-dark mr-2" />
-                    <span className="font-medium dark:text-white">Fel svar</span>
-                  </div>
-                  <p className="text-2xl font-bold text-learny-red dark:text-learny-red-dark">
-                    {sessionIncorrectCount}
-                  </p>
-                </div>
-              </div>
-
-              {incorrectAnswers.length > 0 ? (
-                <div className="mb-8 text-left">
-                  <h3 className="font-medium text-lg mb-4 dark:text-white">Att öva på:</h3>
-                  <div className="space-y-4 max-h-60 overflow-y-auto border dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-700">
-                    {incorrectAnswers.map((answer, index) => (
-                      <div key={index} className="border-b dark:border-gray-600 pb-2 last:border-b-0">
-                        <p className="font-medium mb-1 dark:text-gray-200">F: {answer.question}</p>
-                        <p className="text-sm text-learny-green dark:text-learny-green-dark">Rätt svar: {answer.correctAnswer}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-8 text-center p-4 bg-green-100 dark:bg-green-900/30 rounded-md border border-green-200 dark:border-green-700">
-                  <CheckCircle className="h-6 w-6 text-learny-green dark:text-learny-green-dark mx-auto mb-2" />
-                  <p className="font-medium text-learny-green dark:text-learny-green-dark">Alla rätt! Bra jobbat!</p>
-                </div>
-              )}
-
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button variant="outline" onClick={handleRestartProgram}>
-                  <RefreshCcw className="h-4 w-4 mr-2" /> Öva igen
-                </Button>
-
-                {program.hasExam && (
-                  <Button onClick={handleStartExam} className="flex items-center gap-2">
-                    <FileQuestion className="h-4 w-4" /> Ta provet
-                  </Button>
-                )}
-
-                <Button asChild>
-                  <Link to="/home">Tillbaka till startsidan</Link>
-                </Button>
-              </div>
-            </div>
-          </motion.div>
+            Visa svar
+          </Button>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
-};
-
-export default StudyPage;
+}

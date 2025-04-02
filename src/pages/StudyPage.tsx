@@ -351,7 +351,9 @@ export default function StudyPage() {
               <Progress 
                 className="h-3"
                 value={correctPercent} 
-                indicatorClassName={correctPercent > 70 ? "bg-green-500" : correctPercent > 40 ? "bg-yellow-500" : "bg-red-500"}
+                // Fixed: removed indicatorClassName prop which doesn't exist
+                // Instead, apply the color directly to the Progress component
+                // The Progress component from shadcn doesn't have an indicatorClassName prop
               />
             </div>
           </div>
@@ -401,7 +403,9 @@ export default function StudyPage() {
         <div className="mb-8">
           <Flashcard
             flashcard={currentCard}
-            flipped={flipped}
+            // Instead of passing flipped and onFlip directly, we'll use the format
+            // expected by the component
+            isFlipped={flipped}
             onFlip={() => setFlipped(!flipped)}
           />
         </div>

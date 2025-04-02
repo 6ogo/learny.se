@@ -6,7 +6,7 @@ export const geographyFlashcards: Flashcard[] = [
     id: 'geo-1',
     question: 'Vilken är Sveriges huvudstad?',
     answer: 'Stockholm',
-    category: 'science',
+    category: 'geography',  // Updated to match the correct category
     difficulty: 'beginner',
     isApproved: true
   },
@@ -14,7 +14,7 @@ export const geographyFlashcards: Flashcard[] = [
     id: 'geo-2',
     question: 'Vilka länder gränsar till Sverige?',
     answer: 'Norge och Finland',
-    category: 'science',
+    category: 'geography',  // Updated to match the correct category
     difficulty: 'beginner',
     isApproved: true
   }

@@ -31,13 +31,14 @@ interface LocalStorageContextType extends LocalStorageState {
   addFlashcard: (flashcard: Flashcard) => void;
   updateFlashcard: (id: string, updatedFlashcard: Partial<Flashcard>) => void;
   deleteFlashcard: (id: string) => void;
+  importFlashcards: (flashcards: Flashcard[]) => Promise<void>;
 
   // Helper methods
   getCategory: (id: string) => Category | undefined;
   getFlashcardsByCategory: (categoryId: string) => Flashcard[];
   markProgramCompleted: (programId: string) => void;
   updateUserStats: (partialStats: Partial<UserStats>) => void;
-  debugFlashcardLoading: (programId: string) => Promise<void>; // Add this line
+  debugFlashcardLoading: (programId: string) => Promise<void>;
 
   // Context management
   initializeContext: (userId: string) => Promise<void>;
@@ -1015,6 +1016,130 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [currentUserId]);
 
+  // Import flashcards from sharing
+  const importFlashcards = useCallback(async (cardsToImport: Flashcard[]): Promise<void> => {
+    if (!currentUserId || cardsToImport.length === 0) return;
+
+    try {
+      console.log(`Importing ${cardsToImport.length} flashcards for user ${currentUserId}`);
+      
+      // First, determine a default module for these flashcards
+      // Group flashcards by category
+      const categorizedCards: Record<string, Flashcard[]> = {};
+      
+      cardsToImport.forEach(card => {
+        if (!categorizedCards[card.category]) {
+          categorizedCards[card.category] = [];
+        }
+        categorizedCards[card.category].push(card);
+      });
+      
+      // Process each category group
+      for (const category in categorizedCards) {
+        const cards = categorizedCards[category];
+        if (!cards.length) continue;
+        
+        // Find or create a module for this category
+        const { data: existingModule, error: moduleError } = await supabase
+          .from('flashcard_modules')
+          .select('id')
+          .eq('category', category)
+          .eq('user_id', currentUserId)
+          .limit(1)
+          .maybeSingle();
+
+        let moduleId: string;
+        
+        if (moduleError) {
+          console.error("Error checking for existing module:", moduleError);
+          continue;
+        }
+
+        if (existingModule) {
+          // Use existing module
+          moduleId = existingModule.id;
+        } else {
+          // Create a new default module for this category
+          const categoryName = categories.find(c => c.id === category)?.name || category;
+          const { data: newModule, error: createError } = await supabase
+            .from('flashcard_modules')
+            .insert({
+              name: `${categoryName} Imported Module`,
+              description: `Imported flashcards for ${categoryName}`,
+              category: category,
+              user_id: currentUserId,
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error("Error creating default module:", createError);
+            continue;
+          }
+
+          moduleId = newModule.id;
+        }
+        
+        // Now add all flashcards for this category
+        const flashcardsToInsert = cards.map(card => ({
+          question: card.question,
+          answer: card.answer,
+          category: card.category,
+          subcategory: card.subcategory || null,
+          difficulty: card.difficulty,
+          module_id: moduleId,
+          user_id: currentUserId,
+          correct_count: 0,
+          incorrect_count: 0,
+          last_reviewed: null,
+          learned: false,
+          review_later: false,
+          report_count: 0,
+          report_reason: [],
+          is_approved: true
+        }));
+        
+        const { data: insertedCards, error: insertError } = await supabase
+          .from('flashcards')
+          .insert(flashcardsToInsert)
+          .select();
+        
+        if (insertError) {
+          console.error("Error inserting imported flashcards:", insertError);
+          continue;
+        }
+        
+        // Convert inserted cards to frontend format and add to state
+        if (insertedCards && insertedCards.length > 0) {
+          const newFlashcards: Flashcard[] = insertedCards.map(card => ({
+            id: card.id,
+            question: card.question,
+            answer: card.answer,
+            category: card.category,
+            subcategory: card.subcategory || undefined,
+            difficulty: card.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+            correctCount: card.correct_count || 0,
+            incorrectCount: card.incorrect_count || 0,
+            lastReviewed: card.last_reviewed ? new Date(card.last_reviewed).getTime() : undefined,
+            learned: Boolean(card.learned),
+            reviewLater: Boolean(card.review_later),
+            reportCount: card.report_count || 0,
+            reportReason: card.report_reason,
+            isApproved: Boolean(card.is_approved),
+            module_id: card.module_id,
+          }));
+          
+          setFlashcards(prev => [...prev, ...newFlashcards]);
+        }
+      }
+      
+      console.log("Flashcard import completed successfully");
+    } catch (error) {
+      console.error("Error importing flashcards:", error);
+      throw error;
+    }
+  }, [currentUserId, categories]);
+
   // Context value
   const value: LocalStorageContextType = {
     // State
@@ -1035,13 +1160,14 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     addFlashcard,
     updateFlashcard,
     deleteFlashcard,
+    importFlashcards,
 
     // Helper methods
     getCategory,
     getFlashcardsByCategory,
     markProgramCompleted,
     updateUserStats,
-    debugFlashcardLoading, // Add this line
+    debugFlashcardLoading,
 
     // Context management
     initializeContext,
@@ -1061,8 +1187,5 @@ export const useLocalStorage = () => {
   if (context === undefined) {
     throw new Error('useLocalStorage must be used within a LocalStorageProvider');
   }
-  return {
-    debugFlashcardLoading: false,
-    ...context
-  };
+  return context;
 };

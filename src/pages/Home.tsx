@@ -1,3 +1,4 @@
+
 // src/pages/Home.tsx - replace with this clean version
 import React, { useEffect, useState, useCallback } from 'react';
 import { CategoryCard } from '@/components/CategoryCard';

@@ -1,4 +1,3 @@
-
 // src/pages/StudyPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -15,10 +14,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { initialCategories as categories } from '@/data/categories';
 
-// Define a type for the answers being tracked
 type AnswerRecord = {
   question: string;
-  userAnswer?: string; // User answer might not be available if skipped
+  userAnswer?: string;
   correctAnswer: string;
   isCorrect: boolean;
 };
@@ -48,7 +46,6 @@ const StudyPage = () => {
   const [isFinished, setIsFinished] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  // --- Fetch Program and Flashcards ---
   const loadStudyData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -64,8 +61,6 @@ const StudyPage = () => {
     try {
       console.log(`StudyPage: Loading program data for ID: ${programId}`);
       
-      // Create a new study session
-      let sessionId = null;
       if (user) {
         try {
           const { data: sessionData, error: sessionError } = await supabase
@@ -92,15 +87,12 @@ const StudyPage = () => {
         }
       }
   
-      // Special handling for different program ID formats
       let fetchedProgram = null;
       
-      // Handle IDs with category-difficulty format
       if (programId.includes('-')) {
         const [category, difficulty] = programId.split('-');
         console.log(`StudyPage: Detected category-difficulty format: ${category}-${difficulty}`);
         
-        // Create a synthetic program
         fetchedProgram = {
           id: programId,
           name: `${categories.find(c => c.id === category)?.name || category} (${difficulty})`,
@@ -111,11 +103,9 @@ const StudyPage = () => {
           hasExam: false
         };
       } else {
-        // Regular module ID format - try to fetch from context first
         const program = await fetchProgram(programId);
         
         if (!program) {
-          // If fetchProgram returns null, try direct DB fetch as fallback
           try {
             console.log("StudyPage: fetchProgram returned null, trying direct DB fetch");
             const { data: moduleData, error: moduleError } = await supabase
@@ -137,7 +127,7 @@ const StudyPage = () => {
               name: moduleData.name,
               description: moduleData.description || moduleData.name,
               category: moduleData.category,
-              difficulty: 'beginner', // Default value
+              difficulty: 'beginner',
               flashcards: [],
               hasExam: false
             };
@@ -159,8 +149,6 @@ const StudyPage = () => {
       setProgram(fetchedProgram);
       console.log("StudyPage: Program set:", fetchedProgram.name);
   
-      // Fetch flashcards for the program
-      console.log(`StudyPage: Fetching flashcards for program: ${programId}`);
       let fetchedFlashcards: FlashcardType[] = [];
       
       try {
@@ -168,9 +156,7 @@ const StudyPage = () => {
         console.log(`StudyPage: Fetched ${fetchedFlashcards.length} flashcards`);
         
         if (fetchedFlashcards.length === 0) {
-          // If no flashcards from context, try direct DB query as fallback
           if (programId.includes('-')) {
-            // For category-difficulty format
             const [category, difficulty] = programId.split('-');
             console.log(`StudyPage: Direct DB fetch for ${category}-${difficulty}`);
             
@@ -196,7 +182,6 @@ const StudyPage = () => {
               }));
             }
           } else {
-            // For regular module ID
             console.log(`StudyPage: Direct DB fetch for module ${programId}`);
             
             const { data, error } = await supabase
@@ -223,7 +208,6 @@ const StudyPage = () => {
         }
       } catch (flashcardsError) {
         console.error("StudyPage: Error fetching flashcards:", flashcardsError);
-        // Continue with empty array instead of failing completely
         fetchedFlashcards = [];
       }
   
@@ -231,7 +215,6 @@ const StudyPage = () => {
         throw new Error("Inga flashcards hittades för detta program.");
       }
       
-      // Shuffle the flashcards for better learning experience
       const shuffledFlashcards = [...fetchedFlashcards].sort(() => 0.5 - Math.random());
       setProgramFlashcards(shuffledFlashcards);
   
@@ -243,58 +226,62 @@ const StudyPage = () => {
       setIsLoading(false);
     }
   }, [programId, fetchProgram, fetchFlashcardsByProgramId, toast, user, categories]);
-  
+
   useEffect(() => {
-    loadStudyData();
-    updateUserStats({}); // Update activity/streak on visit
-  }, [loadStudyData, updateUserStats]);
+    let isMounted = true;
+    
+    if (isMounted) {
+      loadStudyData();
+      updateUserStats({});
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  // --- Handle Flashcard Interaction Updates ---
   const updateFlashcardStats = async (flashcardId: string, isCorrect: boolean) => {
-     if (!user) return;
+    if (!user) return;
 
-     const currentCard = programFlashcards.find(f => f.id === flashcardId);
-     if (!currentCard) return;
-     
-     const columnToIncrement = isCorrect ? 'correct_count' : 'incorrect_count';
-     const currentValue = (isCorrect ? currentCard.correct_count : currentCard.incorrect_count) || 0;
+    const currentCard = programFlashcards.find(f => f.id === flashcardId);
+    if (!currentCard) return;
+    
+    const columnToIncrement = isCorrect ? 'correct_count' : 'incorrect_count';
+    const currentValue = (isCorrect ? currentCard.correct_count : currentCard.incorrect_count) || 0;
 
-     try {
-        // Update directly in Supabase
-        const { error } = await supabase
-          .from('flashcards')
-          .update({
-            [columnToIncrement]: currentValue + 1,
-            last_reviewed: new Date().toISOString(),
-          })
-          .eq('id', flashcardId);
+    try {
+      const { error } = await supabase
+        .from('flashcards')
+        .update({
+          [columnToIncrement]: currentValue + 1,
+          last_reviewed: new Date().toISOString(),
+        })
+        .eq('id', flashcardId);
 
-        if (error) {
-          console.error("Error updating flashcard stats in DB:", error);
+      if (error) {
+        console.error("Error updating flashcard stats in DB:", error);
+      }
+      
+      if (sessionId) {
+        const { error: interactionError } = await supabase
+          .from('flashcard_interactions')
+          .insert({
+            user_id: user.id,
+            flashcard_id: flashcardId,
+            session_id: sessionId,
+            is_correct: isCorrect,
+            response_time_ms: 0
+          });
+          
+        if (interactionError) {
+          console.error("Error recording flashcard interaction:", interactionError);
         }
-        
-        // Record interaction in flashcard_interactions table
-        if (sessionId) {
-          const { error: interactionError } = await supabase
-            .from('flashcard_interactions')
-            .insert({
-              user_id: user.id,
-              flashcard_id: flashcardId,
-              session_id: sessionId,
-              is_correct: isCorrect,
-              response_time_ms: 0 // We're not tracking response time currently
-            });
-            
-          if (interactionError) {
-            console.error("Error recording flashcard interaction:", interactionError);
-          }
-        }
-     } catch (err) {
-       console.error("Failed to update flashcard stats:", err);
-     }
+      }
+    } catch (err) {
+      console.error("Failed to update flashcard stats:", err);
+    }
   };
 
-  // --- Event Handlers ---
   const handleCorrect = (id: string) => {
     setSessionCorrectCount(prev => prev + 1);
     updateFlashcardStats(id, true);
@@ -304,7 +291,6 @@ const StudyPage = () => {
     setSessionIncorrectCount(prev => prev + 1);
     updateFlashcardStats(id, false);
 
-    // Save details for the summary review
     const currentCard = programFlashcards[currentIndex];
     if (currentCard) {
       setIncorrectAnswers(prev => [
@@ -324,7 +310,6 @@ const StudyPage = () => {
     } else {
       setIsFinished(true);
 
-      // Update session as completed
       if (sessionId && user) {
         supabase
           .from('flashcard_sessions')
@@ -341,7 +326,6 @@ const StudyPage = () => {
             else console.log("Session completed:", sessionId);
           });
           
-        // Also update user activity
         supabase.rpc('increment_flashcards_studied', { 
           user_id: user.id, 
           study_date: new Date().toISOString().split('T')[0], 
@@ -351,7 +335,6 @@ const StudyPage = () => {
         });
       }
 
-      // Update global user stats with the session's results
       updateUserStats({
         totalCorrect: (userStats.totalCorrect || 0) + sessionCorrectCount,
         totalIncorrect: (userStats.totalIncorrect || 0) + sessionIncorrectCount,
@@ -366,7 +349,6 @@ const StudyPage = () => {
   };
 
   const handleRestartProgram = () => {
-    // Create a new session for the restart
     if (user && programId) {
       supabase
         .from('flashcard_sessions')
@@ -384,7 +366,6 @@ const StudyPage = () => {
         });
     }
     
-    // Shuffle cards for the restart
     const shuffledFlashcards = [...programFlashcards].sort(() => 0.5 - Math.random());
     setProgramFlashcards(shuffledFlashcards);
     
@@ -401,7 +382,6 @@ const StudyPage = () => {
     }
   };
 
-  // --- Render Logic ---
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -428,19 +408,16 @@ const StudyPage = () => {
 
   return (
     <div>
-      {/* Back Link */}
       <Link to="/home" className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-learny-purple dark:hover:text-learny-purple-dark mb-6">
         <ChevronLeft className="h-5 w-5 mr-1" />
         Tillbaka till startsidan
       </Link>
 
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 dark:text-white">{program.name}</h1>
         <p className="text-lg text-gray-600 dark:text-gray-300">{program.description}</p>
       </div>
 
-      {/* Progress Bar */}
       {!isFinished && (
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
@@ -464,7 +441,6 @@ const StudyPage = () => {
         </div>
       )}
 
-      {/* Flashcard/Summary Area */}
       <AnimatePresence mode="wait">
         {!isFinished ? (
           <motion.div
@@ -500,9 +476,7 @@ const StudyPage = () => {
                 Du har gått igenom alla flashcards i detta program.
               </p>
 
-              {/* Score Summary */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* Correct Answers */}
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center justify-center mb-2">
                     <CheckCircle className="h-5 w-5 text-learny-green dark:text-learny-green-dark mr-2" />
@@ -512,7 +486,6 @@ const StudyPage = () => {
                     {sessionCorrectCount}
                   </p>
                 </div>
-                {/* Incorrect Answers */}
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center justify-center mb-2">
                     <AlertCircle className="h-5 w-5 text-learny-red dark:text-learny-red-dark mr-2" />
@@ -524,7 +497,6 @@ const StudyPage = () => {
                 </div>
               </div>
 
-              {/* Incorrect Answers Review Section */}
               {incorrectAnswers.length > 0 ? (
                 <div className="mb-8 text-left">
                   <h3 className="font-medium text-lg mb-4 dark:text-white">Att öva på:</h3>
@@ -544,7 +516,6 @@ const StudyPage = () => {
                 </div>
               )}
 
-              {/* Action Buttons */}
               <div className="flex flex-wrap justify-center gap-3">
                 <Button variant="outline" onClick={handleRestartProgram}>
                   <RefreshCcw className="h-4 w-4 mr-2" /> Öva igen

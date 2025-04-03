@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { Program } from '@/types/program';
@@ -13,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
-const difficulty = {
+const difficultyLabels = {
   beginner: 'Nybörjare',
   intermediate: 'Medel',
   advanced: 'Avancerad',
@@ -23,7 +24,7 @@ const difficulty = {
 export default function StudyPage() {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
-  const { fetchFlashcardsByProgramId, fetchProgram, markProgramCompleted, updateUserStats, debugFlashcardLoading } = useLocalStorage();
+  const { fetchFlashcardsByProgramId, fetchProgram, markProgramCompleted, updateUserStats } = useLocalStorage();
   const { user } = useAuth();
   
   // Program state
@@ -46,6 +47,9 @@ export default function StudyPage() {
   // Session management
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionComplete, setSessionComplete] = useState(false);
+  
+  // Reference to track if data has been loaded
+  const dataLoaded = useRef(false);
   
   // Parse category and difficulty from programId if it's in the format "category-difficulty"
   const isCategoryDifficultyFormat = programId?.includes('-') && programId.split('-').length === 2;
@@ -94,67 +98,62 @@ export default function StudyPage() {
     }
   }, [user, program, categoryId]);
   
-  // Load study data (program and flashcards)
-  const loadStudyData = useCallback(async () => {
-    if (!programId) {
-      setError('Inget program-ID angivet');
-      setLoading(false);
-      return;
-    }
-    
-    console.log(`StudyPage: Loading program data for ID: ${programId}`);
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Fetch program data
-      const programData = await fetchProgram(programId);
-      
-      if (!programData) {
-        setError('Programmet kunde inte hittas');
-        setLoading(false);
-        return;
-      }
-      
-      setProgram(programData);
-      
-      // Fetch flashcards for this program - only fetch once
-      console.log(`StudyPage: Fetching flashcards for program: ${programId}`);
-      const cards = await fetchFlashcardsByProgramId(programId);
-      
-      if (!cards || cards.length === 0) {
-        console.log('No flashcards found for program');
-        await debugFlashcardLoading(programId);
-        throw new Error('Inga flashcards hittades för detta program.');
-      }
-      
-      setFlashcards(cards);
-      setCurrentCard(cards[0]);
-      setCurrentCardIndex(0);
-      
-      // Create a new session
-      const newSessionId = await createSession();
-      setSessionId(newSessionId);
-      
-      setSessionStats({
-        correct: 0,
-        incorrect: 0,
-        total: cards.length,
-        cardsStudied: 0,
-      });
-      
-      setLoading(false);
-    } catch (err: any) {
-      console.log(' StudyPage: Error in loadStudyData:', err);
-      setError(err.message || 'Ett fel uppstod vid laddning av studie-data');
-      setLoading(false);
-    }
-  }, [programId, fetchProgram, fetchFlashcardsByProgramId, createSession, debugFlashcardLoading]);
-  
-  // Initial data loading - use empty dependency array to load only once
+  // Load study data (program and flashcards) - only once
   useEffect(() => {
-    loadStudyData();
-  }, []);
+    // Prevent duplicate loading
+    if (dataLoaded.current || !programId) return;
+    
+    const loadData = async () => {
+      console.log(`StudyPage: Loading program data for ID: ${programId}`);
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch program data
+        const programData = await fetchProgram(programId);
+        
+        if (!programData) {
+          setError('Programmet kunde inte hittas');
+          setLoading(false);
+          return;
+        }
+        
+        setProgram(programData);
+        
+        // Fetch flashcards for this program - only fetch once
+        console.log(`StudyPage: Fetching flashcards for program: ${programId}`);
+        const cards = await fetchFlashcardsByProgramId(programId);
+        
+        if (!cards || cards.length === 0) {
+          throw new Error('Inga flashcards hittades för detta program.');
+        }
+        
+        setFlashcards(cards);
+        setCurrentCard(cards[0]);
+        setCurrentCardIndex(0);
+        
+        // Create a new session
+        const newSessionId = await createSession();
+        setSessionId(newSessionId);
+        
+        setSessionStats({
+          correct: 0,
+          incorrect: 0,
+          total: cards.length,
+          cardsStudied: 0,
+        });
+        
+        dataLoaded.current = true;
+        setLoading(false);
+      } catch (err: any) {
+        console.error(`StudyPage: Error in loadData:`, err);
+        setError(err.message || 'Ett fel uppstod vid laddning av studie-data');
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [programId, fetchProgram, fetchFlashcardsByProgramId, createSession]);
   
   // Update current card when index changes
   useEffect(() => {
@@ -177,14 +176,23 @@ export default function StudyPage() {
     
     // Update flashcard stats in Supabase
     try {
-      const updates = {
-        [correct ? 'correct_count' : 'incorrect_count']: supabase.rpc('increment', {
-          row_id: parseInt(currentCard.id),
-          column_name: correct ? 'correct_count' : 'incorrect_count',
-          table_name: 'flashcards'
-        }),
+      const updates: any = {
         last_reviewed: new Date().toISOString()
       };
+      
+      if (correct) {
+        updates.correct_count = supabase.rpc('increment', {
+          row_id: parseInt(currentCard.id),
+          column_name: 'correct_count',
+          table_name: 'flashcards'
+        });
+      } else {
+        updates.incorrect_count = supabase.rpc('increment', {
+          row_id: parseInt(currentCard.id),
+          column_name: 'incorrect_count',
+          table_name: 'flashcards'
+        });
+      }
       
       await supabase
         .from('flashcards')
@@ -377,7 +385,7 @@ export default function StudyPage() {
           <p className="text-gray-600 dark:text-gray-300">{program.description}</p>
           
           {isCategoryDifficultyFormat && difficultyLevel && (
-            <Badge className="mt-2">{difficulty[difficultyLevel as keyof typeof difficulty] || difficultyLevel}</Badge>
+            <Badge className="mt-2">{difficultyLabels[difficultyLevel as keyof typeof difficultyLabels] || difficultyLevel}</Badge>
           )}
         </div>
       )}

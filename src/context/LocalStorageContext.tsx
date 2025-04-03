@@ -1,3 +1,4 @@
+
 // src/context/LocalStorageContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Category } from '@/types/category';
@@ -373,68 +374,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [currentUserId, flashcards, isContextLoading]);
 
-  // Fetch programs for a category
-  const fetchProgramsByCategory = useCallback(async (categoryId: string): Promise<Program[]> => {
-    // If we're still loading, return empty array after a delay
-    if (isContextLoading) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return [];
-    }
-
-    try {
-      // First, try filtering local programs
-      const localCategoryPrograms = programs.filter(p => p.category === categoryId);
-      if (localCategoryPrograms.length > 0) {
-        return localCategoryPrograms;
-      }
-
-      // If no local programs for this category, try to fetch modules from Supabase
-      const { data: modules, error } = await supabase
-        .from('flashcard_modules')
-        .select('*')
-        .eq('category', categoryId)
-        .eq('user_id', currentUserId);
-
-      if (error) {
-        console.error("Error fetching modules by category:", error);
-        throw error;
-      }
-
-      if (modules && modules.length > 0) {
-        console.log(`Fetched ${modules.length} modules for category ${categoryId}`);
-
-        // Convert modules to programs
-        const modulePrograms: Program[] = modules.map(module => ({
-          id: module.id,
-          name: module.name,
-          description: module.description || `${module.name} flashcards`,
-          category: module.category,
-          difficulty: 'beginner', // Default difficulty
-          flashcards: [], // Will be populated separately
-          progress: 0,
-          hasExam: false,
-        }));
-
-        // Update programs state with these new programs
-        setPrograms(prev => {
-          const filtered = prev.filter(p => p.category !== categoryId);
-          return [...filtered, ...modulePrograms];
-        });
-
-        return modulePrograms;
-      }
-
-      // If no real modules found, return placeholder programs
-      return generatePlaceholderPrograms([getCategory(categoryId)].filter(Boolean) as Category[]);
-
-    } catch (error) {
-      console.error("Error fetching programs by category:", error);
-      // For now, just filter local programs state as fallback
-      return programs.filter(program => program.category === categoryId);
-    }
-  }, [isContextLoading, programs, currentUserId, getCategory]);
-
-  // Fetch a single program - MOVED BEFORE fetchFlashcardsByProgramId
+  // Fetch a single program
   const fetchProgram = useCallback(async (programId: string): Promise<Program | null> => {
     console.log(`fetchProgram: Attempting to fetch program: ${programId}`);
 
@@ -528,6 +468,67 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return null;
     }
   }, [programs, categories]);
+
+  // Fetch programs for a category
+  const fetchProgramsByCategory = useCallback(async (categoryId: string): Promise<Program[]> => {
+    // If we're still loading, return empty array after a delay
+    if (isContextLoading) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return [];
+    }
+
+    try {
+      // First, try filtering local programs
+      const localCategoryPrograms = programs.filter(p => p.category === categoryId);
+      if (localCategoryPrograms.length > 0) {
+        return localCategoryPrograms;
+      }
+
+      // If no local programs for this category, try to fetch modules from Supabase
+      const { data: modules, error } = await supabase
+        .from('flashcard_modules')
+        .select('*')
+        .eq('category', categoryId)
+        .eq('user_id', currentUserId);
+
+      if (error) {
+        console.error("Error fetching modules by category:", error);
+        throw error;
+      }
+
+      if (modules && modules.length > 0) {
+        console.log(`Fetched ${modules.length} modules for category ${categoryId}`);
+
+        // Convert modules to programs
+        const modulePrograms: Program[] = modules.map(module => ({
+          id: module.id,
+          name: module.name,
+          description: module.description || `${module.name} flashcards`,
+          category: module.category,
+          difficulty: 'beginner', // Default difficulty
+          flashcards: [], // Will be populated separately
+          progress: 0,
+          hasExam: false,
+        }));
+
+        // Update programs state with these new programs
+        setPrograms(prev => {
+          const filtered = prev.filter(p => p.category !== categoryId);
+          return [...filtered, ...modulePrograms];
+        });
+
+        return modulePrograms;
+      }
+
+      // If no real modules found, return placeholder programs
+      return generatePlaceholderPrograms([getCategory(categoryId)].filter(Boolean) as Category[]);
+
+    } catch (error) {
+      console.error("Error fetching programs by category:", error);
+      // For now, just filter local programs state as fallback
+      return programs.filter(program => program.category === categoryId);
+    }
+  }, [isContextLoading, programs, currentUserId, getCategory]);
 
   // Fetch flashcards for a program
   const fetchFlashcardsByProgramId = useCallback(async (programId: string): Promise<Flashcard[]> => {
@@ -911,3 +912,220 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       // Always update lastActivity on any stats update
       updated.lastActivity = Date.now();
+
+      // Update local storage
+      if (currentUserId) {
+        localStorage.setItem(`user_stats_${currentUserId}`, JSON.stringify(updated));
+      }
+      
+      return updated;
+    });
+  }, [currentUserId]);
+
+  // Add a new category
+  const addCategory = useCallback((category: Category) => {
+    setCategories(prev => [...prev, category]);
+  }, []);
+
+  // Add a flashcard
+  const addFlashcard = useCallback((flashcard: Flashcard) => {
+    setFlashcards(prev => [...prev, flashcard]);
+  }, []);
+
+  // Update a flashcard
+  const updateFlashcard = useCallback((id: string, updatedFlashcard: Partial<Flashcard>) => {
+    setFlashcards(prev => 
+      prev.map(card => card.id === id ? { ...card, ...updatedFlashcard } : card)
+    );
+  }, []);
+
+  // Delete a flashcard
+  const deleteFlashcard = useCallback((id: string) => {
+    setFlashcards(prev => prev.filter(card => card.id !== id));
+  }, []);
+
+  // Import a batch of flashcards, potentially creating modules
+  const importFlashcards = useCallback(async (flashcardsToImport: Flashcard[]): Promise<void> => {
+    if (!currentUserId || flashcardsToImport.length === 0) {
+      return;
+    }
+
+    try {
+      // Group flashcards by category
+      const flashcardsByCategory = flashcardsToImport.reduce<Record<string, Flashcard[]>>((groups, card) => {
+        const category = card.category || 'uncategorized';
+        if (!groups[category]) {
+          groups[category] = [];
+        }
+        groups[category].push(card);
+        return groups;
+      }, {});
+
+      for (const [category, cards] of Object.entries(flashcardsByCategory)) {
+        // Check if we need to create a module
+        const moduleName = `Imported ${cards.length} flashcards - ${new Date().toLocaleDateString()}`;
+        
+        // Create module in Supabase
+        const { data: moduleData, error: moduleError } = await supabase
+          .from('flashcard_modules')
+          .insert({
+            name: moduleName,
+            description: `Imported flashcards for ${category}`,
+            category,
+            user_id: currentUserId
+          })
+          .select()
+          .single();
+
+        if (moduleError) {
+          console.error("Error creating module:", moduleError);
+          throw moduleError;
+        }
+
+        const moduleId = moduleData.id;
+
+        // Format cards for Supabase with the new module_id
+        const cardsForInsertion = cards.map(card => ({
+          question: card.question,
+          answer: card.answer,
+          category: card.category,
+          subcategory: card.subcategory || null,
+          difficulty: card.difficulty,
+          user_id: currentUserId,
+          module_id: moduleId,
+          learned: false,
+          review_later: false
+        }));
+
+        // Insert cards into Supabase
+        const { error: cardsError } = await supabase
+          .from('flashcards')
+          .insert(cardsForInsertion);
+
+        if (cardsError) {
+          console.error("Error importing flashcards:", cardsError);
+          throw cardsError;
+        }
+
+        // Add new module to local state
+        const newProgram: Program = {
+          id: moduleId,
+          name: moduleName,
+          description: `Imported flashcards for ${category}`,
+          category,
+          difficulty: 'beginner',
+          flashcards: [],
+          progress: 0,
+          hasExam: false
+        };
+
+        setPrograms(prev => [...prev, newProgram]);
+
+        // Also add the new flashcards to local state
+        const formattedCards = cards.map(card => ({
+          ...card,
+          module_id: moduleId,
+          correctCount: 0,
+          incorrectCount: 0,
+          learned: false,
+          reviewLater: false
+        }));
+
+        setFlashcards(prev => [...prev, ...formattedCards]);
+      }
+
+      console.log(`Successfully imported ${flashcardsToImport.length} flashcards`);
+    } catch (error) {
+      console.error("Error during flashcard import:", error);
+      throw error;
+    }
+  }, [currentUserId]);
+
+  // Update flashcard user interaction (learned/review later)
+  const updateFlashcardUserInteraction = useCallback(async (flashcardId: string, updates: { learned?: boolean, reviewLater?: boolean }) => {
+    if (!currentUserId || !flashcardId) {
+      return;
+    }
+
+    try {
+      // Local state update
+      setFlashcards(prev => 
+        prev.map(card => 
+          card.id === flashcardId ? { ...card, ...updates } : card
+        )
+      );
+      
+      // Prepare database update
+      const dbUpdates: Record<string, boolean> = {};
+      if (updates.learned !== undefined) {
+        dbUpdates.learned = updates.learned;
+      }
+      if (updates.reviewLater !== undefined) {
+        dbUpdates.review_later = updates.reviewLater;
+      }
+      
+      // Send to database
+      const { error } = await supabase
+        .from('flashcards')
+        .update(dbUpdates)
+        .eq('id', flashcardId);
+      
+      if (error) {
+        console.error("Error updating flashcard interaction:", error);
+        throw error;
+      }
+      
+      // Update stats if marking as learned
+      if (updates.learned) {
+        updateUserStats({ cardsLearned: 1 });
+      }
+      
+    } catch (error) {
+      console.error("Error in updateFlashcardUserInteraction:", error);
+    }
+  }, [currentUserId, updateUserStats]);
+
+  // Provide all methods and state to children
+  return (
+    <LocalStorageContext.Provider
+      value={{
+        // State
+        categories,
+        flashcards,
+        programs,
+        userStats,
+        isContextLoading,
+
+        // Methods
+        fetchFlashcardsByCategory,
+        fetchFlashcardsByProgramId,
+        fetchProgramsByCategory,
+        fetchProgram,
+        addCategory,
+        addFlashcard,
+        updateFlashcard,
+        deleteFlashcard,
+        importFlashcards,
+        getCategory,
+        getFlashcardsByCategory,
+        markProgramCompleted,
+        updateUserStats,
+        initializeContext,
+        resetContext,
+        debugFlashcardLoading,
+        updateFlashcardUserInteraction,
+      }}
+    >
+      {children}
+    </LocalStorageContext.Provider>
+  );
+};
+
+// Custom hook for consuming context
+export const useLocalStorage = (): LocalStorageContextType => {
+  const context = useContext(LocalStorageContext);
+  if (!context) {
+    throw new Error('useLocalStorage must be used within a LocalStorageProvider');
+  }
+  return context;
+};

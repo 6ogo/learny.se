@@ -1,22 +1,29 @@
 
-// src/pages/Home.tsx - replace with this clean version
+// src/pages/Home.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { CategoryCard } from '@/components/CategoryCard';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { useAuth } from '@/context/AuthContext';
-import { BookOpen, Award, TrendingUp } from 'lucide-react';
+import { BookOpen, Award, TrendingUp, BookMarked, UserCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ModulesSection } from '@/components/ModulesSection';
+import { Program } from '@/types/program';
 
 const Home = () => {
   const {
     categories,
     userStats,
-    updateUserStats
+    updateUserStats,
+    fetchGenericModules,
+    fetchUserModules
   } = useLocalStorage();
   const { user } = useAuth();
 
   const [totalCardCount, setTotalCardCount] = useState<number | null>(null);
   const [moduleCount, setModuleCount] = useState<number | null>(null);
+  const [genericModules, setGenericModules] = useState<Program[]>([]);
+  const [userModules, setUserModules] = useState<Program[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Fetch total card count
   const fetchTotalCardCount = useCallback(async () => {
@@ -41,18 +48,37 @@ const Home = () => {
     }
   }, []);
 
+  // Fetch modules (both generic and user-specific)
+  const loadModules = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [genericMods, userMods] = await Promise.all([
+        fetchGenericModules(),
+        fetchUserModules()
+      ]);
+      
+      setGenericModules(genericMods);
+      setUserModules(userMods);
+    } catch (error) {
+      console.error("Error loading modules:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchGenericModules, fetchUserModules]);
+
   // Initial data loading effect
   useEffect(() => {
     updateUserStats({}); // Update activity/streak
   
     const loadData = async () => {
       await fetchTotalCardCount();
+      await loadModules();
     };
     
     if (user?.id) {
       loadData();
     }
-  }, [updateUserStats, fetchTotalCardCount, user?.id]);
+  }, [updateUserStats, fetchTotalCardCount, user?.id, loadModules]);
   
   return (
     <div>
@@ -82,7 +108,7 @@ const Home = () => {
             <div className="bg-learny-green/10 dark:bg-learny-green-dark/10 p-3 rounded-full mr-4">
               <TrendingUp className="h-6 w-6 text-learny-green dark:text-learny-green-dark" />
             </div>
-            <h3 className="text-lg font-medium dark:text-white">Modul</h3>
+            <h3 className="text-lg font-medium dark:text-white">Moduler</h3>
           </div>
           <p className="text-3xl font-bold dark:text-white">{moduleCount !== null ? moduleCount.toLocaleString() : '-'}</p>
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Tillgängliga moduler</p>
@@ -99,6 +125,24 @@ const Home = () => {
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Dagars aktivitetssvit</p>
         </div>
       </section>
+
+      {/* User Modules Section */}
+      <ModulesSection 
+        title="Dina moduler" 
+        icon={<UserCircle className="h-6 w-6" />} 
+        modules={userModules} 
+        emptyMessage="Du har inte skapat några egna moduler än."
+        isLoading={isLoading}
+      />
+
+      {/* Generic Modules Section */}
+      <ModulesSection 
+        title="Learny Moduler" 
+        icon={<BookMarked className="h-6 w-6" />} 
+        modules={genericModules}
+        emptyMessage="Det finns inga generiska moduler tillgängliga."
+        isLoading={isLoading}
+      />
 
       {/* Categories Section */}
       <section className="mb-12">

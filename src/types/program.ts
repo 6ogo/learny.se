@@ -10,4 +10,5 @@ export type Program = {
   progress?: number;
   hasExam?: boolean; // Indicates if the program has an exam at the end
   flashcardCount?: number; // Number of flashcards in this program
+  isGeneric?: boolean; // Indicates if this is a generic module available to all users
 };

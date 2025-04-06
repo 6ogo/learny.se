@@ -26,6 +26,8 @@ interface LocalStorageContextType extends LocalStorageState {
   fetchFlashcardsByProgramId: (programId: string) => Promise<Flashcard[]>;
   fetchProgramsByCategory: (categoryId: string) => Promise<Program[]>;
   fetchProgram: (programId: string) => Promise<Program | null>;
+  fetchGenericModules: () => Promise<Program[]>;
+  fetchUserModules: () => Promise<Program[]>;
 
   // Data manipulation methods
   addCategory: (category: Category) => void;
@@ -153,33 +155,11 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setFlashcards([]);
       }
 
-      // Fetch flashcard modules
-      const { data: modules, error: modulesError } = await supabase
-        .from('flashcard_modules')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (modulesError) {
-        console.error("Error fetching flashcard modules:", modulesError);
-      } else if (modules && modules.length > 0) {
-        // Create programs based on modules
-        const modulePrograms: Program[] = modules.map(module => ({
-          id: module.id,
-          name: module.name,
-          description: module.description || `${module.name} flashcards`,
-          category: module.category,
-          difficulty: 'beginner', // Default difficulty
-          flashcards: [], // Will be populated later
-          progress: 0,
-          hasExam: false,
-        }));
-
-        setPrograms(modulePrograms);
-      } else {
-        // Generate placeholder programs if no modules exist
-        const placeholderPrograms = generatePlaceholderPrograms(categories);
-        setPrograms(placeholderPrograms);
-      }
+      // Fetch both user modules and generic modules
+      await Promise.all([
+        fetchUserModules(),
+        fetchGenericModules()
+      ]);
 
       // Load user stats
       try {
@@ -201,7 +181,102 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       setIsContextLoading(false);
     }
-  }, [categories, currentUserId]);
+  }, [categories]);
+
+  // Fetch generic modules that are available to all users
+  const fetchGenericModules = useCallback(async (): Promise<Program[]> => {
+    try {
+      const { data: genericModules, error } = await supabase
+        .from('flashcard_modules')
+        .select('*')
+        .eq('is_generic', true);
+      
+      if (error) {
+        console.error("Error fetching generic modules:", error);
+        return [];
+      }
+
+      if (genericModules && genericModules.length > 0) {
+        console.log(`Fetched ${genericModules.length} generic modules`);
+        
+        // Create programs based on generic modules
+        const modulePrograms: Program[] = genericModules.map(module => ({
+          id: module.id,
+          name: module.name,
+          description: module.description || `${module.name} flashcards`,
+          category: module.category,
+          difficulty: 'beginner', // Default difficulty
+          flashcards: [],
+          progress: 0,
+          hasExam: false,
+          isGeneric: true // Mark as generic
+        }));
+
+        // Update programs state to include these generic modules
+        setPrograms(prev => {
+          const filtered = prev.filter(p => !p.isGeneric); // Remove previous generic modules
+          return [...filtered, ...modulePrograms];
+        });
+
+        return modulePrograms;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error("Error in fetchGenericModules:", error);
+      return [];
+    }
+  }, []);
+
+  // Fetch modules specific to the current user
+  const fetchUserModules = useCallback(async (): Promise<Program[]> => {
+    if (!currentUserId) return [];
+    
+    try {
+      const { data: userModules, error } = await supabase
+        .from('flashcard_modules')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .eq('is_generic', false);
+      
+      if (error) {
+        console.error("Error fetching user modules:", error);
+        return [];
+      }
+
+      if (userModules && userModules.length > 0) {
+        console.log(`Fetched ${userModules.length} user modules`);
+        
+        // Create programs based on user modules
+        const modulePrograms: Program[] = userModules.map(module => ({
+          id: module.id,
+          name: module.name,
+          description: module.description || `${module.name} flashcards`,
+          category: module.category,
+          difficulty: 'beginner', // Default difficulty
+          flashcards: [],
+          progress: 0,
+          hasExam: false,
+          isGeneric: false // Mark as user-specific
+        }));
+
+        // Update programs state to include these user modules
+        setPrograms(prev => {
+          const filtered = prev.filter(p => p.isGeneric || (p.isGeneric === undefined)); // Keep generic modules and placeholders
+          return [...filtered, ...modulePrograms];
+        });
+
+        return modulePrograms;
+      } else {
+        console.log("No user modules found");
+      }
+      
+      return [];
+    } catch (error) {
+      console.error("Error in fetchUserModules:", error);
+      return [];
+    }
+  }, [currentUserId]);
 
   // Reset context (used on logout)
   const resetContext = useCallback(() => {
@@ -452,6 +527,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           flashcards: [], // Will be populated separately
           progress: 0,
           hasExam: false,
+          isGeneric: Boolean(data.is_generic), // Add isGeneric flag
         };
 
         // Add to local state
@@ -484,23 +560,30 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return localCategoryPrograms;
       }
 
-      // If no local programs for this category, try to fetch modules from Supabase
-      const { data: modules, error } = await supabase
-        .from('flashcard_modules')
-        .select('*')
-        .eq('category', categoryId)
-        .eq('user_id', currentUserId);
+      // Fetch both generic and user-specific modules for this category
+      const [genericModulesResponse, userModulesResponse] = await Promise.all([
+        supabase
+          .from('flashcard_modules')
+          .select('*')
+          .eq('category', categoryId)
+          .eq('is_generic', true),
+        currentUserId ? 
+          supabase
+            .from('flashcard_modules')
+            .select('*')
+            .eq('category', categoryId)
+            .eq('user_id', currentUserId)
+            .eq('is_generic', false) : 
+          { data: [], error: null }
+      ]);
 
-      if (error) {
-        console.error("Error fetching modules by category:", error);
-        throw error;
-      }
-
-      if (modules && modules.length > 0) {
-        console.log(`Fetched ${modules.length} modules for category ${categoryId}`);
-
-        // Convert modules to programs
-        const modulePrograms: Program[] = modules.map(module => ({
+      const allModules = [];
+      
+      // Process generic modules
+      if (genericModulesResponse.error) {
+        console.error("Error fetching generic modules by category:", genericModulesResponse.error);
+      } else if (genericModulesResponse.data?.length) {
+        const genericPrograms = genericModulesResponse.data.map(module => ({
           id: module.id,
           name: module.name,
           description: module.description || `${module.name} flashcards`,
@@ -509,15 +592,39 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           flashcards: [], // Will be populated separately
           progress: 0,
           hasExam: false,
+          isGeneric: true
         }));
+        allModules.push(...genericPrograms);
+      }
 
+      // Process user modules
+      if (userModulesResponse.error) {
+        console.error("Error fetching user modules by category:", userModulesResponse.error);
+      } else if (userModulesResponse.data?.length) {
+        const userPrograms = userModulesResponse.data.map(module => ({
+          id: module.id,
+          name: module.name,
+          description: module.description || `${module.name} flashcards`,
+          category: module.category,
+          difficulty: 'beginner', // Default difficulty
+          flashcards: [], // Will be populated separately
+          progress: 0,
+          hasExam: false,
+          isGeneric: false
+        }));
+        allModules.push(...userPrograms);
+      }
+      
+      if (allModules.length > 0) {
+        console.log(`Fetched ${allModules.length} total modules for category ${categoryId}`);
+        
         // Update programs state with these new programs
         setPrograms(prev => {
           const filtered = prev.filter(p => p.category !== categoryId);
-          return [...filtered, ...modulePrograms];
+          return [...filtered, ...allModules];
         });
 
-        return modulePrograms;
+        return allModules;
       }
 
       // If no real modules found, return placeholder programs
@@ -1101,6 +1208,8 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         fetchFlashcardsByProgramId,
         fetchProgramsByCategory,
         fetchProgram,
+        fetchGenericModules,
+        fetchUserModules,
         addCategory,
         addFlashcard,
         updateFlashcard,

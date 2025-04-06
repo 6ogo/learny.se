@@ -1,4 +1,3 @@
-
 // src/context/LocalStorageContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Category } from '@/types/category';

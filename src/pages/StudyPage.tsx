@@ -13,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { StudyInsights } from '@/components/StudyInsights';
 
 const difficultyLabels = {
   beginner: 'Nybörjare',
@@ -20,6 +21,10 @@ const difficultyLabels = {
   advanced: 'Avancerad',
   expert: 'Expert'
 };
+
+interface FlashcardWithResponse extends FlashcardType {
+  userResponse?: boolean;
+}
 
 export default function StudyPage() {
   const { programId } = useParams<{ programId: string }>();
@@ -29,9 +34,9 @@ export default function StudyPage() {
   
   // Program state
   const [program, setProgram] = useState<Program | null>(null);
-  const [flashcards, setFlashcards] = useState<FlashcardType[]>([]);
+  const [flashcards, setFlashcards] = useState<FlashcardWithResponse[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [currentCard, setCurrentCard] = useState<FlashcardType | null>(null);
+  const [currentCard, setCurrentCard] = useState<FlashcardWithResponse | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,6 +171,14 @@ export default function StudyPage() {
   const handleAnswer = async (correct: boolean) => {
     if (!currentCard || !user?.id) return;
     
+    // Update flashcard with user response
+    const updatedFlashcards = [...flashcards];
+    updatedFlashcards[currentCardIndex] = {
+      ...updatedFlashcards[currentCardIndex],
+      userResponse: correct
+    };
+    setFlashcards(updatedFlashcards);
+    
     // Update session stats
     setSessionStats(prev => ({
       ...prev,
@@ -286,6 +299,13 @@ export default function StudyPage() {
       total: flashcards.length,
       cardsStudied: 0,
     });
+    // Reset user responses
+    const resetFlashcards = flashcards.map(card => ({
+      ...card,
+      userResponse: undefined
+    }));
+    setFlashcards(resetFlashcards);
+    
     // Create a new session
     createSession().then(newId => {
       setSessionId(newId);
@@ -323,55 +343,18 @@ export default function StudyPage() {
     );
   }
   
-  // Session complete state
-  if (sessionComplete) {
-    const correctPercent = Math.round((sessionStats.correct / sessionStats.total) * 100);
-    
+  // Session complete state with insights
+  if (sessionComplete && program) {
     return (
-      <div className="max-w-2xl mx-auto px-4">
-        <h1 className="text-2xl font-bold mb-6">Session avslutad!</h1>
-        
-        <Card className="p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Ditt resultat</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Korrekt:</p>
-              <div className="flex items-center">
-                <span className="text-2xl font-bold mr-2">{sessionStats.correct}</span>
-                <span className="text-gray-500 dark:text-gray-400">av {sessionStats.total}</span>
-                <Badge className="ml-auto bg-green-500">{correctPercent}%</Badge>
-              </div>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Fel:</p>
-              <div className="flex items-center">
-                <span className="text-2xl font-bold mr-2">{sessionStats.incorrect}</span>
-                <span className="text-gray-500 dark:text-gray-400">av {sessionStats.total}</span>
-                <Badge className="ml-auto bg-red-500">{100 - correctPercent}%</Badge>
-              </div>
-            </div>
-            
-            <div className="pt-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Totalt resultat:</p>
-              <Progress 
-                className="h-3"
-                value={correctPercent} 
-              />
-            </div>
-          </div>
-        </Card>
-        
-        <div className="flex gap-4 justify-between">
-          <Button onClick={handleBack} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Tillbaka
-          </Button>
-          <Button onClick={handleRestart}>
-            Börja om
-          </Button>
-        </div>
+      <div className="max-w-4xl mx-auto px-4">
+        <StudyInsights
+          program={program}
+          correctCount={sessionStats.correct}
+          incorrectCount={sessionStats.incorrect}
+          flashcards={flashcards}
+          onClose={handleBack}
+          onRestart={handleRestart}
+        />
       </div>
     );
   }

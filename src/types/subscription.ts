@@ -1,5 +1,5 @@
 
-export type SubscriptionTier = 'free' | 'premium' | 'super';
+export type SubscriptionTier = 'free' | 'plus' | 'super';
 
 export type SubscriptionFeature = {
   id: string;
@@ -7,14 +7,14 @@ export type SubscriptionFeature = {
   description: string;
   tiers: {
     free: boolean | string;
-    premium: boolean | string;
+    plus: boolean | string;
     super: boolean | string;
   };
   highlighted?: boolean;
 };
 
 export type TierDetails = {
-  id: SubscriptionTier;
+  id: string;
   name: string;
   description: string;
   price: string;

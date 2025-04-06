@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { Flashcard } from '@/components/Flashcard';
@@ -12,6 +11,27 @@ interface FlashcardsByLevelProps {
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
 }
 
+// Define helper functions first, before they're used
+const getDifficultyLabel = (difficulty: string) => {
+  switch (difficulty) {
+    case 'beginner': return 'Nybörjare';
+    case 'intermediate': return 'Medel';
+    case 'advanced': return 'Avancerad';
+    case 'expert': return 'Expert';
+    default: return difficulty;
+  }
+};
+
+const getDifficultyColor = (difficulty: string) => {
+  switch (difficulty) {
+    case 'beginner': return 'border-learny-green dark:border-learny-green-dark';
+    case 'intermediate': return 'border-learny-blue dark:border-learny-blue-dark';
+    case 'advanced': return 'border-learny-purple dark:border-learny-purple-dark';
+    case 'expert': return 'border-learny-red dark:border-learny-red-dark';
+    default: return 'border-gray-500';
+  }
+};
+
 export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId, difficulty }) => {
   const { getFlashcardsByCategory, fetchFlashcardsByCategory } = useLocalStorage();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -19,27 +39,6 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
   const [filteredFlashcards, setFilteredFlashcards] = useState<any[]>([]);
   const [isFlipped, setIsFlipped] = useState(false);
   const dataFetched = useRef(false);
-  
-  // Define helper functions first, before they're used
-  const getDifficultyLabel = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'Nybörjare';
-      case 'intermediate': return 'Medel';
-      case 'advanced': return 'Avancerad';
-      case 'expert': return 'Expert';
-      default: return difficulty;
-    }
-  };
-  
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'border-learny-green dark:border-learny-green-dark';
-      case 'intermediate': return 'border-learny-blue dark:border-learny-blue-dark';
-      case 'advanced': return 'border-learny-purple dark:border-learny-purple-dark';
-      case 'expert': return 'border-learny-red dark:border-learny-red-dark';
-      default: return 'border-gray-500';
-    }
-  };
   
   // Load flashcards when component mounts or categoryId/difficulty changes
   useEffect(() => {

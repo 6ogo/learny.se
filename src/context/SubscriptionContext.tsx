@@ -1,3 +1,4 @@
+
 // src/context/SubscriptionContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -8,7 +9,7 @@ import { SubscriptionTier, TierDetails } from '@/types/subscription';
 // Subscription tiers details
 const tierDetailsData: TierDetails[] = [
   {
-    id: 'gratis',
+    id: 'free',
     name: 'Gratis',
     description: 'Påbörja ditt lärande.',
     price: 'Gratis!',

@@ -8,59 +8,56 @@ import { SubscriptionTier, TierDetails } from '@/types/subscription';
 // Subscription tiers details
 const tierDetailsData: TierDetails[] = [
   {
-    id: 'free',
-    name: 'Free',
-    description: 'Start learning with basic flashcards',
-    price: 'Free',
+    id: 'gratis',
+    name: 'Gratis',
+    description: 'Påbörja ditt lärande.',
+    price: 'Gratis!',
     priceId: '', // No price ID for free tier
     features: [
-      'Unlimited study sessions',
-      'Basic statistics',
-      'Up to 1 flashcard module',
+      'Tillgång till 10 moduler/dag',
+      'Simpla resultat',
+      'Skapa upp till 3 egna moduler'
     ],
     limits: {
-      dailyCards: 50,
-      modules: 1,
+      dailyCards: 200,
+      modules: 3,
       ai: false,
     },
     cta: 'Current Plan',
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    description: 'Enhance your learning experience',
-    price: '99 kr/month',
+    id: 'plus',
+    name: 'Plus',
+    description: 'Effektivisera ditt lärande!',
+    price: '35 kr/mån',
     priceId: 'price_1PgHvhL8NfK43ZCzWM3qwZCw', // Replace with your actual Stripe price ID
     features: [
-      'Everything in Free',
-      'Up to 500 flashcards',
+      'Obegränsad tillgång till moduler',
+      'Skapa upp till 500 moduler',
       'Advanced statistics',
-      'Up to 10 modules',
-      'Export capabilities',
+      'Exportera egna moduler'
     ],
     limits: {
-      dailyCards: 500,
-      modules: 10,
+      dailyCards: 10000,
+      modules: 500,
       ai: false,
     },
-    cta: 'Upgrade to Premium',
+    cta: 'Uppgradera till Plus',
   },
   {
     id: 'super',
     name: 'Super Learner',
-    description: 'The ultimate learning toolkit',
-    price: '199 kr/month',
+    description: 'Ultimata lärandet!',
+    price: '99 kr/mån',
     priceId: 'price_1PgHwUL8NfK43ZCzSKugtQJn', // Replace with your actual Stripe price ID
     features: [
-      'Everything in Premium',
-      'Unlimited flashcards',
-      'AI flashcard generation',
-      'Personalized learning insights',
-      'Priority support',
+      'Allt som ingår i Premium',
+      'AI flashcard generering',
+      'Personaliserade inlärnings-insikter'
     ],
     limits: {
-      dailyCards: 2000,
-      modules: 100,
+      dailyCards: 10000,
+      modules: 500,
       ai: true,
     },
     cta: 'Become a Super Learner',

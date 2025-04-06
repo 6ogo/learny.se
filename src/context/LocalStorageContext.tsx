@@ -490,6 +490,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
             category,
             difficulty: difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
             flashcards: [],
+            progress: 0,
             hasExam: false
           };
 
@@ -801,7 +802,7 @@ export const LocalStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           if (data && data.length > 0) {
             console.log(`Fetched ${data.length} flashcards for module ${programId}`);
             
-            // Format and update local state
+            // Format and return
             const formattedCards = data.map(f => ({
               id: f.id,
               question: f.question,

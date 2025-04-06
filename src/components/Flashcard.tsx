@@ -46,13 +46,13 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   const getDifficultyDisplay = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner':
-        return { label: 'Nybörjare', color: 'bg-green-500' };
+        return { label: 'Nybörjare', color: 'bg-learny-green dark:bg-learny-green-dark' };
       case 'intermediate':
-        return { label: 'Medel', color: 'bg-yellow-500' };
+        return { label: 'Medel', color: 'bg-learny-blue dark:bg-learny-blue-dark' };
       case 'advanced':
-        return { label: 'Avancerad', color: 'bg-orange-500' };
+        return { label: 'Avancerad', color: 'bg-learny-purple dark:bg-learny-purple-dark' };
       case 'expert':
-        return { label: 'Expert', color: 'bg-red-500' };
+        return { label: 'Expert', color: 'bg-learny-red dark:bg-learny-red-dark' };
       default:
         return { label: difficulty, color: 'bg-gray-500' };
     }
@@ -125,8 +125,8 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         {/* Back side */}
         <Card 
           className={cn(
-            "absolute w-full h-full backface-hidden p-6 flex flex-col",
-            flipped ? "visible rotate-y-180" : "invisible"
+            "absolute w-full h-full backface-hidden p-6 flex flex-col rotate-y-180",
+            flipped ? "visible" : "invisible"
           )}
         >
           <CardContent className="flex-1 flex flex-col justify-center p-0">

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { Flashcard } from '@/components/Flashcard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,23 +12,48 @@ interface FlashcardsByLevelProps {
 }
 
 export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId, difficulty }) => {
-  const { getFlashcardsByCategory } = useLocalStorage();
+  const { getFlashcardsByCategory, fetchFlashcardsByCategory } = useLocalStorage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [filteredFlashcards, setFilteredFlashcards] = useState<any[]>([]);
   const [isFlipped, setIsFlipped] = useState(false);
+  const dataFetched = useRef(false);
   
   // Load flashcards when component mounts or categoryId/difficulty changes
   useEffect(() => {
     setIsLoading(true);
     
-    // Filter flashcards for this category and difficulty from local storage
-    const cards = getFlashcardsByCategory(categoryId).filter(card => card.difficulty === difficulty);
-    setFilteredFlashcards(cards);
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setIsLoading(false);
-  }, [categoryId, difficulty, getFlashcardsByCategory]);
+    // First try to get cards from local cache
+    const cachedCards = getFlashcardsByCategory(categoryId).filter(card => card.difficulty === difficulty);
+    
+    if (cachedCards.length > 0 && dataFetched.current) {
+      // Use cached data if available and we've already attempted a fetch
+      setFilteredFlashcards(cachedCards);
+      setCurrentIndex(0);
+      setIsFlipped(false);
+      setIsLoading(false);
+    } else {
+      // Otherwise fetch from the database
+      const loadData = async () => {
+        try {
+          await fetchFlashcardsByCategory(categoryId);
+          // After fetching, get the updated cards from cache
+          const updatedCards = getFlashcardsByCategory(categoryId).filter(card => card.difficulty === difficulty);
+          setFilteredFlashcards(updatedCards);
+          dataFetched.current = true; // Mark that we've attempted a fetch
+        } catch (error) {
+          console.error('Error loading flashcards:', error);
+          // If fetch fails, still use any available cached cards
+          setFilteredFlashcards(cachedCards);
+        } finally {
+          setCurrentIndex(0);
+          setIsFlipped(false);
+          setIsLoading(false);
+        }
+      };
+      loadData();
+    }
+  }, [categoryId, difficulty, getFlashcardsByCategory, fetchFlashcardsByCategory]);
   
   if (isLoading) {
     return (

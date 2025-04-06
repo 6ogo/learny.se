@@ -1,6 +1,6 @@
 
 // src/components/FlashcardsBySubcategory.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { Flashcard } from '@/components/Flashcard'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -45,14 +45,22 @@ export const FlashcardsBySubcategory: React.FC<FlashcardsBySubcategoryProps> = (
   const [currentIndices, setCurrentIndices] = useState<Record<string, Record<string, number>>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const dataFetchedRef = useRef(false);
 
-  // Fetch and Group Flashcards
+  // Fetch and Group Flashcards - with optimization to prevent excessive fetching
   const loadAndGroupFlashcards = useCallback(async () => {
+    // Only fetch if we haven't already or if there was an error
+    if (dataFetchedRef.current && Object.keys(flashcardGroups).length > 0 && !error) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+    
     try {
       const allFlashcards = await fetchFlashcardsByCategory(categoryId);
       if (!allFlashcards) throw new Error("Kunde inte hämta flashcards.");
+      
       if (allFlashcards.length === 0) {
           // Set empty groups and stop loading if no cards found
           setFlashcardGroups({});
@@ -61,6 +69,7 @@ export const FlashcardsBySubcategory: React.FC<FlashcardsBySubcategoryProps> = (
           return;
       }
 
+      // Group flashcards by subcategory and difficulty
       const grouped = allFlashcards.reduce((groups, flashcard) => {
         const subcategory = flashcard.subcategory || 'Allmänt';
         const difficulty = flashcard.difficulty;
@@ -71,23 +80,35 @@ export const FlashcardsBySubcategory: React.FC<FlashcardsBySubcategoryProps> = (
       }, {} as Record<string, Record<string, FlashcardType[]>>);
 
       setFlashcardGroups(grouped);
+      
+      // Initialize indices for navigation
       const initialIndices: Record<string, Record<string, number>> = {};
       Object.keys(grouped).forEach(sub => {
         initialIndices[sub] = {};
         Object.keys(grouped[sub]).forEach(diff => { initialIndices[sub][diff] = 0; });
       });
+      
       setCurrentIndices(initialIndices);
+      dataFetchedRef.current = true; // Mark that we've successfully fetched the data
     } catch (err: any) {
-        console.error("Error loading flashcards for subcategory view:", err)
+        console.error("Error loading flashcards for subcategory view:", err);
         setError(err.message || "Kunde inte ladda flashcards.");
         setFlashcardGroups({});
         setCurrentIndices({});
     } finally {
       setIsLoading(false);
     }
-  }, [categoryId, fetchFlashcardsByCategory]);
+  }, [categoryId, fetchFlashcardsByCategory, error, flashcardGroups]);
 
-  useEffect(() => { loadAndGroupFlashcards(); }, [loadAndGroupFlashcards]);
+  // Initial load
+  useEffect(() => {
+    loadAndGroupFlashcards();
+  }, [loadAndGroupFlashcards]);
+
+  // Reset data fetch flag when category changes
+  useEffect(() => {
+    dataFetchedRef.current = false;
+  }, [categoryId]);
 
   // Navigation Handlers
   const handlePrevious = (subcategory: string, difficulty: string) => {
@@ -162,8 +183,6 @@ export const FlashcardsBySubcategory: React.FC<FlashcardsBySubcategoryProps> = (
             <p className="text-center py-8 dark:text-gray-400">
               Inga flashcards tillgängliga i denna kategori ännu.
             </p>
-            {/* Optional: Add a button to create cards */}
-            {/* <Button asChild className="mt-4"><Link to="/create">Skapa Flashcards</Link></Button> */}
           </CardContent>
         </Card>
       );
@@ -178,7 +197,7 @@ export const FlashcardsBySubcategory: React.FC<FlashcardsBySubcategoryProps> = (
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="multiple" className="w-full" defaultValue={sortedSubcategories}> {/* Optionally open all by default */}
+        <Accordion type="multiple" className="w-full" defaultValue={sortedSubcategories}>
           {sortedSubcategories.map(subcategory => (
             Object.keys(flashcardGroups[subcategory] || {}).length > 0 && (
               <AccordionItem key={subcategory} value={subcategory}>
@@ -221,6 +240,7 @@ export const FlashcardsBySubcategory: React.FC<FlashcardsBySubcategoryProps> = (
                           {(currentCardIndex >= 0 && currentCardIndex < cardsInGroup.length) ? (
                             <Flashcard 
                               flashcard={cardsInGroup[currentCardIndex]}
+                              showInteractions={true}
                             />
                           ) : (
                             <p className="text-center text-red-500">Fel: Kunde inte visa flashcard.</p>

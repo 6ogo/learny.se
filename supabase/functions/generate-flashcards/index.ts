@@ -1,3 +1,4 @@
+
 // supabase/functions/generate-flashcards/index.ts
 
 // These imports might show as errors in VS Code, but they work in the Deno runtime
@@ -15,6 +16,8 @@ interface RequestBody {
   category: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   count?: number;
+  context?: string; // Add context parameter
+  language?: string; // Add language parameter
 }
 
 // CORS Headers configuration
@@ -110,7 +113,7 @@ serve(async (req: Request) => {
 
   try {
     // Parse request body
-    const { topic, category, difficulty, count = 10 }: RequestBody = await req.json();
+    const { topic, category, difficulty, count = 10, context = '', language = 'swedish' }: RequestBody = await req.json();
 
     // --- Input Validation ---
     if (!topic || !category || !difficulty) {
@@ -139,8 +142,16 @@ serve(async (req: Request) => {
     }
 
     // --- Call Groq API ---
-    const systemPrompt = `You are an expert flashcard creator specializing in the field related to ${category}. Generate exactly ${count} high-quality flashcards about the specific topic: "${topic}". The target difficulty level is: ${difficulty}. Ensure each flashcard has a clear 'question' and a concise, accurate 'answer'. The flashcards should be factual and educational. Format the output STRICTLY as a valid JSON array of objects, where each object has exactly two string keys: "question" and "answer". Do NOT include any text, explanations, introductions, markdown formatting, or code blocks before or after the JSON array itself. The entire response must be only the JSON array. Example: [{"question": "Q1?", "answer": "A1"}, {"question": "Q2?", "answer": "A2"}]`;
-    const userPrompt = `Generate ${count} flashcards for topic "${topic}", category "${category}", difficulty "${difficulty}". Strict JSON array output only.`;
+    let systemPrompt = `Du är en expert på att skapa flashcards för ämnet "${category}". Generera exakt ${count} högkvalitativa flashcards på svenska om: "${topic}". Svårighetsgraden ska vara: ${difficulty}.`;
+    
+    // Add context if provided
+    if (context && context.trim().length > 0) {
+      systemPrompt += ` Använd följande ytterligare kontext för att skapa mer detaljerade och relevanta flashcards: "${context}"`;
+    }
+    
+    systemPrompt += ` Se till att varje flashcard har en tydlig 'question' och ett koncist, korrekt 'answer'. Flashcards ska vara faktabaserade och lärande. Formatera utmatningen STRIKT som en giltig JSON-array med objekt, där varje objekt har exakt två strängnycklar: "question" och "answer". Inkludera INTE någon text, förklaringar, introduktioner, markeringsformatering eller kodblock före eller efter JSON-arrayen. Hela svaret måste endast vara JSON-arrayen. Exempel: [{"question": "F1?", "answer": "S1"}, {"question": "F2?", "answer": "S2"}]`;
+    
+    const userPrompt = `Generera ${count} flashcards på svenska för ämnet "${topic}", kategori "${category}", svårighetsgrad "${difficulty}". Endast JSON-array som output.`;
 
     console.log(`Calling Groq for: ${topic} (${category}, ${difficulty}, ${count})`);
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -203,7 +214,7 @@ serve(async (req: Request) => {
           console.log("AI generated an empty list of flashcards.");
           // Inform the user appropriately
            return new Response(
-             JSON.stringify({ flashcards: [], saved: false, message: "AI generated no flashcards for this topic." }),
+             JSON.stringify({ flashcards: [], saved: false, message: "AI genererade inga flashcards för detta ämne." }),
              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
            );
     }

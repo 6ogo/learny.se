@@ -1,3 +1,4 @@
+
 // src/services/groqService.ts
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +8,7 @@ export interface AIFlashcardRequest {
   category: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   count?: number;
+  context?: string; // Add support for additional context
 }
 
 export interface AIFlashcardResponse {
@@ -26,7 +28,9 @@ export const generateFlashcards = async (request: AIFlashcardRequest): Promise<A
         topic: request.topic,
         category: request.category,
         difficulty: request.difficulty,
-        count: request.count || 10
+        count: request.count || 10,
+        context: request.context || '', // Pass additional context if provided
+        language: 'swedish' // Always generate flashcards in Swedish
       }
     });
 

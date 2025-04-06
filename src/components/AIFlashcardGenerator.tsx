@@ -1,3 +1,4 @@
+
 // src/components/AIFlashcardGenerator.tsx
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea'; // Added Textarea import
 import { useToast } from '@/hooks/use-toast';
 import { generateFlashcards, AIFlashcardRequest, AIFlashcardResponse } from '@/services/groqService';
 import { useLocalStorage } from '@/context/LocalStorageContext';
@@ -23,6 +25,7 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'expert'>('intermediate');
   const [count, setCount] = useState(10);
+  const [context, setContext] = useState(''); // Added context state
 
   const handleGenerate = async () => {
     if (!topic) {
@@ -41,7 +44,8 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
         topic: topic, // Assign value of topic state
         category: selectedCategory, // Assign value of selectedCategory state
         difficulty: difficulty, // Assign value of difficulty state
-        count: count // Assign value of count state
+        count: count, // Assign value of count state
+        context: context // Add additional context if provided
       };
 
       const response: AIFlashcardResponse = await generateFlashcards(request);
@@ -49,6 +53,7 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
       if (response.saved) {
         console.log("AI Flashcards generated and saved successfully.");
         setTopic(''); // Reset topic on success
+        setContext(''); // Reset context on success
       } else if (response.flashcards?.length > 0 && !response.error) {
         console.log("AI Flashcards generated but not saved.");
       } else {
@@ -73,7 +78,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
     }
   };
 
-  // --- JSX remains the same ---
   return (
     <Card className="relative overflow-hidden">
        <div className="absolute top-0 right-0 p-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-bl-lg">
@@ -98,6 +102,22 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
                value={topic}
                onChange={(e) => setTopic(e.target.value)}
              />
+           </div>
+           
+           {/* Context Input - New */}
+           <div className="grid gap-2">
+             <Label htmlFor="context-ai">Ytterligare kontext (valfritt)</Label>
+             <Textarea
+               id="context-ai"
+               placeholder="Lägg till mer detaljerad kontext eller exempeltext (max 1000 tecken)"
+               value={context}
+               onChange={(e) => setContext(e.target.value)}
+               maxLength={1000}
+               className="min-h-[100px] resize-y"
+             />
+             <div className="text-xs text-muted-foreground text-right">
+               {context.length}/1000 tecken
+             </div>
            </div>
 
            {/* Category Select */}

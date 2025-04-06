@@ -21,7 +21,7 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
   const dataFetched = useRef(false);
   
   // Define helper functions first, before they're used
-  const getDifficultyLabel = () => {
+  const getDifficultyLabel = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner': return 'Nybörjare';
       case 'intermediate': return 'Medel';
@@ -31,12 +31,13 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
     }
   };
   
-  const getDifficultyColor = () => {
+  const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner': return 'border-learny-green dark:border-learny-green-dark';
       case 'intermediate': return 'border-learny-blue dark:border-learny-blue-dark';
       case 'advanced': return 'border-learny-purple dark:border-learny-purple-dark';
       case 'expert': return 'border-learny-red dark:border-learny-red-dark';
+      default: return 'border-gray-500';
     }
   };
   
@@ -78,9 +79,9 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
   
   if (isLoading) {
     return (
-      <Card className={cn("mb-8 border-l-4", getDifficultyColor())}>
+      <Card className={cn("mb-8 border-l-4", getDifficultyColor(difficulty))}>
         <CardHeader>
-          <CardTitle>{getDifficultyLabel()}</CardTitle>
+          <CardTitle>{getDifficultyLabel(difficulty)}</CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center items-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -109,10 +110,10 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
   };
 
   return (
-    <Card className={cn("mb-8 border-l-4", getDifficultyColor())}>
+    <Card className={cn("mb-8 border-l-4", getDifficultyColor(difficulty))}>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          <span>{getDifficultyLabel()} ({filteredFlashcards.length} kort)</span>
+          <span>{getDifficultyLabel(difficulty)} ({filteredFlashcards.length} kort)</span>
           <div className="flex gap-2">
             <Button 
               variant="outline" 

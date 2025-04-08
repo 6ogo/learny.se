@@ -2,7 +2,6 @@
 // supabase/functions/generate-flashcards/index.ts
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.8.0'
-import { Groq } from "https://esm.sh/@groq/groq@0.3.0";
 
 // CORS headers for the response
 const corsHeaders = {
@@ -52,9 +51,8 @@ serve(async (req) => {
       );
     }
 
-    // Create GROQ client
-    const groq = new Groq({ apiKey });
-
+    console.log(`Generating ${count} flashcards about "${topic}" in category "${category}" with difficulty "${difficulty}"`);
+    
     // Build a prompt that includes additional context if provided
     let prompt = `Generera ${count} flashcards på svenska för ämnet "${topic}" inom kategorin "${category}" med svårighetsgrad "${difficulty}".`;
     
@@ -75,27 +73,33 @@ serve(async (req) => {
     Inkludera BARA denna JSON-array i ditt svar, inga andra kommentarer eller förklaringar.
     `;
 
-    console.log(`Generating ${count} flashcards about "${topic}" in category "${category}" with difficulty "${difficulty}"`);
-    
-    // Call GROQ API
-    const response = await groq.chat.completions.create({
-      model: "llama3-70b-8192",
-      messages: [
-        {
-          role: "system",
-          content: "Du är en pedagogisk AI som hjälper till att skapa högkvalitativa flashcards på svenska. Svara med endast JSON utan kommentarer."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.4,
-      max_tokens: 4000,
+    // Call GROQ API directly using fetch
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: "llama3-70b-8192",
+        messages: [
+          {
+            role: "system",
+            content: "Du är en pedagogisk AI som hjälper till att skapa högkvalitativa flashcards på svenska. Svara med endast JSON utan kommentarer."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.4,
+        max_tokens: 4000,
+      }),
     });
 
     // Extract AI response
-    const aiResponseText = response.choices[0]?.message?.content || "";
+    const responseData = await response.json();
+    const aiResponseText = responseData.choices[0]?.message?.content || "";
     console.log("AI response:", aiResponseText.substring(0, 200) + "...");
 
     // Try to parse the JSON from the response

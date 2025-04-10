@@ -1,11 +1,11 @@
 
-import { useToast as useToastOriginal } from "@/components/ui/toast";
+import { useToast as useToastOriginal } from "@/components/ui/use-toast";
+import { toast as toastOriginal } from "@/components/ui/use-toast";
 
 // Re-export the original useToast function
 export const useToast = useToastOriginal;
 
 // Export toast as default and as a named export
-import { toast as toastOriginal } from "@/components/ui/toast";
 export const toast = toastOriginal;
 export default toast;
 

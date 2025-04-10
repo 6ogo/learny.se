@@ -2,7 +2,7 @@
 // Follow Deno Deploy runtime API
 import { serve } from "serve";
 import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 import { Database } from "../_shared/database.types.ts";
 
 // Define the correct GROQ API endpoint

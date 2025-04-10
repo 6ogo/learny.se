@@ -1,17 +1,14 @@
 
 // Re-export the toast functions from shadcn/ui
 import { toast as toastImplementation } from "@/components/ui/use-toast";
+import { useToast as useToastOriginal } from "@/components/ui/use-toast";
 
-// Create a proper useToast hook that returns both toasts array and toast function
+// Create a proper useToast hook that returns both the context and toast function
 export const useToast = () => {
-  const { toasts, addToast, dismissToast, updateToast } = require("@/components/ui/use-toast").useToast();
+  const toastContext = useToastOriginal();
   
   return {
-    toasts,
-    addToast,
-    dismissToast,
-    updateToast,
-    // Add the toast function to the returned object for convenience
+    ...toastContext,
     toast: toastImplementation
   };
 };

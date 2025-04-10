@@ -50,31 +50,37 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Helper function to create toast with default timeout
-function createToast(props: ToastProps) {
-  const { addToast } = useToast();
-  addToast(props);
+// Create a proper callable toast function
+// This is a function that can be called directly and has methods
+interface ToastFunction {
+  (props: Omit<ToastProps, "variant">): void;
+  defaultTimeout: number;
+  default: (props: Omit<ToastProps, "variant">) => void;
+  destructive: (props: Omit<ToastProps, "variant">) => void;
 }
 
-// Toast component helper functions as callable methods
-export const toast = {
-  // Default timeout
-  defaultTimeout: 5000,
-
-  // Make the toast object directly callable as a function for the default variant
-  __proto__: {
-    apply: function(target: any, thisArg: any, args: any[]) {
-      return target.default.apply(thisArg, args);
-    }
-  },
-
-  // Toast variants
-  default: (props: Omit<ToastProps, "variant">) => {
+const createToastFunction = (): ToastFunction => {
+  // Main toast function implementation - default variant
+  const toastFunction = ((props: Omit<ToastProps, "variant">) => {
     const { addToast } = require("@/hooks/use-toast").useToast();
     addToast({ ...props, variant: "default" });
-  },
-  destructive: (props: Omit<ToastProps, "variant">) => {
+  }) as ToastFunction;
+  
+  // Add properties to the function
+  toastFunction.defaultTimeout = 5000;
+  
+  toastFunction.default = (props: Omit<ToastProps, "variant">) => {
+    const { addToast } = require("@/hooks/use-toast").useToast();
+    addToast({ ...props, variant: "default" });
+  };
+  
+  toastFunction.destructive = (props: Omit<ToastProps, "variant">) => {
     const { addToast } = require("@/hooks/use-toast").useToast();
     addToast({ ...props, variant: "destructive" });
-  },
+  };
+  
+  return toastFunction;
 };
+
+// Create and export the toast function
+export const toast = createToastFunction();

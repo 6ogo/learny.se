@@ -8,9 +8,11 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import { useToast as useToastOriginal } from "@/components/ui/use-toast"
 
 export function Toaster() {
-  const { toasts } = useToast()
+  // Use the context directly from the original useToast, not our wrapped version
+  const { toasts } = useToastOriginal();
 
   return (
     <ToastProvider>

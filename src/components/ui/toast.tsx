@@ -111,8 +111,9 @@ const ToastDescription = React.forwardRef<
 ))
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
-// Extended ToastProps to include additional properties used in the app
+// Extended ToastProps to include additional properties used in our application
 type ToastProps = React.ComponentPropsWithoutRef<typeof Toast> & {
+  id?: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactNode;

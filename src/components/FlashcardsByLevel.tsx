@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { Flashcard } from '@/components/Flashcard';
@@ -133,14 +134,16 @@ export const FlashcardsByLevel: React.FC<FlashcardsByLevelProps> = ({ categoryId
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {filteredFlashcards.length > 0 && (
-          <Flashcard 
-            flashcard={filteredFlashcards[currentIndex]}
-            isFlipped={isFlipped}
-            onFlip={handleFlip}
-            showInteractions={true}
-          />
+          <div className="h-[250px]">
+            <Flashcard 
+              flashcard={filteredFlashcards[currentIndex]}
+              isFlipped={isFlipped}
+              onFlip={handleFlip}
+              showInteractions={true}
+            />
+          </div>
         )}
       </CardContent>
     </Card>

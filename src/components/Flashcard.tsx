@@ -72,7 +72,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   
   return (
     <div 
-      className={`flip-card-container ${flipped ? 'flipped' : ''} relative w-full cursor-pointer min-h-[200px] card-enter card-shadow`}
+      className={`flip-card-container ${flipped ? 'flipped' : ''} relative w-full cursor-pointer card-enter card-shadow`}
       onClick={handleClick}
     >
       <div className="flip-card-inner">

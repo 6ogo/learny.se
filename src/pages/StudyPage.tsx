@@ -387,7 +387,7 @@ export default function StudyPage() {
       </div>
       
       {currentCard && (
-        <div className="mb-8">
+        <div className="mb-8 h-[300px]">
           <Flashcard
             flashcard={currentCard}
             isFlipped={flipped}

@@ -52,19 +52,25 @@ const Home = () => {
   const loadModules = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [genericMods, userMods] = await Promise.all([
-        fetchGenericModules(),
-        fetchUserModules()
-      ]);
-      
+      // Fetch generic modules (available to all users)
+      const genericMods = await fetchGenericModules();
       setGenericModules(genericMods);
-      setUserModules(userMods);
+      
+      // Only fetch user modules if a user is logged in
+      if (user?.id) {
+        const userMods = await fetchUserModules();
+        // Filter to only show modules created by the current user
+        const filteredUserMods = userMods.filter(mod => mod.user_id === user.id);
+        setUserModules(filteredUserMods);
+      } else {
+        setUserModules([]);
+      }
     } catch (error) {
       console.error("Error loading modules:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchGenericModules, fetchUserModules]);
+  }, [fetchGenericModules, fetchUserModules, user?.id]);
 
   // Initial data loading effect
   useEffect(() => {
@@ -75,10 +81,8 @@ const Home = () => {
       await loadModules();
     };
     
-    if (user?.id) {
-      loadData();
-    }
-  }, [updateUserStats, fetchTotalCardCount, user?.id, loadModules]);
+    loadData();
+  }, [updateUserStats, fetchTotalCardCount, loadModules]);
   
   return (
     <div>
@@ -126,14 +130,17 @@ const Home = () => {
         </div>
       </section>
 
-      {/* User Modules Section */}
-      <ModulesSection 
-        title="Dina moduler" 
-        icon={<UserCircle className="h-6 w-6" />} 
-        modules={userModules} 
-        emptyMessage="Du har inte skapat några egna moduler än."
-        isLoading={isLoading}
-      />
+      {/* User Modules Section - Only shown if user is logged in and has modules */}
+      {user && userModules.length > 0 && (
+        <ModulesSection 
+          title="Dina moduler" 
+          icon={<UserCircle className="h-6 w-6" />} 
+          modules={userModules} 
+          emptyMessage="Du har inte skapat några egna moduler än."
+          isLoading={isLoading}
+          groupByCategory={true}
+        />
+      )}
 
       {/* Generic Modules Section */}
       <ModulesSection 
@@ -142,6 +149,7 @@ const Home = () => {
         modules={genericModules}
         emptyMessage="Det finns inga generiska moduler tillgängliga."
         isLoading={isLoading}
+        groupByCategory={true}
       />
 
       {/* Categories Section */}

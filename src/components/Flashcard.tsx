@@ -72,24 +72,14 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   
   return (
     <div 
-      className="relative perspective-1000 w-full cursor-pointer"
+      className={`flip-card-container ${flipped ? 'flipped' : ''} relative w-full cursor-pointer min-h-[200px] card-enter card-shadow`}
       onClick={handleClick}
     >
-      <div 
-        className={cn(
-          "w-full transition-transform duration-500 transform-style-3d min-h-[200px]",
-          flipped ? "rotate-y-180" : ""
-        )}
-      >
+      <div className="flip-card-inner">
         {/* Front side */}
-        <Card 
-          className={cn(
-            "absolute w-full h-full backface-hidden p-6 flex flex-col",
-            !flipped ? "visible" : "invisible rotate-y-0"
-          )}
-        >
+        <Card className="flip-card-front p-6 flex flex-col border rounded-xl">
           <CardContent className="flex-1 flex flex-col justify-center p-0">
-            <p className="text-xl font-medium text-center">{flashcard.question}</p>
+            <p className="text-xl font-medium text-center flip-text">{flashcard.question}</p>
           </CardContent>
           
           <div className="flex justify-between items-center mt-4">
@@ -123,14 +113,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         </Card>
         
         {/* Back side */}
-        <Card 
-          className={cn(
-            "absolute w-full h-full backface-hidden p-6 flex flex-col rotate-y-180",
-            flipped ? "visible" : "invisible"
-          )}
-        >
+        <Card className="flip-card-back p-6 flex flex-col border rounded-xl">
           <CardContent className="flex-1 flex flex-col justify-center p-0">
-            <p className="text-xl font-medium text-center">{flashcard.answer}</p>
+            <p className="text-xl font-medium text-center flip-text flip-text-back">{flashcard.answer}</p>
           </CardContent>
           
           <div className="flex justify-between items-center mt-4">

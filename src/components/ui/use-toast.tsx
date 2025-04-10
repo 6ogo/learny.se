@@ -1,5 +1,4 @@
 
-// Original shadcn/ui toast implementation
 import { createContext, useContext, useState } from "react";
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
@@ -51,30 +50,29 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 // Create a proper callable toast function
-// This is a function that can be called directly and has methods
 interface ToastFunction {
-  (props: Omit<ToastProps, "variant">): void;
+  (props: ToastProps): void;
   defaultTimeout: number;
-  default: (props: Omit<ToastProps, "variant">) => void;
-  destructive: (props: Omit<ToastProps, "variant">) => void;
+  default: (props: ToastProps) => void;
+  destructive: (props: ToastProps) => void;
 }
 
 const createToastFunction = (): ToastFunction => {
   // Main toast function implementation - default variant
-  const toastFunction = ((props: Omit<ToastProps, "variant">) => {
+  const toastFunction = ((props: ToastProps) => {
     const { addToast } = require("@/hooks/use-toast").useToast();
     addToast({ ...props, variant: "default" });
   }) as ToastFunction;
   
   // Add properties to the function
-  toastFunction.defaultTimeout = 5000;
+  toastFunction.defaultTimeout = 7000;
   
-  toastFunction.default = (props: Omit<ToastProps, "variant">) => {
+  toastFunction.default = (props: ToastProps) => {
     const { addToast } = require("@/hooks/use-toast").useToast();
     addToast({ ...props, variant: "default" });
   };
   
-  toastFunction.destructive = (props: Omit<ToastProps, "variant">) => {
+  toastFunction.destructive = (props: ToastProps) => {
     const { addToast } = require("@/hooks/use-toast").useToast();
     addToast({ ...props, variant: "destructive" });
   };

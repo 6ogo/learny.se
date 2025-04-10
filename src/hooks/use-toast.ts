@@ -17,5 +17,5 @@ export const useToast = () => {
 export const toast = toastImplementation;
 export default toast;
 
-// Override the default toast timeout to 7 seconds
+// Preserve the default timeout
 toast.defaultTimeout = 7000;

@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
@@ -8,6 +9,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { ProtectedRoute, PublicRoute } from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/toaster";
+import { ToastProvider } from "@/components/ui/use-toast";
 import Index from '@/pages/Index';
 import AuthPage from '@/pages/AuthPage';
 import Home from '@/pages/Home';
@@ -93,8 +95,10 @@ function App() {
       <LocalStorageProvider>
         <ThemeProvider>
           <SubscriptionProvider>
-            <RouterProvider router={router} />
-            <Toaster />
+            <ToastProvider>
+              <RouterProvider router={router} />
+              <Toaster />
+            </ToastProvider>
           </SubscriptionProvider>
         </ThemeProvider>
       </LocalStorageProvider>

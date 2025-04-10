@@ -4,11 +4,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Trophy, CheckCircle, XCircle, Loader2 } from 'lucide-react'; // Added Loader2
+import { ChevronLeft, Trophy, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast'; // Updated import
 import { Program } from '@/types/program'; // Import Program type
 import { Flashcard } from '@/types/flashcard'; // Import Flashcard type
 

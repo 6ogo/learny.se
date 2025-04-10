@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Check, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useSubscription } from '@/context/SubscriptionContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +13,6 @@ import { LandingNavBar } from '@/components/LandingNavBar';
 const PricingPage: React.FC = () => {
   const { tierDetails, currentTier, initiateCheckout } = useSubscription();
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubscribe = async (tier: TierDetails) => {

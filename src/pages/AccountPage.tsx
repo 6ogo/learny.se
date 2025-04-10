@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -10,7 +9,7 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useSubscription } from '@/context/SubscriptionContext';
 import { User, CreditCard, LogOut, AlertTriangle, ChevronRight, Shield, Settings } from 'lucide-react';
@@ -19,7 +18,6 @@ import { supabase } from '@/lib/supabase';
 const AccountPage: React.FC = () => {
   const { user, signOut } = useAuth();
   const { currentTierDetails } = useSubscription();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 

@@ -1,8 +1,12 @@
 
-// src/hooks/use-toast.ts
-import { toast } from '@/components/ui/use-toast';
+import { useToast as useToastOriginal } from "@/components/ui/toast";
 
-export { toast };
+// Re-export the original useToast function
+export const useToast = useToastOriginal;
+
+// Export toast as default and as a named export
+import { toast as toastOriginal } from "@/components/ui/toast";
+export const toast = toastOriginal;
 export default toast;
 
 // Override the default toast timeout to 7 seconds

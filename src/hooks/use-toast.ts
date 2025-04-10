@@ -1,14 +1,24 @@
 
-import { useToast as useToastOriginal } from "@/components/ui/use-toast";
-import { toast as toastOriginal } from "@/components/ui/use-toast";
+// Re-export the toast functions from shadcn/ui
+import { toast as toastImplementation } from "@/components/ui/use-toast";
 
-// Re-export the original useToast function
-export const useToast = useToastOriginal;
+// Create a proper useToast hook that returns both toasts array and toast function
+export const useToast = () => {
+  const { toasts, addToast, dismissToast, updateToast } = require("@/components/ui/use-toast").useToast();
+  
+  return {
+    toasts,
+    addToast,
+    dismissToast,
+    updateToast,
+    // Add the toast function to the returned object for convenience
+    toast: toastImplementation
+  };
+};
 
-// Export toast as default and as a named export
-export const toast = toastOriginal;
+// Export toast function directly for easier imports in services
+export const toast = toastImplementation;
 export default toast;
 
 // Override the default toast timeout to 7 seconds
-// This will be picked up by the toast provider
 toast.defaultTimeout = 7000;

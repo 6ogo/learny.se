@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Textarea } from '@/components/ui/textarea'; // Added Textarea import
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { generateFlashcards, AIFlashcardRequest, AIFlashcardResponse } from '@/services/groqService';
 import { useLocalStorage } from '@/context/LocalStorageContext';
@@ -25,7 +25,8 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'expert'>('intermediate');
   const [count, setCount] = useState(10);
-  const [context, setContext] = useState(''); // Added context state
+  const [context, setContext] = useState(''); 
+  const [language, setLanguage] = useState('swedish');
 
   const handleGenerate = async () => {
     if (!topic) {
@@ -41,11 +42,12 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
     try {
       // Corrected: Use explicit property assignment
       const request: AIFlashcardRequest = {
-        topic: topic, // Assign value of topic state
-        category: selectedCategory, // Assign value of selectedCategory state
-        difficulty: difficulty, // Assign value of difficulty state
-        count: count, // Assign value of count state
-        context: context // Add additional context if provided
+        topic: topic,
+        category: selectedCategory, 
+        difficulty: difficulty,
+        count: count,
+        context: context,
+        language: language
       };
 
       const response: AIFlashcardResponse = await generateFlashcards(request);
@@ -120,6 +122,26 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
              </div>
            </div>
 
+           {/* Language Selection - New */}
+           <div className="grid gap-2">
+             <Label htmlFor="language-ai">Språk</Label>
+             <Select value={language} onValueChange={setLanguage}>
+               <SelectTrigger id="language-ai">
+                 <SelectValue placeholder="Välj språk" />
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="swedish">Svenska</SelectItem>
+                 <SelectItem value="english">Engelska</SelectItem>
+                 <SelectItem value="norwegian">Norska</SelectItem>
+                 <SelectItem value="danish">Danska</SelectItem>
+                 <SelectItem value="finnish">Finska</SelectItem>
+                 <SelectItem value="german">Tyska</SelectItem>
+                 <SelectItem value="french">Franska</SelectItem>
+                 <SelectItem value="spanish">Spanska</SelectItem>
+               </SelectContent>
+             </Select>
+           </div>
+
            {/* Category Select */}
            <div className="grid gap-2">
              <Label htmlFor="category-ai">Kategori</Label>
@@ -166,6 +188,18 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
                 <span>15</span>
                 <span>25</span>
               </div>
+           </div>
+
+           {/* API instructions link */}
+           <div className="text-sm text-muted-foreground mt-2">
+             <p>För utvecklare: Se hur du kan använda <a href="#" className="text-blue-600 hover:underline" onClick={(e) => {
+               e.preventDefault();
+               toast({
+                 title: "API Integration",
+                 description: "För att integrera med GROQ API: https://console.groq.com/docs/quickstart",
+                 duration: 8000,
+               });
+             }}>GROQ API</a> direkt för att generera flashcards.</p>
            </div>
 
            {/* Generate Button */}

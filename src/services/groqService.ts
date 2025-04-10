@@ -8,7 +8,8 @@ export interface AIFlashcardRequest {
   category: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   count?: number;
-  context?: string; // Add support for additional context
+  context?: string;
+  language?: string;
 }
 
 export interface AIFlashcardResponse {
@@ -29,8 +30,8 @@ export const generateFlashcards = async (request: AIFlashcardRequest): Promise<A
         category: request.category,
         difficulty: request.difficulty,
         count: request.count || 10,
-        context: request.context || '', // Pass additional context if provided
-        language: 'swedish' // Always generate flashcards in Swedish
+        context: request.context || '',
+        language: request.language || 'swedish' // Default to Swedish if not specified
       }
     });
 

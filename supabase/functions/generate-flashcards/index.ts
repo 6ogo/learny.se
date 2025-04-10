@@ -38,7 +38,14 @@ serve(async (req) => {
 
     // Get the request body
     const requestData = await req.json();
-    const { topic, category, difficulty = 'beginner', count = 10, context = '', language = 'swedish' } = requestData;
+    const { 
+      topic, 
+      category, 
+      difficulty = 'beginner', 
+      count = 10, 
+      context = '', 
+      language = 'swedish' 
+    } = requestData;
 
     if (!topic || !category) {
       return new Response(
@@ -51,10 +58,10 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating ${count} flashcards about "${topic}" in category "${category}" with difficulty "${difficulty}"`);
+    console.log(`Generating ${count} flashcards about "${topic}" in category "${category}" with difficulty "${difficulty}" in language "${language}"`);
     
     // Build a prompt that includes additional context if provided
-    let prompt = `Generera ${count} flashcards på svenska för ämnet "${topic}" inom kategorin "${category}" med svårighetsgrad "${difficulty}".`;
+    let prompt = `Generera ${count} flashcards på ${language} för ämnet "${topic}" inom kategorin "${category}" med svårighetsgrad "${difficulty}".`;
     
     if (context && context.length > 0) {
       prompt += ` Använd följande kontext för att skapa mer specifika och detaljerade flashcards: "${context}"`;
@@ -67,7 +74,7 @@ serve(async (req) => {
     - advanced: Avancerade koncept och tillämpningar
     - expert: Specialiserade och komplicerade koncept
     
-    Varje flashcard ska ha fråga och svar på svenska. Frågorna ska vara koncisa men tydliga. Svaren ska vara informativa, korrekta och kompletta, men inte för långa.
+    Varje flashcard ska ha fråga och svar på ${language}. Frågorna ska vara koncisa men tydliga. Svaren ska vara informativa, korrekta och kompletta, men inte för långa.
     
     Svara med en JSON-array med objekt som har fälten "question" och "answer".
     Inkludera BARA denna JSON-array i ditt svar, inga andra kommentarer eller förklaringar.
@@ -85,7 +92,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "Du är en pedagogisk AI som hjälper till att skapa högkvalitativa flashcards på svenska. Svara med endast JSON utan kommentarer."
+            content: `Du är en pedagogisk AI som hjälper till att skapa högkvalitativa flashcards på ${language}. Svara med endast JSON utan kommentarer.`
           },
           {
             role: "user",

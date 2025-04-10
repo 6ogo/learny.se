@@ -14,7 +14,7 @@ import { generateFlashcards, AIFlashcardRequest, AIFlashcardResponse } from '@/s
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { BrainCircuit, Sparkles, Loader2 } from 'lucide-react';
 
-interface AIFlashcardGeneratorProps {} // Keep interface if needed for future props
+interface AIFlashcardGeneratorProps {}
 
 export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
   const { user } = useAuth();

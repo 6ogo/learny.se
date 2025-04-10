@@ -1,4 +1,3 @@
-
 // src/services/groqService.ts
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -67,7 +66,6 @@ export const generateFlashcards = async (request: AIFlashcardRequest): Promise<A
             variant: "default"
          });
      }
-
 
     // Handle success (saved or not saved)
     if (data.saved) {

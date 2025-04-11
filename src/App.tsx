@@ -1,4 +1,3 @@
-
 import {
   createBrowserRouter,
   RouterProvider,
@@ -23,6 +22,7 @@ import NotFound from '@/pages/NotFound';
 import PricingPage from '@/pages/PricingPage';
 import AdminPage from '@/pages/AdminPage';
 import SharePage from '@/pages/SharePage';
+import MyModulesPage from '@/pages/MyModulesPage';
 
 const router = createBrowserRouter([
   {
@@ -59,6 +59,14 @@ const router = createBrowserRouter([
       {
         path: "/admin",
         element: <AdminPage />,
+      },
+      {
+        path: "/my-modules",
+        element: (
+          <ProtectedRoute>
+            <MyModulesPage />
+          </ProtectedRoute>
+        ),
       },
     ],
   },

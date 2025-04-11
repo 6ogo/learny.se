@@ -19,7 +19,8 @@ import {
   ListChecks,
   User,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  Library
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -43,14 +44,30 @@ export const NavBar: React.FC = () => {
   return (
     <nav className="bg-background border-b sticky top-0 z-50">
       <div className="container flex items-center justify-between py-4">
-        <Link to="/home" className="font-bold text-2xl flex items-center">
-          <img 
-            src="/logo.png" 
-            alt="Learny.se" 
-            className="h-10 w-auto mr-2" 
-          />
-          <span>Learny</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to="/home" className="font-bold text-2xl flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="Learny.se" 
+              className="h-10 w-auto mr-2" 
+            />
+            <span>Learny</span>
+          </Link>
+          
+          {user && (
+            <div className="hidden md:flex ml-6 space-x-4">
+              <Link to="/home" className="text-sm font-medium hover:text-primary transition-colors">
+                Hem
+              </Link>
+              <Link to="/my-modules" className="text-sm font-medium hover:text-primary transition-colors">
+                Mina Moduler
+              </Link>
+              <Link to="/create" className="text-sm font-medium hover:text-primary transition-colors">
+                Skapa Flashcards
+              </Link>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-4">
           {user ? (
@@ -70,6 +87,12 @@ export const NavBar: React.FC = () => {
                   <Link to="/home">
                     <Home className="mr-2 h-4 w-4" />
                     <span>Hem</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/my-modules">
+                    <Library className="mr-2 h-4 w-4" />
+                    <span>Mina Moduler</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

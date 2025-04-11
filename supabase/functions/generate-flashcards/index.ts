@@ -35,6 +35,20 @@ interface FlashcardPayload {
   answer: string;
 }
 
+// Add request timeout support
+const fetchWithTimeout = async (url: string, options: any, timeout = 25000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  const response = await fetch(url, {
+    ...options,
+    signal: controller.signal
+  });
+  
+  clearTimeout(id);
+  return response;
+};
+
 // Function to get the category ID from its name
 async function getCategoryId(supabaseClient: any, categoryName: string) {
   const { data, error } = await supabaseClient
@@ -114,15 +128,20 @@ serve(async (req) => {
       "expert": "highly technical, specialist knowledge with in-depth explanations"
     };
     
+    // Update the prompt to be more explicit about proper JSON formatting
     const systemMessage = `You are an expert educator creating flashcards on the topic: "${topic}" in ${targetLang}. 
     Create ${count} question-answer flashcards at ${difficulty} level (${difficultyDescriptions[difficulty]}).
     ${context ? `Additional context to consider: ${context}` : ''}
     
     Each flashcard should have a clear question and comprehensive answer.
-    Your response must be ONLY valid, properly formatted JSON array with objects containing "question" and "answer" fields.
-    Ensure the JSON is complete and properly terminated. Verify each flashcard object has both fields completed.`;
     
-    // Prepare the request to GROQ API
+    Your MUST respond ONLY with a properly formatted JSON array of objects. Each object must have "question" and "answer" fields.
+    Format:
+    [{"question": "Question 1?", "answer": "Answer 1."}, {"question": "Question 2?", "answer": "Answer 2."}, ...]
+    
+    Ensure all JSON is valid, with proper quotes, commas, and brackets. DO NOT include any text before or after the JSON array.`;
+    
+    // Prepare the request to GROQ API with increased temperature for better generation
     const groqPayload = {
       messages: [
         {
@@ -131,32 +150,42 @@ serve(async (req) => {
         },
         {
           role: "user",
-          content: `Create ${count} flashcards about "${topic}" in ${targetLang} at ${difficulty} difficulty. Return only a valid JSON array without any additional text.`
+          content: `Create ${count} flashcards about "${topic}" in ${targetLang} at ${difficulty} difficulty. Return only valid JSON in this format: [{"question": "Question text?", "answer": "Answer text."}]`
         }
       ],
       model: "llama-3.3-70b-versatile",
-      temperature: 0.7,
+      temperature: 0.6,
       max_tokens: 2048
     };
     
-    // Call the GROQ API
-    const response = await fetch(GROQ_API_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(groqPayload)
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("GROQ API error:", errorData);
-      throw new Error(`GROQ API error: ${response.status} ${errorData}`);
+    // Call the GROQ API with timeout
+    let apiResponse;
+    try {
+      const response = await fetchWithTimeout(
+        GROQ_API_ENDPOINT, 
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(groqPayload)
+        },
+        25000 // 25 second timeout
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("GROQ API error:", errorData);
+        throw new Error(`GROQ API error: ${response.status} ${errorData}`);
+      }
+      
+      apiResponse = await response.json();
+      console.log("AI response received, length:", apiResponse.choices[0].message.content.length);
+    } catch (fetchError) {
+      console.error("Fetch error with GROQ API:", fetchError);
+      throw new Error(`Failed to connect to GROQ API: ${fetchError.message}`);
     }
-    
-    const apiResponse = await response.json();
-    console.log("AI response:", apiResponse.choices[0].message.content.substring(0, 200) + "...");
     
     // Extract the content and parse the JSON
     let flashcardsContent = apiResponse.choices[0].message.content;
@@ -189,6 +218,14 @@ serve(async (req) => {
           // Try to fix incomplete strings with missing quotes
           fixedContent = fixedContent.replace(/([{,]\s*"[^"]+"\s*:\s*[^",}\]]*),/g, '$1",');
           fixedContent = fixedContent.replace(/([{,]\s*"[^"]+"\s*:\s*[^",}\]]*)}]/g, '$1"}]');
+          
+          // Further cleanup: remove characters before opening bracket
+          fixedContent = fixedContent.replace(/^[^[]*(\[.*)/s, '$1');
+          
+          // And after closing bracket
+          fixedContent = fixedContent.replace(/(\][^\]]*)$/s, ']');
+          
+          console.log("Attempting to parse fixed JSON:", fixedContent.substring(0, 100) + "...");
           
           flashcards = JSON.parse(fixedContent);
           console.log("JSON repair successful");

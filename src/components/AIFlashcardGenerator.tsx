@@ -1,4 +1,3 @@
-
 // src/components/AIFlashcardGenerator.tsx
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { generateFlashcards, AIFlashcardRequest, AIFlashcardResponse } from '@/services/groqService';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { BrainCircuit, Sparkles, Loader2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { useNavigate } from 'react-router-dom';
 
 interface AIFlashcardGeneratorProps {}
 
@@ -20,13 +21,38 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
   const { user } = useAuth();
   const { categories } = useLocalStorage();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
   const [topic, setTopic] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'expert'>('intermediate');
   const [count, setCount] = useState(10);
   const [context, setContext] = useState(''); 
   const [language, setLanguage] = useState('swedish');
+
+  React.useEffect(() => {
+    let progressInterval: NodeJS.Timeout;
+    
+    if (isGenerating) {
+      setGenerationProgress(10);
+      
+      progressInterval = setInterval(() => {
+        setGenerationProgress(prev => {
+          if (prev < 40) return prev + 5;
+          if (prev < 70) return prev + 2;
+          if (prev < 90) return prev + 0.5;
+          return prev;
+        });
+      }, 600);
+    } else {
+      setGenerationProgress(0);
+    }
+
+    return () => {
+      if (progressInterval) clearInterval(progressInterval);
+    };
+  }, [isGenerating]);
 
   const handleGenerate = async () => {
     if (!topic) {
@@ -46,7 +72,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
 
     setIsGenerating(true);
     try {
-      // Corrected: Use explicit property assignment
       const request: AIFlashcardRequest = {
         topic: topic,
         category: selectedCategory, 
@@ -59,10 +84,16 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
       console.log("Starting flashcard generation with:", request);
       const response: AIFlashcardResponse = await generateFlashcards(request);
 
+      setGenerationProgress(100);
+
       if (response.saved) {
         console.log("AI Flashcards generated and saved successfully.");
-        setTopic(''); // Reset topic on success
-        setContext(''); // Reset context on success
+        setTopic('');
+        setContext('');
+        
+        setTimeout(() => {
+          navigate('/my-modules');
+        }, 1500);
       } else if (response.flashcards?.length > 0 && !response.error) {
         console.log("AI Flashcards generated but not saved.");
       } else {
@@ -77,7 +108,9 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
         variant: "destructive" 
       });
     } finally {
-      setIsGenerating(false);
+      setTimeout(() => {
+        setIsGenerating(false);
+      }, 1000);
     }
   };
 
@@ -106,7 +139,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
 
        <CardContent>
          <div className="space-y-4">
-           {/* Topic Input */}
            <div className="grid gap-2">
              <Label htmlFor="topic-ai">Ämne</Label>
              <Input
@@ -117,7 +149,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
              />
            </div>
            
-           {/* Context Input - New */}
            <div className="grid gap-2">
              <Label htmlFor="context-ai">Ytterligare kontext (valfritt)</Label>
              <Textarea
@@ -133,7 +164,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
              </div>
            </div>
 
-           {/* Language Selection - New */}
            <div className="grid gap-2">
              <Label htmlFor="language-ai">Språk</Label>
              <Select value={language} onValueChange={setLanguage}>
@@ -153,7 +183,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
              </Select>
            </div>
 
-           {/* Category Select */}
            <div className="grid gap-2">
              <Label htmlFor="category-ai">Kategori</Label>
              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -168,7 +197,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
              </Select>
            </div>
 
-           {/* Difficulty Select */}
            <div className="grid gap-2">
              <Label htmlFor="difficulty-ai">Svårighetsgrad</Label>
              <Select value={difficulty} onValueChange={(val) => setDifficulty(val as any)}>
@@ -182,7 +210,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
              </Select>
            </div>
 
-           {/* Count Slider */}
            <div className="grid gap-2">
               <Label htmlFor="count-slider-ai">Antal flashcards ({count})</Label>
               <Slider
@@ -201,7 +228,22 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
               </div>
            </div>
 
-           {/* API instructions link */}
+           {isGenerating && (
+             <div className="space-y-2">
+               <div className="flex justify-between text-xs text-muted-foreground">
+                 <span>Genererar flashcards...</span>
+                 <span>{Math.round(generationProgress)}%</span>
+               </div>
+               <Progress value={generationProgress} className="h-2" />
+               <p className="text-xs text-muted-foreground italic mt-1">
+                 {generationProgress < 40 ? 'Förbereder modellen...' : 
+                  generationProgress < 70 ? 'Skapar flashcards...' : 
+                  generationProgress < 90 ? 'Sparar innehållet...' : 
+                  'Slutför generering...'}
+               </p>
+             </div>
+           )}
+
            <div className="text-sm text-muted-foreground mt-2">
              <p>För utvecklare: Se hur du kan använda <a href="#" className="text-blue-600 hover:underline" onClick={(e) => {
                e.preventDefault();
@@ -213,7 +255,6 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
              }}>GROQ API</a> direkt för att generera flashcards.</p>
            </div>
 
-           {/* Generate Button */}
            <Button
              onClick={handleGenerate}
              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"

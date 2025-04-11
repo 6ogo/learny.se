@@ -91,18 +91,18 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <AuthProvider>
-      <LocalStorageProvider>
-        <ThemeProvider>
-          <SubscriptionProvider>
-            <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <LocalStorageProvider>
+          <ThemeProvider>
+            <SubscriptionProvider>
               <RouterProvider router={router} />
               <Toaster />
-            </ToastProvider>
-          </SubscriptionProvider>
-        </ThemeProvider>
-      </LocalStorageProvider>
-    </AuthProvider>
+            </SubscriptionProvider>
+          </ThemeProvider>
+        </LocalStorageProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 

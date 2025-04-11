@@ -1,5 +1,4 @@
 
-import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
   ToastClose,
@@ -8,11 +7,10 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { useToast as useToastOriginal } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 export function Toaster() {
-  // Use the context directly from the original useToast, not our wrapped version
-  const { toasts } = useToastOriginal();
+  const { toasts } = useToast()
 
   return (
     <ToastProvider>

@@ -30,11 +30,17 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
 
   const handleGenerate = async () => {
     if (!topic) {
-      toast({ title: "Ämne saknas", description: "Vänligen ange ett ämne.", variant: "destructive" });
+      toast({
+        title: "Ämne saknas", 
+        description: "Vänligen ange ett ämne."
+      });
       return;
     }
     if (!selectedCategory) {
-      toast({ title: "Kategori saknas", description: "Vänligen välj en kategori.", variant: "destructive" });
+      toast({
+        title: "Kategori saknas", 
+        description: "Vänligen välj en kategori."
+      });
       return;
     }
 
@@ -49,7 +55,8 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
         context: context,
         language: language
       };
-
+      
+      console.log("Starting flashcard generation with:", request);
       const response: AIFlashcardResponse = await generateFlashcards(request);
 
       if (response.saved) {
@@ -64,7 +71,11 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
 
     } catch (error) {
       console.error('Error in handleGenerate:', error);
-      toast({ title: "Oväntat fel", description: "Kunde inte starta AI-generering.", variant: "destructive" });
+      toast({ 
+        title: "Oväntat fel", 
+        description: "Kunde inte starta AI-generering.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsGenerating(false);
     }

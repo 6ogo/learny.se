@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLocalStorage } from '@/context/LocalStorageContext';
 import { ModulesSection } from '@/components/ModulesSection';
 import { Program } from '@/types/program';
-import { Library } from 'lucide-react';
+import { Library, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -86,7 +86,9 @@ const MyModulesPage = () => {
           <CardContent>
             <p className="mb-6">Du har inte skapat några egna moduler ännu. Skapa din första modul nu!</p>
             <Button asChild>
-              <Link to="/create">Skapa flashcards</Link>
+              <Link to="/create" className="flex items-center">
+                <Plus className="mr-2 h-4 w-4" /> Skapa nya flashcards
+              </Link>
             </Button>
           </CardContent>
         </Card>

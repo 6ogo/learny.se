@@ -1,3 +1,4 @@
+
 // Follow Deno Deploy runtime API
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -117,8 +118,9 @@ serve(async (req) => {
     Create ${count} question-answer flashcards at ${difficulty} level (${difficultyDescriptions[difficulty]}).
     ${context ? `Additional context to consider: ${context}` : ''}
     
-    Each flashcard should have a clear question and comprehensive answer formatted as a JSON array of objects with "question" and "answer" fields.
-    Your response should be ONLY the JSON array without any additional text or formatting.`;
+    Each flashcard should have a clear question and comprehensive answer.
+    Your response must be ONLY valid, properly formatted JSON array with objects containing "question" and "answer" fields.
+    Ensure the JSON is complete and properly terminated. Verify each flashcard object has both fields completed.`;
     
     // Prepare the request to GROQ API
     const groqPayload = {
@@ -129,7 +131,7 @@ serve(async (req) => {
         },
         {
           role: "user",
-          content: `Create ${count} flashcards about "${topic}" in ${targetLang} at ${difficulty} difficulty. Return only a JSON array.`
+          content: `Create ${count} flashcards about "${topic}" in ${targetLang} at ${difficulty} difficulty. Return only a valid JSON array without any additional text.`
         }
       ],
       model: "llama-3.3-70b-versatile",
@@ -162,10 +164,53 @@ serve(async (req) => {
     // Sometimes the AI includes markdown code blocks, let's clean that up
     flashcardsContent = flashcardsContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
     
-    // Try to parse the JSON
-    let flashcards: FlashcardPayload[];
+    // Try to parse the JSON - with improved error handling
+    let flashcards: FlashcardPayload[] = [];
     try {
-      flashcards = JSON.parse(flashcardsContent);
+      // First, try the standard JSON parse
+      try {
+        flashcards = JSON.parse(flashcardsContent);
+      } catch (parseError) {
+        console.error("Initial JSON parse failed:", parseError);
+        
+        // Try to repair the JSON if possible
+        try {
+          // Add missing closing brackets if needed
+          let fixedContent = flashcardsContent;
+          const openBrackets = (flashcardsContent.match(/\[/g) || []).length;
+          const closeBrackets = (flashcardsContent.match(/\]/g) || []).length;
+          if (openBrackets > closeBrackets) {
+            fixedContent += ']'.repeat(openBrackets - closeBrackets);
+          }
+          
+          // Check for trailing commas
+          fixedContent = fixedContent.replace(/,(\s*[\}\]])/g, '$1');
+          
+          // Try to fix incomplete strings with missing quotes
+          fixedContent = fixedContent.replace(/([{,]\s*"[^"]+"\s*:\s*[^",}\]]*),/g, '$1",');
+          fixedContent = fixedContent.replace(/([{,]\s*"[^"]+"\s*:\s*[^",}\]]*)}]/g, '$1"}]');
+          
+          flashcards = JSON.parse(fixedContent);
+          console.log("JSON repair successful");
+        } catch (repairError) {
+          console.error("JSON repair failed:", repairError);
+          
+          // If all else fails, we'll extract flashcards manually
+          // Extract using regex pattern matching
+          const pattern = /"question"\s*:\s*"([^"]*)"\s*,\s*"answer"\s*:\s*"([^"]*)"/g;
+          const matches = [...flashcardsContent.matchAll(pattern)];
+          
+          if (matches.length > 0) {
+            flashcards = matches.map(match => ({
+              question: match[1],
+              answer: match[2]
+            }));
+            console.log("Extracted flashcards using regex:", flashcards.length);
+          } else {
+            throw new Error("Could not extract flashcards from malformed JSON");
+          }
+        }
+      }
       
       // Validate structure: should be an array of objects with question and answer
       if (!Array.isArray(flashcards)) {
@@ -180,6 +225,14 @@ serve(async (req) => {
           typeof fc.question === 'string' && fc.question.trim() !== '' &&
           typeof fc.answer === 'string' && fc.answer.trim() !== ''
         );
+      }
+      
+      // If we end up with no valid flashcards, add a fallback
+      if (flashcards.length === 0) {
+        flashcards = [{
+          question: "Could not generate valid flashcards",
+          answer: "The AI returned an invalid response format. Please try again."
+        }];
       }
     } catch (e) {
       console.error("Failed to parse AI response:", e);

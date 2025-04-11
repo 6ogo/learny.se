@@ -8,11 +8,16 @@ import { Loader2 } from 'lucide-react';
 
 interface ProgramsByCategoryProps {
   categoryId: string;
+  filters?: {
+    subcategory?: string;
+    difficulty?: string;
+  };
 }
 
-export const ProgramsByCategory: React.FC<ProgramsByCategoryProps> = ({ categoryId }) => {
+export const ProgramsByCategory: React.FC<ProgramsByCategoryProps> = ({ categoryId, filters }) => {
   const { fetchProgramsByCategory, getCategory } = useLocalStorage();
   const [programs, setPrograms] = useState<Program[]>([]);
+  const [filteredPrograms, setFilteredPrograms] = useState<Program[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +27,8 @@ export const ProgramsByCategory: React.FC<ProgramsByCategoryProps> = ({ category
     setIsLoading(true);
     setError(null);
     try {
-        // **** THIS WILL USE THE PLACEHOLDER/LOCAL STATE FETCH ****
-        // **** Replace with real DB fetch after program migration ****
+      // **** THIS WILL USE THE PLACEHOLDER/LOCAL STATE FETCH ****
+      // **** Replace with real DB fetch after program migration ****
       const fetchedPrograms = await fetchProgramsByCategory(categoryId);
       setPrograms(fetchedPrograms);
     } catch (err: any) {
@@ -37,6 +42,28 @@ export const ProgramsByCategory: React.FC<ProgramsByCategoryProps> = ({ category
   useEffect(() => {
     loadPrograms();
   }, [loadPrograms]);
+
+  // Apply filters whenever programs or filters change
+  useEffect(() => {
+    if (!programs.length) {
+      setFilteredPrograms([]);
+      return;
+    }
+
+    let result = [...programs];
+
+    // Apply subcategory filter if specified
+    if (filters?.subcategory) {
+      result = result.filter(program => program.subcategory === filters.subcategory);
+    }
+
+    // Apply difficulty filter if specified
+    if (filters?.difficulty) {
+      result = result.filter(program => program.difficulty === filters.difficulty);
+    }
+
+    setFilteredPrograms(result);
+  }, [programs, filters]);
 
   if (isLoading) {
     return (
@@ -61,8 +88,9 @@ export const ProgramsByCategory: React.FC<ProgramsByCategoryProps> = ({ category
      );
    }
 
+  const programsToDisplay = filteredPrograms.length > 0 ? filteredPrograms : programs;
 
-  if (programs.length === 0) {
+  if (programsToDisplay.length === 0) {
     return (
       <Card className="mb-8">
         <CardHeader>
@@ -70,7 +98,9 @@ export const ProgramsByCategory: React.FC<ProgramsByCategoryProps> = ({ category
         </CardHeader>
         <CardContent>
           <p className="text-center py-8 dark:text-gray-400">
-            Inga program tillgängliga i denna kategori ännu.
+            {programs.length > 0 && filteredPrograms.length === 0 
+              ? 'Inga program matchar de valda filtren.'
+              : 'Inga program tillgängliga i denna kategori ännu.'}
           </p>
         </CardContent>
       </Card>
@@ -78,10 +108,10 @@ export const ProgramsByCategory: React.FC<ProgramsByCategoryProps> = ({ category
   }
 
   // Group programs by difficulty (logic remains the same)
-  const beginnerPrograms = programs.filter(p => p.difficulty === 'beginner');
-  const intermediatePrograms = programs.filter(p => p.difficulty === 'intermediate');
-  const advancedPrograms = programs.filter(p => p.difficulty === 'advanced');
-  const expertPrograms = programs.filter(p => p.difficulty === 'expert');
+  const beginnerPrograms = programsToDisplay.filter(p => p.difficulty === 'beginner');
+  const intermediatePrograms = programsToDisplay.filter(p => p.difficulty === 'intermediate');
+  const advancedPrograms = programsToDisplay.filter(p => p.difficulty === 'advanced');
+  const expertPrograms = programsToDisplay.filter(p => p.difficulty === 'expert');
 
   return (
     <Card className="mb-8">

@@ -4,6 +4,7 @@ export type Program = {
   name: string;
   description: string;
   category: string;
+  subcategory?: string; // Added subcategory as an optional property
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   flashcards: string[]; // Array of flashcard IDs
   completedByUser?: boolean;

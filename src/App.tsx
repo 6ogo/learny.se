@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
@@ -62,11 +63,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/my-modules",
-        element: (
-          <ProtectedRoute>
-            <MyModulesPage />
-          </ProtectedRoute>
-        ),
+        element: <MyModulesPage />,
       },
     ],
   },

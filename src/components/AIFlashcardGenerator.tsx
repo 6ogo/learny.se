@@ -1,5 +1,5 @@
-// src/components/AIFlashcardGenerator.tsx
-import React, { useState } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,14 +30,24 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
   const [count, setCount] = useState(10);
   const [context, setContext] = useState(''); 
   const [language, setLanguage] = useState('swedish');
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isGeneratingRef = useRef<boolean>(false);
 
-  React.useEffect(() => {
-    let progressInterval: NodeJS.Timeout;
-    
+  // Cleanup function to clear interval
+  const clearProgressInterval = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  };
+
+  // Set up and clean up the progress animation
+  useEffect(() => {
     if (isGenerating) {
       setGenerationProgress(10);
+      isGeneratingRef.current = true;
       
-      progressInterval = setInterval(() => {
+      progressIntervalRef.current = setInterval(() => {
         setGenerationProgress(prev => {
           if (prev < 40) return prev + 5;
           if (prev < 70) return prev + 2;
@@ -46,12 +56,20 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
         });
       }, 600);
     } else {
-      setGenerationProgress(0);
+      isGeneratingRef.current = false;
+      if (!isGeneratingRef.current && generationProgress < 100 && generationProgress > 0) {
+        // If generation stopped unexpectedly, complete the progress bar gracefully
+        setGenerationProgress(100);
+        setTimeout(() => {
+          setGenerationProgress(0);
+        }, 1000);
+      } else if (!isGeneratingRef.current && generationProgress === 0) {
+        // Just cleanup
+        clearProgressInterval();
+      }
     }
 
-    return () => {
-      if (progressInterval) clearInterval(progressInterval);
-    };
+    return clearProgressInterval;
   }, [isGenerating]);
 
   const handleGenerate = async () => {
@@ -67,6 +85,11 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
         title: "Kategori saknas", 
         description: "Vänligen välj en kategori."
       });
+      return;
+    }
+    
+    // Prevent multiple submissions
+    if (isGenerating) {
       return;
     }
 
@@ -108,9 +131,17 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
         variant: "destructive" 
       });
     } finally {
-      setTimeout(() => {
-        setIsGenerating(false);
-      }, 1000);
+      // Ensure progress bar completes before hiding generation state
+      if (generationProgress < 100) {
+        setGenerationProgress(100);
+        setTimeout(() => {
+          setIsGenerating(false);
+        }, 1000);
+      } else {
+        setTimeout(() => {
+          setIsGenerating(false);
+        }, 1000);
+      }
     }
   };
 
@@ -228,7 +259,7 @@ export const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = () => {
               </div>
            </div>
 
-           {isGenerating && (
+           {(isGenerating || generationProgress > 0) && (
              <div className="space-y-2">
                <div className="flex justify-between text-xs text-muted-foreground">
                  <span>Genererar flashcards...</span>

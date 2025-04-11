@@ -1,3 +1,4 @@
+
 // src/services/groqService.ts
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,10 +24,21 @@ export interface AIFlashcardResponse {
 const MAX_RETRIES = 3;
 // Timeout for function invocation (ms)
 const TIMEOUT_MS = 30000;
+// Track if a request is already in progress
+let requestInProgress = false;
 
 export const generateFlashcards = async (request: AIFlashcardRequest): Promise<AIFlashcardResponse> => {
+  // Prevent multiple concurrent requests
+  if (requestInProgress) {
+    return { 
+      flashcards: [], 
+      error: "En annan generering pågår redan. Vänta tills den är klar." 
+    };
+  }
+  
   try {
     console.log('Invoking Supabase function generate-flashcards...', request);
+    requestInProgress = true;
 
     let retries = 0;
     let lastError = null;
@@ -166,6 +178,9 @@ export const generateFlashcards = async (request: AIFlashcardRequest): Promise<A
       console.error('Could not show toast:', toastError);
     }
     return { flashcards: [], saved: false, error: error.message };
+  } finally {
+    // Always reset the request flag when done
+    requestInProgress = false;
   }
 };
 

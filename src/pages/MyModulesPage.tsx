@@ -19,8 +19,14 @@ const MyModulesPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [loadProgress, setLoadProgress] = useState<number>(0);
   const [loadAttempts, setLoadAttempts] = useState<number>(0);
+  const [fetchingInProgress, setFetchingInProgress] = useState<boolean>(false);
 
   const loadUserModules = useCallback(async () => {
+    // Prevent concurrent fetch operations
+    if (fetchingInProgress) {
+      return;
+    }
+    
     if (!user) {
       setUserModules([]);
       setIsLoading(false);
@@ -29,6 +35,7 @@ const MyModulesPage = () => {
 
     setIsLoading(true);
     setError(null);
+    setFetchingInProgress(true);
     
     // Start progress animation
     setLoadProgress(10);
@@ -45,6 +52,8 @@ const MyModulesPage = () => {
       
       // Filter to only show modules created by the current user
       const filteredModules = modules.filter(mod => mod.user_id === user.id);
+      console.log(`Found ${filteredModules.length} modules created by current user`);
+      
       setUserModules(filteredModules);
       setLoadAttempts(0); // Reset attempts counter on success
     } catch (err: any) {
@@ -54,13 +63,14 @@ const MyModulesPage = () => {
     } finally {
       clearInterval(progressInterval);
       setLoadProgress(100);
+      setFetchingInProgress(false);
       
       // Short delay before hiding loading indicator
       setTimeout(() => {
         setIsLoading(false);
       }, 300);
     }
-  }, [user, fetchUserModules]);
+  }, [user, fetchUserModules, fetchingInProgress]);
 
   useEffect(() => {
     // Prevent excessive retries
